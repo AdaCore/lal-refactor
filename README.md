@@ -1,92 +1,55 @@
-# lal-refactor
+# LAL Refactor
 
+This repository provides a collection of source code refactoring tools for the Ada programming language, leveraging the power of [Libadalang](https://github.com/AdaCore/libadalang). These tools aim to automate and assist with common code refactoring tasks, improving code maintainability and reducing the risk of introducing errors during the refactoring process.
 
+Currently, the main user of this tools is the [Ada Language Server](https://github.com/AdaCore/ada_language_server).
 
-## Getting started
+## Implemented Tools
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Safe Rename
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The Safe Rename tool not only allows you to safely rename Ada entities such as variables, constants, types, packages, and subprograms throughout your codebase but also includes additional features to ensure the integrity of your code during the renaming process. Currently, it is able to: detect potential name collisions that may occur when renaming an entity; detect instances where the renamed entity might become hidden for another entity, causing the runtime behaviour of the program to change silently.
 
-## Add your files
+### Change Subprogram Signatures
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+The Change Subprogram Signatures tool provides several sub-tools to modify subprogram signatures in a controlled and automated manner. The following sub-tools are available:
 
-```
-cd existing_repo
-git remote add origin https://gitlab.adacore-it.com/eng/ide/lal-refactor.git
-git branch -M main
-git push -uf origin main
-```
+-   Add Parameter: Easily add a new parameter to a subprogram. Currently, all call sites need to be manually handled.
+-   Remove Parameter: Safely remove a parameter from a subprogram, handling the necessary adjustments to all references.
+-   Move Parameter: Move a parameter from one position to another within a subprogram, automatically updating call sites (if necessary).
+-   Change Parameter Mode: Change the mode (in, out, in out) of a parameter in a subprogram, ensuring consistency across the codebase.
+-   Change Parameter Default Value: Modify the default value of a parameter in a subprogram.
+-   Change Parameter Type: Update the type of a parameter in a subprogram.
+-   Change Function Return Type: Change the return type of a function. Currently, all calls and assignments need to be handled manually.
 
-## Integrate with your tools
+### Pull-Up Declaration
 
-- [ ] [Set up project integrations](https://gitlab.adacore-it.com/eng/ide/lal-refactor/-/settings/integrations)
+The Pull-Up Declaration tool assists you in refactoring code by moving a declaration from a child unit to its parent unit. It simplifies the code structure, avoids duplication, and promotes better organization of your Ada code. In addition, the tool ensures that dependent declarations are also moved when pulling up a declaration.
 
-## Collaborate with your team
+#### Handling Dependent Declarations
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+When you use the Pull-Up Declaration tool to move a declaration (let's say, declaration A) from a child unit to its parent unit, the tool takes into account any dependent declarations (e.g., declaration B) that A relies on within the same scope. The tool intelligently identifies these dependent declarations and automatically moves them along with the original declaration.
 
-## Test and Deploy
+### Replace Type
 
-Use the built-in continuous integration in GitLab.
+The Replace Type tool allows you to easily replace a specific type with another type throughout your codebase. This is useful when you want to update a type definition and ensure that all instances of the old type are correctly modified.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Introduce Parameter
 
-***
+The Introduce Parameter tool enables you to introduce a new parameter to a subprogram based on one of its declarations, automatically modifying the subprogram's signature. This is useful when you need to pass additional data to a subprogram instead of making a declaration inside it.
 
-# Editing this README
+### Suggest Import
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+The Suggest Import tool assists you in managing imports by automatically suggesting the necessary import statements for Ada packages that are used but not yet imported.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Sort Dependencies
 
-## Name
-Choose a self-explaining name for your project.
+The Sort Dependencies tool provides functionality to sort the with and use clauses of an Ada source files, ensuring a consistent and organized order of package imports.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### Suppress Separate Subprogram
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+The Suppress Separate Subprogram tool allows you to suppress a separate subprogram by removing its declaration and merging its body with the parent unit. This helps simplify code organization and improve readability.
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Contributions to this project are welcome! If you encounter any issues or have ideas for additional refactoring tools, feel free to open an issue or submit a pull request.

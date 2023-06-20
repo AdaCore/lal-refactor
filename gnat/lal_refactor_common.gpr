@@ -1,0 +1,30 @@
+abstract project LAL_Refactor_Common is
+
+   type Build_Mode_Type is ("dev", "prod");
+   Build_Mode : Build_Mode_Type := external ("LAL_REFACTOR_BUILD_MODE", external ("BUILD_MODE", "dev"));
+
+   package Compiler is
+      case Build_Mode is
+         when "dev" =>
+            for Default_Switches ("Ada") use
+              ("-fPIC",
+               "-gnatX",
+               "-gnatyg",
+               "-gnatwae",
+               "-gnatw.u",
+               "-g",
+               "-O0",
+               "-gnata",
+               "-gnatVa");
+         when "prod" =>
+            for Default_Switches ("Ada") use
+              ("-fPIC",
+               "-gnatX",
+               "-gnatyg",
+               "-g",
+               "-Ofast",
+               "-gnatn2");
+      end case;
+   end Compiler;
+
+end LAL_Refactor_Common;

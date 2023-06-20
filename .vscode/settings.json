@@ -1,0 +1,6 @@
+{
+    "[ada]": {
+        "editor.tabSize": 3
+    },
+    "ada.projectFile": "gnat/lal_refactor_driver.gpr"
+}

@@ -1,0 +1,1 @@
+lalrefactor --help
