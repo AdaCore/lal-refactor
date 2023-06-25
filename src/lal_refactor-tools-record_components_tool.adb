@@ -27,13 +27,13 @@ with Libadalang.Common;
 with Ada.Containers; use Ada.Containers;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Ada.Assertions;
-with Output;
+with LAL_Refactor.Output;
 pragma Unreferenced (Langkit_Support.Text);
 pragma Unreferenced (Ada.Assertions);
 with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Sets;
 
-package body Lint.Tools.Record_Components_Tool is
+package body LAL_Refactor.Tools.Record_Components_Tool is
    package LALCO renames Libadalang.Common;
    package Text renames Langkit_Support.Text;
    use type LALCO.Ada_Node_Kind_Type;
@@ -883,7 +883,7 @@ package body Lint.Tools.Record_Components_Tool is
       Edit_Info : Delete_Infos;
    begin
       Edit_Info := Find_Unused_Components (Unit_Array);
-      Output.JSON_Serialize (Edit_Info, Stream);
+      LAL_Refactor.Output.JSON_Serialize (Edit_Info, Stream);
    end Run;
 
-end Lint.Tools.Record_Components_Tool;
+end LAL_Refactor.Tools.Record_Components_Tool;

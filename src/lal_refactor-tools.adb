@@ -25,9 +25,8 @@ with Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;
 
-package body Lint.Tools is
+package body LAL_Refactor.Tools is
 
    -------------
    -- Convert --
@@ -47,8 +46,6 @@ package body Lint.Tools is
 
    function Tool_List return String is
       use Ada.Characters.Handling;
-      --  use Ada.Characters.Latin_1;
-      use Ada.Strings.Unbounded;
       H : Unbounded_String;
    begin
       Append (H, To_Lower (Tool'Image (Tool'First)));
@@ -93,4 +90,4 @@ package body Lint.Tools is
       return 0;
    end Find_First_Tool_Index;
 
-end Lint.Tools;
+end LAL_Refactor.Tools;

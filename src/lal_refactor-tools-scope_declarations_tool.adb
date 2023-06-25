@@ -22,19 +22,16 @@
 ------------------------------------------------------------------------------
 
 with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Strings;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
 with Langkit_Support.Text;
 with Libadalang.Common;
 with Ada.Containers; use Ada.Containers;
-with Output;
+with LAL_Refactor.Output;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Hashed_Maps;
-with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
-package body Lint.Tools.Scope_Declarations_Tool is
+package body LAL_Refactor.Tools.Scope_Declarations_Tool is
    package LALCO renames Libadalang.Common;
    package Text renames Langkit_Support.Text;
 
@@ -467,7 +464,7 @@ package body Lint.Tools.Scope_Declarations_Tool is
    begin
       Edit_Info := Scope_Declarations (Unit_Array);
 
-      Output.JSON_Serialize (Edit_Info, Stream);
+      LAL_Refactor.Output.JSON_Serialize (Edit_Info, Stream);
    end Run;
 
    function Interact return ReFac.Text_Edit_Map is
@@ -565,4 +562,4 @@ package body Lint.Tools.Scope_Declarations_Tool is
       return Output_Map;
    end Interact;
 
-end Lint.Tools.Scope_Declarations_Tool;
+end LAL_Refactor.Tools.Scope_Declarations_Tool;

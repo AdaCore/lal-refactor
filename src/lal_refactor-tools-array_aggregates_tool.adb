@@ -23,25 +23,21 @@
 
 with Ada.Strings;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with GNATCOLL.GMP.Integers; use GNATCOLL.GMP.Integers;
 with GNATCOLL.VFS;
 with GNAT.Regpat;
 
-with Langkit_Support.Slocs; use Langkit_Support.Slocs;
-
 with Libadalang.Common; use Libadalang.Common;
 
-with Lint.Command_Line;
-with Lint.File_Edits;
-with Lint.Utils;
+with LAL_Refactor.Command_Line;
+with LAL_Refactor.File_Edits;
+with LAL_Refactor.Utils;
 
 with VSS.Strings.Conversions;
 
-package body Lint.Tools.Array_Aggregates_Tool is
-   use Libadalang.Analysis;
+package body LAL_Refactor.Tools.Array_Aggregates_Tool is
 
    function To_Text_Edit_Map
      (Map : Aggregate_Edits)
@@ -81,8 +77,6 @@ package body Lint.Tools.Array_Aggregates_Tool is
      (Map : Aggregate_Edits)
       return LAL_Refactor.Text_Edit_Map
    is
-      use LAL_Refactor;
-
       Result : Text_Edit_Map;
 
    begin
@@ -207,7 +201,7 @@ package body Lint.Tools.Array_Aggregates_Tool is
       --  has one element. If so, inspect the designator (array indices) to
       --  determine if it can be removed.
 
-      if Lint.Command_Line.Remove_Indices.Get
+      if LAL_Refactor.Command_Line.Remove_Indices.Get
         and Aggregate_Assoc_List.Children'Length = 1
       then
          declare
@@ -287,7 +281,7 @@ package body Lint.Tools.Array_Aggregates_Tool is
 
          exception
             when E : others =>
-               Logger.Trace
+               Refactor_Trace.Trace
                  (E,
                   "Failed to process array with a single association."
                   & "Falling back to processing it as a multi element "
@@ -384,12 +378,12 @@ package body Lint.Tools.Array_Aggregates_Tool is
 
          begin
             if Expression_Type.Is_Null then
-               Logger.Trace
+               Refactor_Trace.Trace
                  ("WARNING: Failed to get the type of the aggregate "
                   & Aggregate.Image);
                return False;
             elsif Full_View.Is_Null then
-               Logger.Trace
+               Refactor_Trace.Trace
                  ("WARNING: Failed to get the full view of the aggregate type "
                   & Expression_Type.Image);
                return Expression_Type.P_Is_Array_Type;
@@ -400,10 +394,10 @@ package body Lint.Tools.Array_Aggregates_Tool is
          exception
             when E : others =>
                if Aggregate.Is_Null then
-                  Logger.Trace (E, "Unexpected null Aggregate node: ");
+                  Refactor_Trace.Trace (E, "Unexpected null Aggregate node: ");
 
                else
-                  Logger.Trace
+                  Refactor_Trace.Trace
                     (E,
                      "Unexpected exception when checking if "
                      & Aggregate.Image
@@ -425,10 +419,10 @@ package body Lint.Tools.Array_Aggregates_Tool is
       exception
          when E : others =>
             if Node.Is_Null then
-               Logger.Trace (E, "Unexpected null node: ");
+               Refactor_Trace.Trace (E, "Unexpected null node: ");
 
             else
-               Logger.Trace
+               Refactor_Trace.Trace
                  (E,
                   "Unexpected exception when processing " & Node.Image & ": ");
             end if;
@@ -442,7 +436,7 @@ package body Lint.Tools.Array_Aggregates_Tool is
 
    begin
       if Units'Length > 0 then
-         Lint.Logger.Trace ("Finding all array objects");
+         Refactor_Trace.Trace ("Finding all array objects");
          for J in Units'Range loop
             Log_Progress
               (J, Units_Count, "Processing " & Units (J).Get_Filename);
@@ -467,28 +461,28 @@ package body Lint.Tools.Array_Aggregates_Tool is
    ---------------------
 
    procedure Run_Normal_Mode is
-      use Lint.File_Edits;
-      use type Lint.Command_Line.Sources.Result_Array;
+      use LAL_Refactor.File_Edits;
+      use type LAL_Refactor.Command_Line.Sources.Result_Array;
 
-      Sources : constant Lint.Command_Line.Sources.Result_Array :=
-        Lint.Command_Line.Sources.Get;
+      Sources : constant LAL_Refactor.Command_Line.Sources.Result_Array :=
+        LAL_Refactor.Command_Line.Sources.Get;
 
       Units : constant Analysis_Unit_Array :=
-        (if Sources = Lint.Command_Line.Sources.No_Results then
-           Lint.Utils.Get_Project_Analysis_Units
+        (if Sources = LAL_Refactor.Command_Line.Sources.No_Results then
+           LAL_Refactor.Utils.Get_Project_Analysis_Units
              (Ada.Strings.Unbounded.To_String
-                (Lint.Command_Line.Project.Get))
+                (LAL_Refactor.Command_Line.Project.Get))
          else
-           Lint.Utils.Get_Analysis_Units_From_Sources_List
-             (Lint.Utils.Sources_List (Sources),
+           LAL_Refactor.Utils.Get_Analysis_Units_From_Sources_List
+             (LAL_Refactor.Utils.Sources_List (Sources),
               Ada.Strings.Unbounded.To_String
-                (Lint.Command_Line.Project.Get)));
+                (LAL_Refactor.Command_Line.Project.Get)));
 
       Edits : constant LAL_Refactor.Text_Edit_Map :=
         Upgrade_Array_Aggregates (Units);
 
    begin
-      if Lint.Command_Line.Pipe.Get then
+      if LAL_Refactor.Command_Line.Pipe.Get then
          declare
             use Ada.Text_IO;
             use File_Name_To_Virtual_String_Maps;
@@ -527,14 +521,14 @@ package body Lint.Tools.Array_Aggregates_Tool is
 
       Edits      : LAL_Refactor.Text_Edit_Map;
 
-      use Lint.File_Edits;
+      use LAL_Refactor.File_Edits;
 
    begin
       Ada.Text_IO.Open
         (Warnings_File,
          Ada.Text_IO.In_File,
          GNATCOLL.VFS."+"
-           (Lint.Command_Line.From_GNAT_Warnings.Get.Full_Name));
+           (LAL_Refactor.Command_Line.From_GNAT_Warnings.Get.Full_Name));
       while not Ada.Text_IO.End_Of_File (Warnings_File) loop
          declare
             Line    : constant String := Ada.Text_IO.Get_Line (Warnings_File);
@@ -578,13 +572,13 @@ package body Lint.Tools.Array_Aggregates_Tool is
             end if;
          exception
             when E : others =>
-               Logger.Trace
+               Refactor_Trace.Trace
                  (E, "Unexpected exception when processing line " & Line);
          end;
       end loop;
       Ada.Text_IO.Close (Warnings_File);
 
-      if Lint.Command_Line.Pipe.Get then
+      if LAL_Refactor.Command_Line.Pipe.Get then
          declare
             use Ada.Text_IO;
             use File_Name_To_Virtual_String_Maps;
@@ -615,7 +609,9 @@ package body Lint.Tools.Array_Aggregates_Tool is
       use type GNATCOLL.VFS.Virtual_File;
 
    begin
-      if Lint.Command_Line.From_GNAT_Warnings.Get /= GNATCOLL.VFS.No_File then
+      if LAL_Refactor.Command_Line.From_GNAT_Warnings.Get /=
+        GNATCOLL.VFS.No_File
+      then
          Run_GNAT_Warnings_Mode;
 
       else
@@ -623,4 +619,4 @@ package body Lint.Tools.Array_Aggregates_Tool is
       end if;
    end Run;
 
-end Lint.Tools.Array_Aggregates_Tool;
+end LAL_Refactor.Tools.Array_Aggregates_Tool;

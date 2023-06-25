@@ -3,9 +3,10 @@ with "lal_refactor.gpr";
 
 project LAL_Refactor_Driver is
 
-   for Source_Dirs use ("../src/lint");
+   for Source_Dirs use ("../src");
+   for Source_Files use ("lal_refactor-main.adb");
 
-   Tools_Mains := ("lint-main.adb");
+   Tools_Mains := ("lal_refactor-main.adb");
 
    for Main use Tools_Mains;
 
@@ -15,7 +16,7 @@ project LAL_Refactor_Driver is
    package Compiler renames LAL_Refactor_Common.Compiler;
 
    package Builder is
-      for Executable ("lint-main.adb") use "lalrefactor";
+      for Executable ("lal_refactor-main.adb") use "lalrefactor";
    end Builder;
 
    package Binder is

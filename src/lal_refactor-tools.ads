@@ -23,7 +23,7 @@
 --
 --  Package with the definition of all tools
 
-package Lint.Tools is
+package LAL_Refactor.Tools is
 
    type Tool is (Array_Aggregates);
    --  type Tool is
@@ -47,4 +47,4 @@ package Lint.Tools is
 
    Parse_Tool_Exception : exception;
 
-end Lint.Tools;
+end LAL_Refactor.Tools;

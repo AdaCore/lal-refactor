@@ -28,9 +28,9 @@ with Langkit_Support.Diagnostics;
 
 with Libadalang.Project_Provider;
 
-with Lint.Command_Line;
+with LAL_Refactor.Command_Line;
 
-package body Lint.Utils is
+package body LAL_Refactor.Utils is
 
    ------------------------------------------
    -- Get_Analysis_Units_From_Sources_List --
@@ -49,10 +49,8 @@ package body Lint.Utils is
 
       if Project_Filename /= "" then
          declare
-            use Ada.Strings.Unbounded;
             use GNATCOLL.Projects;
             use GNATCOLL.VFS;
-            use Libadalang.Analysis;
             use Libadalang.Project_Provider;
 
             Project_Environment  : Project_Environment_Access;
@@ -89,12 +87,13 @@ package body Lint.Utils is
 
                   begin
                      if Unit.Has_Diagnostics then
-                        Logger.Trace
+                        Refactor_Trace.Trace
                           ("WARNING: Source "
                            & Unit.Get_Filename
                            & " has diagnostics");
                         for Diagnostic of Unit.Diagnostics loop
-                           Logger.Trace (To_Pretty_String (Diagnostic));
+                           Refactor_Trace.Trace
+                             (To_Pretty_String (Diagnostic));
                         end loop;
 
                      else
@@ -107,9 +106,6 @@ package body Lint.Utils is
 
       else
          declare
-            use Ada.Strings.Unbounded;
-            use Libadalang.Analysis;
-
             Context : constant Analysis_Context := Create_Context;
 
          begin
@@ -123,12 +119,13 @@ package body Lint.Utils is
 
                   begin
                      if Unit.Has_Diagnostics then
-                        Logger.Trace
+                        Refactor_Trace.Trace
                           ("WARNING: Source "
                            & Unit.Get_Filename
                            & " has diagnostics");
                         for Diagnostic of Unit.Diagnostics loop
-                           Logger.Trace (To_Pretty_String (Diagnostic));
+                           Refactor_Trace.Trace
+                             (To_Pretty_String (Diagnostic));
                         end loop;
 
                      else
@@ -149,10 +146,8 @@ package body Lint.Utils is
      (Project_Filename : String)
       return Libadalang.Analysis.Analysis_Unit_Array
    is
-      use Ada.Strings.Unbounded;
       use GNATCOLL.Projects;
       use GNATCOLL.VFS;
-      use Libadalang.Analysis;
       use Libadalang.Project_Provider;
 
       Project_Environment  : Project_Environment_Access;
@@ -167,7 +162,9 @@ package body Lint.Utils is
 
    begin
       Initialize (Project_Environment);
-      for Scenario_Variable of Lint.Command_Line.Scenario_Variables.Get loop
+      for Scenario_Variable of
+        LAL_Refactor.Command_Line.Scenario_Variables.Get
+      loop
          declare
             Equal_Index : constant Natural :=
               Ada.Strings.Unbounded.Index (Scenario_Variable, "=");
@@ -207,12 +204,12 @@ package body Lint.Utils is
 
             begin
                if Unit.Has_Diagnostics then
-                  Logger.Trace
+                  Refactor_Trace.Trace
                     ("WARNING: Source "
                      & Unit.Get_Filename
                      & " has diagnostics");
                   for Diagnostic of Unit.Diagnostics loop
-                     Logger.Trace (To_Pretty_String (Diagnostic));
+                     Refactor_Trace.Trace (To_Pretty_String (Diagnostic));
                   end loop;
 
                else
@@ -221,8 +218,8 @@ package body Lint.Utils is
             end;
          end loop;
 
-         Lint.Logger.Trace ("Found" & Units'Length'Image & " units");
+         Refactor_Trace.Trace ("Found" & Units'Length'Image & " units");
       end return;
    end Get_Project_Analysis_Units;
 
-end Lint.Utils;
+end LAL_Refactor.Utils;

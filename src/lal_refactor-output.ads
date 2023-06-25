@@ -21,37 +21,35 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  This package constains utilities to apply text edits on files
+--  JSON output tool
 
-with Ada.Containers.Indefinite_Ordered_Maps;
+with LAL_Refactor.Tools.Record_Components_Tool;
+with LAL_Refactor.Tools.Array_Aggregates_Tool;
+with LAL_Refactor.Tools.Suppress_Dead_Params_Tool;
+with LAL_Refactor.Tools.Scope_Declarations_Tool;
+with LAL_Refactor.Tools.Relocate_Decls_Tool;
+with VSS.Text_Streams;
 
-with LAL_Refactor;
+package LAL_Refactor.Output is
 
-with VSS.Strings;
+   procedure JSON_Serialize
+     (Edits_Info : LAL_Refactor.Tools.Array_Aggregates_Tool.Aggregate_Edits;
+      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
 
-package Lint.File_Edits is
+   procedure JSON_Serialize
+     (Edits_Info : LAL_Refactor.Tools.Record_Components_Tool.Delete_Infos;
+      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
 
-   use type VSS.Strings.Virtual_String;
+   procedure JSON_Serialize
+     (Edits_Info : LAL_Refactor.Tools.Suppress_Dead_Params_Tool.Edit_Infos;
+      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
 
-   package File_Name_To_Virtual_String_Maps is new
-     Ada.Containers.Indefinite_Ordered_Maps
-       (Key_Type     => LAL_Refactor.File_Name_Type,
-        Element_Type => VSS.Strings.Virtual_String);
+   procedure JSON_Serialize
+     (Edits_Info : LAL_Refactor.Tools.Scope_Declarations_Tool.Modify_Info;
+      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
 
-   subtype File_Name_To_Virtual_String_Map is
-     File_Name_To_Virtual_String_Maps.Map;
+   procedure JSON_Serialize
+     (Edits_Info : LAL_Refactor.Tools.Relocate_Decls_Tool.Modify_Info;
+      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
 
-   procedure Apply_Edits
-     (Edits : LAL_Refactor.Text_Edit_Map);
-   --  Apply Edits on disk. If an exception happens while trying to apply
-   --  an edit to a file, that file is skipped and the procedure continues
-   --  with the next one.
-
-   function Apply_Edits
-     (Edits : LAL_Refactor.Text_Edit_Map)
-      return File_Name_To_Virtual_String_Map;
-   --  Apply Edits on and return buffers with the edits applied. If an
-   --  exception occurs while trying to create a buffer with the edits,
-   --  the returned map will not contain that buffer.
-
-end Lint.File_Edits;
+end LAL_Refactor.Output;

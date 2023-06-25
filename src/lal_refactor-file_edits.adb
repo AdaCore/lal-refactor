@@ -24,7 +24,6 @@
 with Ada.Containers.Vectors;
 with Ada.Strings;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
 
 with VSS.Characters;
 with VSS.Characters.Latin;
@@ -36,7 +35,7 @@ with VSS.Text_Streams.File_Output;
 with VSS.Strings.Cursors.Iterators;
 with VSS.Strings.Cursors.Iterators.Characters;
 
-package body Lint.File_Edits is
+package body LAL_Refactor.File_Edits is
 
    package Positive_Vectors is new Ada.Containers.Vectors (Positive, Positive);
 
@@ -103,7 +102,7 @@ package body Lint.File_Edits is
          return;
       end if;
 
-      Lint.Logger.Trace ("Editing files on disk");
+      Refactor_Trace.Trace ("Editing files on disk");
       while Has_Element (Edits_Cursor) loop
          declare
             Output : VSS.Text_Streams.File_Output.File_Output_Text_Stream;
@@ -124,8 +123,8 @@ package body Lint.File_Edits is
 
          exception
             when E : others =>
-               Lint.Logger.Trace ("Failed to edit " & Key (Edits_Cursor));
-               Lint.Logger.Trace (E);
+               Refactor_Trace.Trace ("Failed to edit " & Key (Edits_Cursor));
+               Refactor_Trace.Trace (E);
          end;
 
          Next (Edits_Cursor);
@@ -141,8 +140,6 @@ package body Lint.File_Edits is
      (Edits : LAL_Refactor.Text_Edit_Map)
       return File_Name_To_Virtual_String_Map
    is
-      use Ada.Strings.Unbounded;
-      use LAL_Refactor;
       use LAL_Refactor.Text_Edit_Ordered_Maps;
 
       Edits_Cursor : LAL_Refactor.Text_Edit_Ordered_Maps.Cursor :=
@@ -158,7 +155,7 @@ package body Lint.File_Edits is
          return Result;
       end if;
 
-      Lint.Logger.Trace
+      Refactor_Trace.Trace
         ("Found edits for " & Edits_Length_Image & " files");
 
       while Has_Element (Edits_Cursor) loop
@@ -304,7 +301,7 @@ package body Lint.File_Edits is
 
          exception
             when E : others =>
-               Lint.Logger.Trace
+               Refactor_Trace.Trace
                  ("Failed to process "
                   & Key (Edits_Cursor)
                   & " edits at"
@@ -312,7 +309,7 @@ package body Lint.File_Edits is
                   & ":"
                   & Ada.Strings.Fixed.Trim
                       (Current_Column_Number'Image, Ada.Strings.Both));
-               Lint.Logger.Trace (E);
+               Refactor_Trace.Trace (E);
          end;
 
          Text_Edit_Ordered_Maps.Next (Edits_Cursor);
@@ -322,4 +319,4 @@ package body Lint.File_Edits is
       return Result;
    end Apply_Edits;
 
-end Lint.File_Edits;
+end LAL_Refactor.File_Edits;

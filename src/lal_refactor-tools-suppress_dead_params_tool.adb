@@ -23,17 +23,15 @@
 
 with Langkit_Support.Errors;
 with Libadalang.Common;
-with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 with Ada.Containers.Vectors;
 with Ada.Strings;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
 with Langkit_Support.Text;
-with LAL_RefactorSubprogram_Signature;
-with LAL_RefactorSubprogram_Signature.Remove_Parameter;
-with Output;
+with LAL_Refactor.Subprogram_Signature;
+with LAL_Refactor.Subprogram_Signature.Remove_Parameter;
+with LAL_Refactor.Output;
 
-package body Lint.Tools.Suppress_Dead_Params_Tool is
+package body LAL_Refactor.Tools.Suppress_Dead_Params_Tool is
    package LALCO renames Libadalang.Common;
    package Text renames Langkit_Support.Text;
 
@@ -437,7 +435,7 @@ package body Lint.Tools.Suppress_Dead_Params_Tool is
 
    begin
       Edit_Info := Find_Dead_Param (Unit_Array);
-      Output.JSON_Serialize (Edit_Info, Stream);
+      LAL_Refactor.Output.JSON_Serialize (Edit_Info, Stream);
    end Run;
 
-end Lint.Tools.Suppress_Dead_Params_Tool;
+end LAL_Refactor.Tools.Suppress_Dead_Params_Tool;

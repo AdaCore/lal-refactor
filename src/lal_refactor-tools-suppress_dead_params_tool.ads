@@ -21,11 +21,10 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  Lint suppress_dead_params tool
+--  LAL_Refactor suppress_dead_params tool
 
 with Ada.Strings.Unbounded;
 with Libadalang.Analysis;
-with LAL_Refactor;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Sets;
@@ -33,7 +32,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
 with VSS.Text_Streams;
 
-package Lint.Tools.Suppress_Dead_Params_Tool is
+package LAL_Refactor.Tools.Suppress_Dead_Params_Tool is
    package LAL renames Libadalang.Analysis;
    package ReFac renames LAL_Refactor;
    Parser : Argument_Parser :=
@@ -118,4 +117,4 @@ package Lint.Tools.Suppress_Dead_Params_Tool is
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
    --  Suppress_Params_Tool main procedure
 
-end Lint.Tools.Suppress_Dead_Params_Tool;
+end LAL_Refactor.Tools.Suppress_Dead_Params_Tool;

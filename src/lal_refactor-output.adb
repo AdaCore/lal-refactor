@@ -23,20 +23,16 @@
 
 with Libadalang.Analysis;
 with Interfaces;
-with Langkit_Support.Slocs;
-use Langkit_Support.Slocs;
 with Langkit_Support.Text;
 with VSS.Strings;
 with Ada.Characters.Conversions;
 use Ada.Characters.Conversions;
 with VSS.Strings.Conversions;
 use VSS.Strings.Conversions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with LAL_Refactor; use LAL_Refactor;
 with VSS.JSON.Content_Handlers;
 with VSS.JSON.Push_Writers;
 
-package body Output is
+package body LAL_Refactor.Output is
    package Text renames Langkit_Support.Text;
    procedure Write
      (Writer    : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -89,7 +85,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Record_Name  : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Record_Components_Tool.
+      Delete_Names : LAL_Refactor.Tools.Record_Components_Tool.
                        Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean);
    --  Write the error/warning messages.
@@ -106,7 +102,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Func_Name    : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Suppress_Dead_Params_Tool.
+      Delete_Names : LAL_Refactor.Tools.Suppress_Dead_Params_Tool.
                      Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean);
    --  Write the error/warning messages.
@@ -116,7 +112,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                            JSON_Content_Handler'Class;
       Obj_Decl     : Libadalang.Analysis.Object_Decl;
-      Modify_Names : Lint.Tools.Scope_Declarations_Tool
+      Modify_Names : LAL_Refactor.Tools.Scope_Declarations_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean);
    --  Write the error/warning messages.
@@ -126,7 +122,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Record_Name  : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Record_Components_Tool
+      Delete_Names : LAL_Refactor.Tools.Record_Components_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Item         : Text_Edit_Map;
       Success      : in out Boolean);
@@ -145,7 +141,7 @@ package body Output is
                            JSON_Content_Handler'Class;
       Function_Name : Libadalang.Analysis.Defining_Name;
       Item          : Text_Edit_Map;
-      Params        : Lint.Tools.Suppress_Dead_Params_Tool
+      Params        : LAL_Refactor.Tools.Suppress_Dead_Params_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean);
    --  Write for suppress_params
@@ -155,7 +151,7 @@ package body Output is
                            JSON_Content_Handler'Class;
       Obj_Decl_Name : Libadalang.Analysis.Object_Decl;
       Item          : Text_Edit_Map;
-      Names         : Lint.Tools.Scope_Declarations_Tool
+      Names         : LAL_Refactor.Tools.Scope_Declarations_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean);
    --  Write for scope_declarations
@@ -165,7 +161,7 @@ package body Output is
                            JSON_Content_Handler'Class;
       Obj_Decl_Name : Libadalang.Analysis.Object_Decl;
       Item          : Text_Edit_Map;
-      Names         : Lint.Tools.Relocate_Decls_Tool
+      Names         : LAL_Refactor.Tools.Relocate_Decls_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean);
    --  Write for relocate_decls object decl part
@@ -174,7 +170,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                            JSON_Content_Handler'Class;
       Obj_Decl     : Libadalang.Analysis.Object_Decl;
-      Modify_Names : Lint.Tools.Relocate_Decls_Tool
+      Modify_Names : LAL_Refactor.Tools.Relocate_Decls_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean);
    --  Create message for the relocate_decls for the obj decls part
@@ -382,7 +378,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Record_Name  : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Record_Components_Tool
+      Delete_Names : LAL_Refactor.Tools.Record_Components_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean)
    is
@@ -406,7 +402,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Func_Name    : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Suppress_Dead_Params_Tool.
+      Delete_Names : LAL_Refactor.Tools.Suppress_Dead_Params_Tool.
                      Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean)
    is
@@ -448,7 +444,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                            JSON_Content_Handler'Class;
       Obj_Decl     : Libadalang.Analysis.Object_Decl;
-      Modify_Names : Lint.Tools.Scope_Declarations_Tool
+      Modify_Names : LAL_Refactor.Tools.Scope_Declarations_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean) is
       Words : Unbounded_String := Null_Unbounded_String;
@@ -485,7 +481,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                            JSON_Content_Handler'Class;
       Obj_Decl     : Libadalang.Analysis.Object_Decl;
-      Modify_Names : Lint.Tools.Relocate_Decls_Tool
+      Modify_Names : LAL_Refactor.Tools.Relocate_Decls_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Success      : in out Boolean) is
       Words : Unbounded_String := Null_Unbounded_String;
@@ -526,7 +522,7 @@ package body Output is
      (Writer       : in out VSS.JSON.Content_Handlers.
                      JSON_Content_Handler'Class;
       Record_Name  : Libadalang.Analysis.Defining_Name'Class;
-      Delete_Names : Lint.Tools.Record_Components_Tool
+      Delete_Names : LAL_Refactor.Tools.Record_Components_Tool
                      .Defining_Name_Ordered_Sets.Set;
       Item         : Text_Edit_Map;
       Success      : in out Boolean)
@@ -589,7 +585,7 @@ package body Output is
                       JSON_Content_Handler'Class;
       Function_Name : Libadalang.Analysis.Defining_Name;
       Item          : Text_Edit_Map;
-      Params        : Lint.Tools.Suppress_Dead_Params_Tool
+      Params        : LAL_Refactor.Tools.Suppress_Dead_Params_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean)
    is
@@ -621,7 +617,7 @@ package body Output is
                            JSON_Content_Handler'Class;
       Obj_Decl_Name : Libadalang.Analysis.Object_Decl;
       Item          : Text_Edit_Map;
-      Names         : Lint.Tools.Scope_Declarations_Tool
+      Names         : LAL_Refactor.Tools.Scope_Declarations_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean) is
    begin
@@ -652,7 +648,7 @@ package body Output is
                            JSON_Content_Handler'Class;
       Obj_Decl_Name : Libadalang.Analysis.Object_Decl;
       Item          : Text_Edit_Map;
-      Names         : Lint.Tools.Relocate_Decls_Tool
+      Names         : LAL_Refactor.Tools.Relocate_Decls_Tool
                       .Defining_Name_Ordered_Sets.Set;
       Success       : in out Boolean) is
    begin
@@ -737,7 +733,7 @@ package body Output is
    --------------------
 
    procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Record_Components_Tool.Delete_Infos;
+     (Edits_Info : LAL_Refactor.Tools.Record_Components_Tool.Delete_Infos;
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class)
    is
       Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
@@ -750,11 +746,11 @@ package body Output is
       for Record_Node in Edits_Info.Texts_Edit.Iterate loop
          Write (Writer       => Writer,
                 Record_Name  =>
-                  Lint.Tools.Record_Components_Tool.
+                  LAL_Refactor.Tools.Record_Components_Tool.
                     Get_Record_Name (Record_Node.Key),
                 Delete_Names =>
                   Edits_Info.Deletable_Names
-                    (Lint.Tools.Record_Components_Tool.
+                    (LAL_Refactor.Tools.Record_Components_Tool.
                        Get_Record_Name (Record_Node.Key)),
                 Item         => Edits_Info.Texts_Edit (Record_Node),
                 Success      => Success);
@@ -768,7 +764,7 @@ package body Output is
    --------------------
 
    procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Array_Aggregates_Tool.Aggregate_Edits;
+     (Edits_Info : LAL_Refactor.Tools.Array_Aggregates_Tool.Aggregate_Edits;
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class)
    is
       Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
@@ -794,7 +790,7 @@ package body Output is
    --------------------
 
    procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Suppress_Dead_Params_Tool.Edit_Infos;
+     (Edits_Info : LAL_Refactor.Tools.Suppress_Dead_Params_Tool.Edit_Infos;
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class)
    is
       Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
@@ -822,7 +818,7 @@ package body Output is
    --------------------
 
    procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Scope_Declarations_Tool.Modify_Info;
+     (Edits_Info : LAL_Refactor.Tools.Scope_Declarations_Tool.Modify_Info;
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class) is
       Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
       Success    : Boolean := True;
@@ -853,7 +849,7 @@ package body Output is
    --------------------
 
    procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Relocate_Decls_Tool.Modify_Info;
+     (Edits_Info : LAL_Refactor.Tools.Relocate_Decls_Tool.Modify_Info;
       Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class) is
       Writer     : VSS.JSON.Push_Writers.JSON_Simple_Push_Writer;
       Success    : Boolean := True;
@@ -878,4 +874,4 @@ package body Output is
       Writer.End_Array (Success);
       Writer.End_Document (Success);
    end JSON_Serialize;
-end Output;
+end LAL_Refactor.Output;

@@ -2,7 +2,7 @@
 --                                                                          --
 --                             Libadalang Tools                             --
 --                                                                          --
---                      Copyright (C) 2022-2023, AdaCore                    --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- Libadalang Tools  is free software; you can redistribute it and/or modi- --
 -- fy  it  under  terms of the  GNU General Public License  as published by --
@@ -21,35 +21,31 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  JSON output tool
+--  Common utilities to all LAL_Refactor LAL_Refactor.Tools
 
-with Lint.Tools.Record_Components_Tool;
-with Lint.Tools.Array_Aggregates_Tool;
-with Lint.Tools.Suppress_Dead_Params_Tool;
-with Lint.Tools.Scope_Declarations_Tool;
-with Lint.Tools.Relocate_Decls_Tool;
-with VSS.Text_Streams;
+with Ada.Strings.Unbounded;
 
-package Output is
+with Libadalang.Analysis;
 
-   procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Array_Aggregates_Tool.Aggregate_Edits;
-      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
+package LAL_Refactor.Utils is
 
-   procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Record_Components_Tool.Delete_Infos;
-      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
+   function Get_Project_Analysis_Units
+     (Project_Filename : String)
+      return Libadalang.Analysis.Analysis_Unit_Array;
+   --  Gets all units of a project whose name is defined by Project_Filename.
+   --  Project_Filename can either be a full path or a filename in the current
+   --  directory.
 
-   procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Suppress_Dead_Params_Tool.Edit_Infos;
-      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
+   type Sources_List is array (Positive range <>) of
+     Ada.Strings.Unbounded.Unbounded_String;
 
-   procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Scope_Declarations_Tool.Modify_Info;
-      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
+   function Get_Analysis_Units_From_Sources_List
+     (Sources          : Sources_List;
+      Project_Filename : String := "")
+      return Libadalang.Analysis.Analysis_Unit_Array;
+   --  Gets all units defined by Sources.
+   --  If Project_Filename is defined, then uses it to create a unit provider.
+   --  Project_Filename can either be a full path or a filename in the current
+   --  directory.
 
-   procedure JSON_Serialize
-     (Edits_Info : Lint.Tools.Relocate_Decls_Tool.Modify_Info;
-      Stream     : in out VSS.Text_Streams.Output_Text_Stream'Class);
-
-end Output;
+end LAL_Refactor.Utils;

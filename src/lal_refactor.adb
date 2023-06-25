@@ -30,6 +30,26 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body LAL_Refactor is
 
+   ------------------
+   -- Log_Progress --
+   ------------------
+
+   procedure Log_Progress
+     (Current  : Natural;
+      Total    : String;
+      Message  : String)
+   is
+      Total_Length       : constant Natural := Total'Length;
+      Current_Image      : constant String :=
+        Ada.Strings.Fixed.Tail
+          (Ada.Strings.Fixed.Trim (Current'Image, Ada.Strings.Both),
+           Total_Length,
+           '0');
+   begin
+      Refactor_Trace.Trace
+        ("[" & Current_Image & "/" & Total & "] " & Message);
+   end Log_Progress;
+
    function Image (S : Source_Location_Range) return String;
    --  Return a Source_Location_Range as a string in a human readable format
 

@@ -41,6 +41,14 @@ package LAL_Refactor is
    Refactor_Trace : GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create ("LAL_REFACTOR", GNATCOLL.Traces.Off);
 
+   procedure Log_Progress
+     (Current  : Natural;
+      Total    : String;
+      Message  : String);
+   --  Logs a progress message with format '[X/Y] Message' where X is left
+   --  padded with 0s so that it has the same length as Y.
+   --  Example : '[001/581] Processing Foo'
+
    type Refactoring_Diagnotic is interface;
 
    function Filename (Self : Refactoring_Diagnotic) return String is abstract;

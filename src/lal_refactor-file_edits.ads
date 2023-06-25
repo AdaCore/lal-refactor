@@ -2,7 +2,7 @@
 --                                                                          --
 --                             Libadalang Tools                             --
 --                                                                          --
---                        Copyright (C) 2023, AdaCore                       --
+--                      Copyright (C) 2022-2023, AdaCore                    --
 --                                                                          --
 -- Libadalang Tools  is free software; you can redistribute it and/or modi- --
 -- fy  it  under  terms of the  GNU General Public License  as published by --
@@ -21,31 +21,35 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  Common utilities to all lint Lint.Tools
+--  This package constains utilities to apply text edits on files
 
-with Ada.Strings.Unbounded;
+with Ada.Containers.Indefinite_Ordered_Maps;
 
-with Libadalang.Analysis;
+with VSS.Strings;
 
-package Lint.Utils is
+package LAL_Refactor.File_Edits is
 
-   function Get_Project_Analysis_Units
-     (Project_Filename : String)
-      return Libadalang.Analysis.Analysis_Unit_Array;
-   --  Gets all units of a project whose name is defined by Project_Filename.
-   --  Project_Filename can either be a full path or a filename in the current
-   --  directory.
+   use type VSS.Strings.Virtual_String;
 
-   type Sources_List is array (Positive range <>) of
-     Ada.Strings.Unbounded.Unbounded_String;
+   package File_Name_To_Virtual_String_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (Key_Type     => LAL_Refactor.File_Name_Type,
+        Element_Type => VSS.Strings.Virtual_String);
 
-   function Get_Analysis_Units_From_Sources_List
-     (Sources          : Sources_List;
-      Project_Filename : String := "")
-      return Libadalang.Analysis.Analysis_Unit_Array;
-   --  Gets all units defined by Sources.
-   --  If Project_Filename is defined, then uses it to create a unit provider.
-   --  Project_Filename can either be a full path or a filename in the current
-   --  directory.
+   subtype File_Name_To_Virtual_String_Map is
+     File_Name_To_Virtual_String_Maps.Map;
 
-end Lint.Utils;
+   procedure Apply_Edits
+     (Edits : LAL_Refactor.Text_Edit_Map);
+   --  Apply Edits on disk. If an exception happens while trying to apply
+   --  an edit to a file, that file is skipped and the procedure continues
+   --  with the next one.
+
+   function Apply_Edits
+     (Edits : LAL_Refactor.Text_Edit_Map)
+      return File_Name_To_Virtual_String_Map;
+   --  Apply Edits on and return buffers with the edits applied. If an
+   --  exception occurs while trying to create a buffer with the edits,
+   --  the returned map will not contain that buffer.
+
+end LAL_Refactor.File_Edits;

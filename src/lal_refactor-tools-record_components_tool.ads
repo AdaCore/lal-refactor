@@ -21,19 +21,17 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  Lint record components tool
+--  LAL_Refactor record components tool
 
 with Ada.Strings.Unbounded;
 with Libadalang.Analysis;
-with LAL_Refactor;
-with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
 with VSS.Text_Streams;
 
-package Lint.Tools.Record_Components_Tool is
+package LAL_Refactor.Tools.Record_Components_Tool is
    package LAL renames Libadalang.Analysis;
    package ReFac renames LAL_Refactor;
    package Slocs renames Langkit_Support.Slocs;
@@ -111,4 +109,4 @@ package Lint.Tools.Record_Components_Tool is
                                VSS.Text_Streams.Output_Text_Stream'Class);
    --  Record_Components_Tool main procedure
 
-end Lint.Tools.Record_Components_Tool;
+end LAL_Refactor.Tools.Record_Components_Tool;

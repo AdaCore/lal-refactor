@@ -2,7 +2,7 @@
 --                                                                          --
 --                             Libadalang Tools                             --
 --                                                                          --
---                       Copyright (C) 2023, AdaCore                        --
+--                      Copyright (C) 2022-2023, AdaCore                    --
 --                                                                          --
 -- Libadalang Tools  is free software; you can redistribute it and/or modi- --
 -- fy  it  under  terms of the  GNU General Public License  as published by --
@@ -21,33 +21,42 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  Lint tools driver
+--  LAL_Refactor array aggregates tool
 
-with Ada.Text_IO;
+with Ada.Containers.Ordered_Maps;
 
-with GNATCOLL.Traces;
+with Libadalang.Analysis;
 
-with Lint.Command_Line;
-with Lint.Tools;
-with Lint.Tools.Array_Aggregates_Tool;
+package LAL_Refactor.Tools.Array_Aggregates_Tool is
 
-procedure Lint.Main is
-begin
-   GNATCOLL.Traces.Parse_Config_File;
+   function "<" (L, R : Libadalang.Analysis.Aggregate) return Boolean;
+   --  First compares the Aggregate Analysis_Unit filename and then their
+   --  Source_Location.
 
-   if Lint.Command_Line.Parser.Parse then
-      if Lint.Command_Line.Help.Get then
-         Ada.Text_IO.Put_Line (Lint.Command_Line.Parser.Help);
+   package Aggregates_To_Text_Edit_Ordered_Set_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Libadalang.Analysis.Aggregate,
+        Element_Type => LAL_Refactor.Text_Edit_Ordered_Set,
+        "<"          => "<",
+        "="          => LAL_Refactor.Text_Edit_Ordered_Sets."=");
 
-      else
-         if Lint.Command_Line.Verbose.Get then
-            Lint.Logger.Set_Active (True);
-         end if;
+   subtype Aggregate_Edits is Aggregates_To_Text_Edit_Ordered_Set_Maps.Map;
 
-         case Lint.Command_Line.Tool.Get is
-            when Lint.Tools.Array_Aggregates =>
-               Lint.Tools.Array_Aggregates_Tool.Run;
-         end case;
-      end if;
-   end if;
-end Lint.Main;
+   function Upgrade_Array_Aggregates
+     (Units : Libadalang.Analysis.Analysis_Unit_Array)
+      return Aggregate_Edits;
+   --  Runs the array aggregates tool on Units. This is the main entry point
+   --  of this tool when used in library mode.
+
+   function Upgrade_Array_Aggregates
+     (Units : Libadalang.Analysis.Analysis_Unit_Array)
+      return LAL_Refactor.Text_Edit_Map;
+   --  Runs the array aggregates tool on Units. This is the main entry point
+   --  of this tool when used in library mode.
+
+   procedure Run;
+   --  Runs the array aggregates tool.
+   --  This procedure should by a driver only. User should use the library mode
+   --  equivalent Upgrade_Array_Aggregates defined above.
+
+end LAL_Refactor.Tools.Array_Aggregates_Tool;

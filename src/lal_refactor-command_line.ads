@@ -21,16 +21,16 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 --
---  Lint Lint.Tools command line utilities
+--  LAL_Refactor LAL_Refactor.Tools command line utilities
 
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
 with GNATCOLL.VFS;
 
-with Lint.Tools;
+with LAL_Refactor.Tools;
 
-package Lint.Command_Line is
+package LAL_Refactor.Command_Line is
 
    Parser : Argument_Parser :=
      Create_Argument_Parser (Help => "Refactor tools");
@@ -44,9 +44,9 @@ package Lint.Command_Line is
    package Tool is new Parse_Positional_Arg
      (Parser   => Parser,
       Name     => "tool",
-      Help     => Lint.Tools.Tool_List,
-      Arg_Type => Lint.Tools.Tool,
-      Convert  => Lint.Tools.Convert);
+      Help     => LAL_Refactor.Tools.Tool_List,
+      Arg_Type => LAL_Refactor.Tools.Tool,
+      Convert  => LAL_Refactor.Tools.Convert);
 
    package Verbose is new Parse_Flag
      (Parser   => Parser,
@@ -107,4 +107,4 @@ package Lint.Command_Line is
       Long     => "--remove-indices",
       Help     => "Removes the indices in empty and one element arrays");
 
-end Lint.Command_Line;
+end LAL_Refactor.Command_Line;
