@@ -30,6 +30,8 @@ with Langkit_Support.Text; use Langkit_Support.Text;
 
 with Laltools.Subprogram_Hierarchy; use Laltools.Subprogram_Hierarchy;
 
+with VSS.Strings.Conversions;
+
 package body LAL_Refactor.Subprogram_Signature is
 
    --------------------------
@@ -1885,6 +1887,33 @@ package body LAL_Refactor.Subprogram_Signature is
    end Create;
 
    --------------
+   -- Filename --
+   --------------
+
+   overriding function Filename
+     (Self : Subprogram_Signature_Problem) return String
+   is
+     (Self.Subp.Unit.Get_Filename);
+
+   --------------
+   -- Location --
+   --------------
+
+   overriding function Location
+     (Self : Subprogram_Signature_Problem) return Source_Location_Range
+   is
+     (Self.Subp.Sloc_Range);
+
+   ----------
+   -- Info --
+   ----------
+
+   overriding function Info
+     (Self : Subprogram_Signature_Problem) return String
+   is
+     (VSS.Strings.Conversions.To_UTF_8_String (Self.Info));
+
+   --------------
    -- Refactor --
    --------------
 
@@ -1950,10 +1979,14 @@ package body LAL_Refactor.Subprogram_Signature is
       if Self.Relative_Position = (Before, 1)
         and then Subp_Hierarchy'Length > 1
       then
-         raise Program_Error
-           with
-             "Can't add a new controlling parameter to subprograms that are "
-             & "already primitives";
+         return
+           (Diagnostics =>
+              [Subprogram_Signature_Problem'
+                   (Subp => Self.Spec.P_Parent_Basic_Decl,
+                    Info => VSS.Strings.Conversions.To_Virtual_String
+                      ("Can't change the controlling parameter "
+                       & "of a primitive"))],
+               others => <>);
       end if;
 
       if Self.Full_Specification then
