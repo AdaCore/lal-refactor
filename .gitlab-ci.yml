@@ -29,7 +29,7 @@ build_and_test:
     - e3-testsuite-report
         --failure-exit-code 1
         --xunit-output $CI_PROJECT_DIR/xunit_output.xml
-        x86_64-linux/laltools-test/results/new/
+        x86_64-linux/lal-refactor-test/results/new/
 
   artifacts:
     when: always
