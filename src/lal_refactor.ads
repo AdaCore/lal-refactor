@@ -32,26 +32,26 @@ package LAL_Refactor is
    --  padded with 0s so that it has the same length as Y.
    --  Example : '[001/581] Processing Foo'
 
-   type Refactoring_Diagnotic is interface;
+   type Refactoring_Diagnostic is interface;
 
-   function Filename (Self : Refactoring_Diagnotic) return String is abstract;
+   function Filename (Self : Refactoring_Diagnostic) return String is abstract;
    --  Returns the filename of the analysis unit where Self happens.
 
    function Location
-     (Self : Refactoring_Diagnotic)
+     (Self : Refactoring_Diagnostic)
       return Source_Location_Range is abstract;
    --  Return a location in the file where Self happens.
 
-   function Info (Self : Refactoring_Diagnotic) return String is abstract;
+   function Info (Self : Refactoring_Diagnostic) return String is abstract;
    --  Returns a human readable message with the description of Self.
 
-   package Refactoring_Diagnotic_Vectors is new
+   package Refactoring_Diagnostic_Vectors is new
      Ada.Containers.Indefinite_Vectors
        (Index_Type   => Natural,
-        Element_Type => Refactoring_Diagnotic'Class);
+        Element_Type => Refactoring_Diagnostic'Class);
 
-   subtype Refactoring_Diagnotic_Vector is
-     Refactoring_Diagnotic_Vectors.Vector;
+   subtype Refactoring_Diagnostic_Vector is
+     Refactoring_Diagnostic_Vectors.Vector;
 
    type Text_Edit is
       record
@@ -151,7 +151,7 @@ package LAL_Refactor is
          File_Creations : File_Creation_Ordered_Set;
          File_Deletions : File_Deletion_Ordered_Set;
          File_Renames   : File_Rename_Ordered_Set;
-         Diagnostics    : Refactoring_Diagnotic_Vector;
+         Diagnostics    : Refactoring_Diagnostic_Vector;
       end record;
 
    No_Refactoring_Edits : constant Refactoring_Edits :=
@@ -160,7 +160,7 @@ package LAL_Refactor is
         File_Creations => File_Creation_Ordered_Sets.Empty_Set,
         File_Deletions => File_Deletion_Ordered_Sets.Empty_Set,
         File_Renames   => File_Rename_Ordered_Sets.Empty_Set,
-        Diagnostics    => Refactoring_Diagnotic_Vectors.Empty_Vector);
+        Diagnostics    => Refactoring_Diagnostic_Vectors.Empty_Vector);
 
    procedure Merge
      (Source : in out Text_Edit_Map;

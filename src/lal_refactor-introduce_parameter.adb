@@ -96,7 +96,7 @@ package body LAL_Refactor.Introduce_Parameter is
            File_Creations => File_Creation_Ordered_Sets.Empty_Set,
            File_Deletions => Unbounded_String_Ordered_Sets.Empty_Set,
            File_Renames   => File_Rename_Ordered_Sets.Empty_Set,
-           Diagnostics    => Refactoring_Diagnotic_Vectors.Empty_Vector);
+           Diagnostics    => Refactoring_Diagnostic_Vectors.Empty_Vector);
    end Introduce_Parameter;
 
    ---------------------------------------
@@ -513,7 +513,7 @@ package body LAL_Refactor.Introduce_Parameter is
            File_Creations => File_Creation_Ordered_Sets.Empty_Set,
            File_Deletions => Unbounded_String_Ordered_Sets.Empty_Set,
            File_Renames   => File_Rename_Ordered_Sets.Empty_Set,
-           Diagnostics    => Refactoring_Diagnotic_Vectors.Empty_Vector);
+           Diagnostics    => Refactoring_Diagnostic_Vectors.Empty_Vector);
    end Introduce_Parameter;
 
    ---------------------------------------------

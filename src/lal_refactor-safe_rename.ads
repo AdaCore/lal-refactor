@@ -24,7 +24,7 @@ private with Ada.Strings.Wide_Wide_Unbounded;
 
 package LAL_Refactor.Safe_Rename is
 
-   type Rename_Problem is abstract new Refactoring_Diagnotic with private
+   type Rename_Problem is abstract new Refactoring_Diagnostic with private
      with Type_Invariant'Class => Check_Rename_Problem (Rename_Problem);
 
    function Check_Rename_Problem
@@ -105,7 +105,7 @@ private
 
    function "=" (New_Name : New_Name_Type; Name : Text_Type) return Boolean;
 
-   type Rename_Problem is abstract new Refactoring_Diagnotic with
+   type Rename_Problem is abstract new Refactoring_Diagnostic with
       record
          Canonical_Definition : Defining_Name;
          New_Name             : Unbounded_Text_Type;
@@ -187,7 +187,7 @@ private
    type Problem_Finder_Algorithm is limited interface;
 
    function Find (Self : in out Problem_Finder_Algorithm)
-                  return Refactoring_Diagnotic_Vector is abstract;
+                  return Refactoring_Diagnostic_Vector is abstract;
    --  Finds problems caused by renaming a definition.
 
    function "<" (Left, Right : Source_Location_Range)
@@ -259,7 +259,7 @@ private
 
    overriding
    function Find (Self : in out Reference_Mapper)
-                  return Refactoring_Diagnotic_Vector;
+                  return Refactoring_Diagnostic_Vector;
    --  Finds problems caused by renaming a definition. The strategy of this
    --  algorithm is to compare references before and after the rename.
    --  IMPORTANT NOTE: This function reparses all analysis units given to the
@@ -311,7 +311,7 @@ private
    overriding
    function Find
      (Self : in out AST_Analyser)
-      return Refactoring_Diagnotic_Vector;
+      return Refactoring_Diagnostic_Vector;
    --  Finds problems caused by renaming a definition. The strategy of this
    --  algorithm is to analyse the AST and look for specific problems.
 

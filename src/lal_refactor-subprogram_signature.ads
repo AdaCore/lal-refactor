@@ -150,7 +150,7 @@ package LAL_Refactor.Subprogram_Signature is
    --  a parameter.
 
    type Subprogram_Signature_Problem is
-     new Refactoring_Diagnotic with private;
+     new Refactoring_Diagnostic with private;
 
    overriding function Filename
      (Self : Subprogram_Signature_Problem) return String;
@@ -337,7 +337,7 @@ private
       end record;
 
    type Subprogram_Signature_Problem is
-     new Refactoring_Diagnotic with
+     new Refactoring_Diagnostic with
       record
          Info : VSS.Strings.Virtual_String;
          Subp : Basic_Decl;
