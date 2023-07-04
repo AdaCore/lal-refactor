@@ -1,0 +1,6 @@
+description: |+
+    This test checks that we don't add a a new parameter at the first position
+    when dealing with primitives, to not replace the current controlling parameter
+    and break the whole primitive hierarchy.
+
+driver: shell_script

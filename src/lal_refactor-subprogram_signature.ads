@@ -29,6 +29,7 @@
 ---     - Move Parameter Left/Right
 
 with Libadalang.Common; use Libadalang.Common;
+with VSS.Strings;
 
 package LAL_Refactor.Subprogram_Signature is
 
@@ -164,6 +165,18 @@ package LAL_Refactor.Subprogram_Signature is
       return Refactoring_Edits;
    --  Returns an Edit_Map with all the refactoring edits needed to add
    --  a parameter.
+
+   type Subprogram_Signature_Problem is
+     new Refactoring_Diagnotic with private;
+
+   overriding function Filename
+     (Self : Subprogram_Signature_Problem) return String;
+
+   overriding function Location
+     (Self : Subprogram_Signature_Problem) return Source_Location_Range;
+
+   overriding function Info
+     (Self : Subprogram_Signature_Problem) return String;
 
    type Mode_Changer is new Subprogram_Signature_Changer with private;
 
@@ -338,6 +351,13 @@ private
          Parameter_Indices_Range : Parameter_Indices_Range_Type;
          New_Mode                : Ada_Mode;
          Configuration           : Signature_Changer_Configuration_Type;
+      end record;
+
+   type Subprogram_Signature_Problem is
+     new Refactoring_Diagnotic with
+      record
+         Info : VSS.Strings.Virtual_String;
+         Subp : Basic_Decl;
       end record;
 
    type Backward_Mover is new Parameter_Mover with
