@@ -1,0 +1,8 @@
+description: |
+    Refactoring Safe Rename test
+
+    Rename the `Value` parameter of the function `Increment` to `Number`,
+    which has the same name as a local variable in procedure `Bar`, where
+    `Increment` is used. Confirm that no collision is detected.
+
+driver: shell_script
