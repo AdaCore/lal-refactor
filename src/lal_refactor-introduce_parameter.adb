@@ -64,12 +64,13 @@ package body LAL_Refactor.Introduce_Parameter is
                      & Object_Decl_Default_Expr)));
       Declaration_Pull_Upper : constant Declaration_Extractor :=
         Create_Declaration_Pull_Upper
-          (Unit                     => Self.Object_Decl.Unit,
-           Definition_SLOC          =>
+          (Unit                           => Self.Object_Decl.Unit,
+           Definition_SLOC                =>
              Start_Sloc (Self.Object_Decl.Sloc_Range),
-           Indentation              => 3,
-           Only_Dependencies        => True,
-           Try_Subp_Insertion_Point => True);
+           Indentation                    => 3,
+           Only_Dependencies              => True,
+           Try_Subp_Body_Insertion_Point  => True,
+           Use_Parent_Decl_Canonical_Part => True);
 
       Text_Edits : Text_Edit_Map;
 

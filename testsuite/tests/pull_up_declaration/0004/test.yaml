@@ -1,0 +1,9 @@
+title: pull_up_from_subp_body_with_header
+
+description: |
+    Pull Up Declaration tool test
+    This test checks that when pulling up a declaration for a subprogram body
+    with a header, the insertion point of the pulled up declaration is above
+    the subprogram body header.
+
+driver: shell_script
