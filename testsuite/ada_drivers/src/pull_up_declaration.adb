@@ -107,13 +107,13 @@ procedure Pull_Up_Declaration is
 
       Edits : Refactoring_Edits;
 
-      function Analysis_Units return Analysis_Unit_Array is
-        ([Unit]);
+      function Analysis_Units return Analysis_Unit_Array is ([Unit]);
 
    begin
       if Is_Pull_Up_Declaration_Available (Unit, Declaration_SLOC) then
-         Edits := Create_Declaration_Pull_Upper
-                    (Unit, Declaration_SLOC).Refactor (Analysis_Units'Access);
+         Edits :=
+           Create_Declaration_Pull_Upper (Unit, Declaration_SLOC)
+             .Refactor (Analysis_Units'Access);
          Print (Edits);
       end if;
 
