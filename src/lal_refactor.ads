@@ -162,6 +162,15 @@ package LAL_Refactor is
         File_Renames   => File_Rename_Ordered_Sets.Empty_Set,
         Diagnostics    => Refactoring_Diagnostic_Vectors.Empty_Vector);
 
+   function Has_Failed (Edits : Refactoring_Edits) return Boolean
+   is
+     (Edits.Text_Edits.Is_Empty
+      and then Edits.File_Creations.Is_Empty
+      and then Edits.File_Deletions.Is_Empty
+      and then Edits.File_Renames.Is_Empty);
+   --  Return True is there are no edits to apply at all, meaning that the
+   --  the refactoring that produced these results has failed.
+
    procedure Merge
      (Source : in out Text_Edit_Map;
       Target : Text_Edit_Map);

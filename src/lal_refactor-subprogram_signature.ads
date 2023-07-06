@@ -152,6 +152,10 @@ package LAL_Refactor.Subprogram_Signature is
    type Subprogram_Signature_Problem is
      new Refactoring_Diagnostic with private;
 
+   function Create
+     (Subp : Ada_Node;
+      Info : VSS.Strings.Virtual_String) return Subprogram_Signature_Problem;
+
    overriding function Filename
      (Self : Subprogram_Signature_Problem) return String;
 
@@ -339,8 +343,8 @@ private
    type Subprogram_Signature_Problem is
      new Refactoring_Diagnostic with
       record
+         Subp : Ada_Node;
          Info : VSS.Strings.Virtual_String;
-         Subp : Basic_Decl;
       end record;
 
    type Backward_Mover is new Parameter_Mover with
