@@ -1,3 +1,9 @@
+--
+--  Copyright (C) 2023, AdaCore
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
 with "lal_refactor_common.gpr";
 with "lal_refactor.gpr";
 

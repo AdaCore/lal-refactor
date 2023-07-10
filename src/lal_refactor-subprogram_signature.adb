@@ -1,25 +1,8 @@
-------------------------------------------------------------------------------
---                                                                          --
---                             Libadalang Tools                             --
---                                                                          --
---                    Copyright (C) 2021-2022, AdaCore                      --
---                                                                          --
--- Libadalang Tools  is free software; you can redistribute it and/or modi- --
--- fy  it  under  terms of the  GNU General Public License  as published by --
--- the Free Software Foundation;  either version 3, or (at your option) any --
--- later version. This software  is distributed in the hope that it will be --
--- useful but  WITHOUT  ANY  WARRANTY; without even the implied warranty of --
--- MERCHANTABILITY  or  FITNESS  FOR A PARTICULAR PURPOSE.                  --
---                                                                          --
--- As a special  exception  under  Section 7  of  GPL  version 3,  you are  --
--- granted additional  permissions described in the  GCC  Runtime  Library  --
--- Exception, version 3.1, as published by the Free Software Foundation.    --
---                                                                          --
--- You should have received a copy of the GNU General Public License and a  --
--- copy of the GCC Runtime Library Exception along with this program;  see  --
--- the files COPYING3 and COPYING.RUNTIME respectively.  If not, see        --
--- <http://www.gnu.org/licenses/>.                                          --
-------------------------------------------------------------------------------
+--
+--  Copyright (C) 2021-2023, AdaCore
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
 
 with Ada.Assertions; use Ada.Assertions;
 with Ada.Characters.Conversions; use Ada.Characters.Conversions;
@@ -29,6 +12,8 @@ with Ada.Containers.Vectors;
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 with Laltools.Subprogram_Hierarchy; use Laltools.Subprogram_Hierarchy;
+
+with VSS.Strings.Conversions;
 
 package body LAL_Refactor.Subprogram_Signature is
 
@@ -1885,6 +1870,33 @@ package body LAL_Refactor.Subprogram_Signature is
    end Create;
 
    --------------
+   -- Filename --
+   --------------
+
+   overriding function Filename
+     (Self : Subprogram_Signature_Problem) return String
+   is
+     (Self.Subp.Unit.Get_Filename);
+
+   --------------
+   -- Location --
+   --------------
+
+   overriding function Location
+     (Self : Subprogram_Signature_Problem) return Source_Location_Range
+   is
+     (Self.Subp.Sloc_Range);
+
+   ----------
+   -- Info --
+   ----------
+
+   overriding function Info
+     (Self : Subprogram_Signature_Problem) return String
+   is
+     (VSS.Strings.Conversions.To_UTF_8_String (Self.Info));
+
+   --------------
    -- Refactor --
    --------------
 
@@ -1935,8 +1947,31 @@ package body LAL_Refactor.Subprogram_Signature is
       procedure Add_Parameter_Defining_Id_Or_Ids_Callback is
         new Add_Parameter_Callback (Add_Parameter_Defining_Id_Or_Ids);
       --  Callback to add a parameter identifier or a list of identifiers
-
+      Subp_Hierarchy : constant Basic_Decl_Array :=
+        Get_Subp_Hierarchy
+          (Subp               =>
+             Self.Spec.P_Parent_Basic_Decl.P_Canonical_Part,
+           Units              => Analysis_Units.all,
+           Include_Base_Subps => True,
+           Include_Overrides  => True);
    begin
+      --  If we are trying to add a new parameter at the first position (i.e:
+      --  controlling parameter) on a subprogram that is a primitive, abort the
+      --  refactoring: we don't want to break the whole primitive hierarchy in
+      --  that case.
+      if Self.Relative_Position = (Before, 1)
+        and then Subp_Hierarchy'Length > 1
+      then
+         return
+           (Diagnostics =>
+              [Subprogram_Signature_Problem'
+                   (Subp => Self.Spec.P_Parent_Basic_Decl,
+                    Info => VSS.Strings.Conversions.To_Virtual_String
+                      ("Can't change the controlling parameter "
+                       & "of a primitive"))],
+               others => <>);
+      end if;
+
       if Self.Full_Specification then
          Find_Subp_Relatives
            (Subp           => Self.Spec.P_Parent_Basic_Decl,
