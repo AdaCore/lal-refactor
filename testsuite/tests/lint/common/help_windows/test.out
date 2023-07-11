@@ -1,6 +1,6 @@
 usage: lalrefactor.exe [--help|-h] [--help|-h] tool [--verbose|-v] [--pipe|-p] 
                       [--project|-P PROJECT] [--sources|-S SOURCES [SOURCES...]]
-                       [-X nm=val [nm=val...]] [--from-gnat-warnings|-fgw
+                       [-X nm=val [nm=val...]] [--from-gnat-warnings|-fgw 
                       <file_with_gnat_warnings>] [--remove-indices|-ri] 
 
 Refactor tools
