@@ -637,10 +637,10 @@ package body LAL_Refactor.Safe_Rename is
    overriding
    function Find
      (Self : in out AST_Analyser)
-      return Refactoring_Diagnotic_Vector
+      return Refactoring_Diagnostic_Vector
    is
       Problem_Finders : Specific_Rename_Problem_Finder_Vectors.Vector;
-      Problems        : Refactoring_Diagnotic_Vector;
+      Problems        : Refactoring_Diagnostic_Vector;
 
    begin
       --  If we're renaming an enum literal, just check for collisions within
@@ -749,9 +749,9 @@ package body LAL_Refactor.Safe_Rename is
    overriding
    function Find
      (Self : in out Reference_Mapper)
-      return Refactoring_Diagnotic_Vector
+      return Refactoring_Diagnostic_Vector
    is
-      function Create_Problems return Refactoring_Diagnotic_Vector;
+      function Create_Problems return Refactoring_Diagnostic_Vector;
       --  For every Sloc found in Self.References_Diff create either a
       --  Missing_Reference or New_Reference object and add it to a vector.
 
@@ -759,11 +759,11 @@ package body LAL_Refactor.Safe_Rename is
       -- Create_Problems --
       ---------------------
 
-      function Create_Problems return Refactoring_Diagnotic_Vector is
+      function Create_Problems return Refactoring_Diagnostic_Vector is
          use Unit_Slocs_Maps;
          C : Cursor;
       begin
-         return Result : Refactoring_Diagnotic_Vector do
+         return Result : Refactoring_Diagnostic_Vector do
             --  Self.References_Diff.Minus contains all the references that
             --  would be lost.
 
