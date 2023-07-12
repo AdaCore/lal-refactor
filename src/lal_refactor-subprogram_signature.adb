@@ -1869,6 +1869,16 @@ package body LAL_Refactor.Subprogram_Signature is
          Full_Specification => Is_Param_Spec);
    end Create;
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Subp : Ada_Node;
+      Info : VSS.Strings.Virtual_String) return Subprogram_Signature_Problem
+   is
+      (Subprogram_Signature_Problem'(Subp, Info));
+
    --------------
    -- Filename --
    --------------
@@ -1965,7 +1975,7 @@ package body LAL_Refactor.Subprogram_Signature is
          return
            (Diagnostics =>
               [Subprogram_Signature_Problem'
-                   (Subp => Self.Spec.P_Parent_Basic_Decl,
+                   (Subp => Self.Spec.P_Parent_Basic_Decl.As_Ada_Node,
                     Info => VSS.Strings.Conversions.To_Virtual_String
                       ("Can't change the controlling parameter "
                        & "of a primitive"))],
