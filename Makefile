@@ -9,21 +9,7 @@ LIB_PROJECT = gnat/lal_refactor.gpr
 
 BIN_PROJECT = gnat/lal_refactor_driver.gpr
 
-TESTSUITE_PROJECTS = \
-	testsuite/ada_drivers/add_parameter/add_parameter.gpr \
-	testsuite/ada_drivers/change_parameter_mode/change_parameter_mode.gpr \
-	testsuite/ada_drivers/change_parameters_default_value/change_parameters_default_value.gpr \
-	testsuite/ada_drivers/change_parameters_type/change_parameters_type.gpr \
-	testsuite/ada_drivers/extract_subprogram/extract_subprogram.gpr \
-	testsuite/ada_drivers/introduce_parameter/introduce_parameter.gpr \
-	testsuite/ada_drivers/move_parameter/move_parameter.gpr \
-	testsuite/ada_drivers/pull_up_declaration/pull_up_declaration.gpr \
-	testsuite/ada_drivers/refactor_imports/refactor_imports.gpr \
-	testsuite/ada_drivers/remove_parameter/remove_parameter.gpr \
-	testsuite/ada_drivers/replace_type/replace_type.gpr \
-	testsuite/ada_drivers/safe_rename/safe_rename.gpr \
-	testsuite/ada_drivers/sort_dependencies/sort_dependencies.gpr \
-	testsuite/ada_drivers/suppress_separate/suppress_separate.gpr
+TESTSUITE_PROJECTS = testsuite/ada_drivers/gnat/lal_refactor_test_drivers.gpr
 
 .PHONY: all
 all: lib bin testsuite_drivers
@@ -74,9 +60,11 @@ test: bin testsuite_drivers
 
 .PHONY: clean
 clean:
-	rm -rf bin lib obj;
+	rm -rf bin;
+	rm -rf lib;
+	rm -rf obj;
 	rm -rf testsuite/ada_drivers/bin;
-	rm -rf testsuite/ada_drivers/**/obj;
+	rm -rf testsuite/ada_drivers/obj;
 
 .PHONY: install
 install: install-lib install-bin
