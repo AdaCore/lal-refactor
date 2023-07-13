@@ -1,0 +1,41 @@
+--
+--  Copyright (C) 2023, AdaCore
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
+with "../../../gnat/lal_refactor_common.gpr";
+with "lal_refactor.gpr";
+
+project LAL_Refactor_Test_Drivers is
+
+   for Source_Dirs use ("../src");
+
+   Tools_Mains :=
+     ("add_parameter.adb",
+      "change_parameter_mode.adb",
+      "change_parameters_default_value.adb",
+      "change_parameters_type.adb",
+      "extract_subprogram.adb",
+      "introduce_parameter.adb",
+      "move_parameter.adb",
+      "pull_up_declaration.adb",
+      "refactor_imports.adb",
+      "remove_parameter.adb",
+      "replace_type.adb",
+      "safe_rename.adb",
+      "sort_dependencies.adb",
+      "suppress_separate.adb");
+
+   for Main use Tools_Mains;
+
+   for Object_Dir use "../../obj";
+   for Exec_Dir use "../bin";
+
+   package Compiler renames LAL_Refactor_Common.Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-Es");
+   end Binder;
+
+end LAL_Refactor_Test_Drivers;
