@@ -8,7 +8,6 @@ with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
-
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Wide_Wide_Unbounded;
@@ -60,9 +59,12 @@ package body LAL_Refactor.Sort_Dependencies is
    --------------------------------
 
    function Create_Dependencies_Sorter
-     (Compilation_Unit : Libadalang.Analysis.Compilation_Unit)
+     (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
+      No_Separator     : Boolean := False)
       return Dependencies_Sorter
-   is (Dependencies_Sorter'(Compilation_Unit => Compilation_Unit));
+   is (Dependencies_Sorter'
+         (Compilation_Unit => Compilation_Unit,
+          No_Separator     => No_Separator));
 
    function Less (Left, Right : Unbounded_Text_Type) return Boolean is
      (Ada.Strings.Less_Case_Insensitive
@@ -415,10 +417,12 @@ package body LAL_Refactor.Sort_Dependencies is
             begin
                for Clause of Clauses loop
                   if Clause.Has_With then
-                     if Previous_Public_Clause /= No_Clause_Type
-                       and then not Ada.Strings.Wide_Wide_Unbounded."="
-                         (Previous_Public_Clause.First_Name,
-                          Clause.First_Name)
+                     if not Self.No_Separator
+                       and then Previous_Public_Clause /= No_Clause_Type
+                       and then
+                         not Ada.Strings.Wide_Wide_Unbounded."="
+                               (Previous_Public_Clause.First_Name,
+                                Clause.First_Name)
                      then
                         Append
                           (Clauses_Text,

@@ -1,45 +1,29 @@
-------------------------------------------------------------------------------
---                                                                          --
---                             Libadalang Tools                             --
---                                                                          --
---                       Copyright (C) 2022, AdaCore                        --
---                                                                          --
--- Libadalang Tools  is free software; you can redistribute it and/or modi- --
--- fy  it  under  terms of the  GNU General Public License  as published by --
--- the Free Software Foundation;  either version 3, or (at your option) any --
--- later version. This software  is distributed in the hope that it will be --
--- useful but  WITHOUT  ANY  WARRANTY; without even the implied warranty of --
--- MERCHANTABILITY  or  FITNESS  FOR A PARTICULAR PURPOSE.                  --
---                                                                          --
--- As a special  exception  under  Section 7  of  GPL  version 3,  you are  --
--- granted additional  permissions described in the  GCC  Runtime  Library  --
--- Exception, version 3.1, as published by the Free Software Foundation.    --
---                                                                          --
--- You should have received a copy of the GNU General Public License and a  --
--- copy of the GCC Runtime Library Exception along with this program;  see  --
--- the files COPYING3 and COPYING.RUNTIME respectively.  If not, see        --
--- <http://www.gnu.org/licenses/>.                                          --
-------------------------------------------------------------------------------
+--
+--  Copyright (C) 2022-2023, AdaCore
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
 
 with LAL_Refactor; use LAL_Refactor;
-with LAL_Refactor.Sort_Dependencies;
-use LAL_Refactor.Sort_Dependencies;
 
-with Libadalang.Common; use Libadalang.Common;
+with LAL_Refactor.Sort_Dependencies; use LAL_Refactor.Sort_Dependencies;
+
 with Libadalang.Analysis; use Libadalang.Analysis;
+with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Helpers; use Libadalang.Helpers;
 
 --  This procedure defines the Sort Dependencies Tool
 
 --  Usage:
---  sort_dependencies --project <project> --source <source>
+--  sort_dependencies --project <project> --source <source> [--no-separator]
 --
 --  --project, -P   Project file
 --  --source, -S    Source code file to sort dependencies
+--  --no-separator  Do not separate clauses groups by an empty line
 
 procedure Sort_Dependencies is
 
@@ -66,6 +50,12 @@ procedure Sort_Dependencies is
          Default_Val => Null_Unbounded_String,
          Enabled     => True);
 
+      package No_Separator is new GNATCOLL.Opt_Parse.Parse_Flag
+        (Parser  => Sort_Dependencies_App.Args.Parser,
+         Long    => "--no-separator",
+         Help    => "Do not separate clauses groups by an empty line",
+         Enabled => True);
+
    end Args;
 
    ---------------------------------
@@ -82,17 +72,21 @@ procedure Sort_Dependencies is
       Unit        : constant Analysis_Unit :=
         Jobs (1).Analysis_Ctx.Get_From_File (Source_File);
 
+      No_Separator : constant Boolean := Args.No_Separator.Get;
+
    begin
       if Unit.Root.Kind in Ada_Compilation_Unit_List then
          for Compilation_Unit of Unit.Root.As_Compilation_Unit_List loop
             Print
               (Create_Dependencies_Sorter
-                 (Compilation_Unit.As_Compilation_Unit).Refactor (null));
+                 (Compilation_Unit.As_Compilation_Unit,
+                  No_Separator)
+                 .Refactor (null));
          end loop;
       elsif Unit.Root.Kind in Ada_Compilation_Unit then
          Print
            (Create_Dependencies_Sorter
-              (Unit.Root.As_Compilation_Unit).Refactor (null));
+              (Unit.Root.As_Compilation_Unit, No_Separator).Refactor (null));
       end if;
    end Sort_Dependencies_App_Setup;
 
