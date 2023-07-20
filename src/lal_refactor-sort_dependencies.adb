@@ -487,7 +487,7 @@ package body LAL_Refactor.Sort_Dependencies is
                      end loop;
                   end if;
                end loop;
-               if Public_Clauses.Length > 0 then
+               if Clauses.Length /= 0 then
                   Append
                     (Clauses_Text,
                      Ada.Characters.Wide_Wide_Latin_1.LF);
