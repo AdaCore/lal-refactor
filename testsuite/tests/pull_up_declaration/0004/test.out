@@ -1,0 +1,16 @@
+test.adb
+2:1-2:1    procedure Bar;
+   --  Bar
+
+   ---------
+   -- Bar --
+   ---------
+
+   procedure Bar is
+   begin
+      null;
+   end Bar;
+
+
+7:1-18:1 
+

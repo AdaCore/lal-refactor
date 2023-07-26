@@ -10,6 +10,7 @@ with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Fixed;
+
 with GNAT.String_Split;
 
 with Langkit_Support.Text; use Langkit_Support.Text;
@@ -112,14 +113,18 @@ package body LAL_Refactor.Pull_Up_Declaration is
       end record;
 
    function Get_Insertion_Point
-     (Definition               : Defining_Name'Class;
-      Try_Subp_Insertion_Point : Boolean := False)
+     (Definition                     : Defining_Name'Class;
+      Try_Subp_Body_Insertion_Point  : Boolean := False;
+      Use_Parent_Decl_Canonical_Part : Boolean := False)
       return Insertion_Point_Type;
-   --  Assuming that Decl is the Basic_Decl that will be pulled up, computes
-   --  the Insertion_Point_Type where the pulled up declarations should be
-   --  inserted. If Try_Subp_Insertion_Point is True, and if Decl is
-   --  begin pulled up from a subprogram body, then Decl and its dependencies
-   --  are inserted above the subprogram's canonical part.
+   --  Computes the Insertion_Point_Type where the pulled up declarations
+   --  should be inserted.
+   --  If Try_Subp_Body_Insertion_Point is True, then tries to get an insertion
+   --  point above the parent subprogram.
+   --  If Use_Parent_Decl_Canonical_Part is True, then the insertion point is
+   --  above canonical part of the parent declaration.
+   --  Try_Subp_Body_Insertion_Point is also applicable if
+   --  Use_Parent_Decl_Canonical_Part is True.
 
    function Line_Distance
      (From, To : Token_Reference)
@@ -262,15 +267,15 @@ package body LAL_Refactor.Pull_Up_Declaration is
                Enclosing_Declarative_Part :=
                  Get_Enclosing_Declarative_Part (Decl_Part.P_Basic_Decl);
 
-               for Node of Enclosing_Declarative_Part.F_Decls
-                 when Node.Kind in Ada_Basic_Decl
-               loop
-                  for Node_Defining_Name of
-                    Node.As_Basic_Decl.P_Defining_Names
-                  loop
-                     Local_Basic_Decls.Include
-                       (Node_Defining_Name.P_Canonical_Part.P_Basic_Decl);
-                  end loop;
+               for Node of Enclosing_Declarative_Part.F_Decls loop
+                  if Node.Kind in Ada_Basic_Decl then
+                     for Node_Defining_Name of
+                       Node.As_Basic_Decl.P_Defining_Names
+                     loop
+                        Local_Basic_Decls.Include
+                          (Node_Defining_Name.P_Canonical_Part.P_Basic_Decl);
+                     end loop;
+                  end if;
                end loop;
 
                if Enclosing_Declarative_Part.Parent.Kind in
@@ -538,29 +543,27 @@ package body LAL_Refactor.Pull_Up_Declaration is
    -------------------------
 
    function Get_Insertion_Point
-     (Definition               : Defining_Name'Class;
-      Try_Subp_Insertion_Point : Boolean := False)
+     (Definition                     : Defining_Name'Class;
+      Try_Subp_Body_Insertion_Point  : Boolean := False;
+      Use_Parent_Decl_Canonical_Part : Boolean := False)
       return Insertion_Point_Type
    is
       First_Enclosing_Declarative_Part : constant Declarative_Part :=
         Get_Enclosing_Declarative_Part (Definition.P_Basic_Decl);
-
-      Owner_Is_Decl_Block : constant Boolean :=
-        First_Enclosing_Declarative_Part.Parent.Kind in Ada_Decl_Block_Range;
-
-      Second_Enclosing_Declarative_Part : constant Declarative_Part :=
-        (if Owner_Is_Decl_Block then
-           Get_Enclosing_Declarative_Part
-             (First_Enclosing_Declarative_Part.Parent)
-         else
-           No_Declarative_Part);
-
-      Header_SLOC_Range_IGNORE : constant Source_Location_Range :=
-        Get_Basic_Decl_Header_SLOC_Range
-          (First_Enclosing_Declarative_Part.P_Parent_Basic_Decl);
+      --  This is the Declarative_Part where Definition is declared.
+      --  Two scenarios are possible:
+      --    - The parent is a declaration, therefore, Definition
+      --      will be pulled up to the level of this parent
+      --    - The parent is a decl block, therefore, Definition
+      --      will be pulled up to the next enclosing Declarative_Part, refered
+      --      later in this subprogram as Second_Enclosing_Declarative_Part.
 
    begin
-      if Try_Subp_Insertion_Point then
+      if Try_Subp_Body_Insertion_Point then
+         --  In this scenario let's try to find a parent subprogram body.
+         --  If found, Definition is pulled up to the same level as this
+         --  subprogram body (or its canonical part if
+         --  Use_Parent_Decl_Canonical_Part).
          declare
             Subp_Body : Libadalang.Analysis.Subp_Body := No_Subp_Body;
 
@@ -575,32 +578,36 @@ package body LAL_Refactor.Pull_Up_Declaration is
             end loop;
 
             declare
-               Subp_Body_Canonical_Part : constant Basic_Decl :=
-                 (if Subp_Body.Is_Null then No_Basic_Decl
-                  else Subp_Body.P_Canonical_Part);
-               Subp_Header_SLOC_Range   : constant Source_Location_Range :=
-                 (if Subp_Body_Canonical_Part.Is_Null then
-                    No_Source_Location_Range
+               Subp : constant Basic_Decl :=
+                 (if Subp_Body.Is_Null then
+                    No_Basic_Decl
                   else
-                    Get_Basic_Decl_Header_SLOC_Range
-                      (Subp_Body_Canonical_Part));
+                    (if Use_Parent_Decl_Canonical_Part then
+                       Subp_Body.P_Canonical_Part
+                     else
+                       Subp_Body.As_Basic_Decl));
+
+               --  If Subp is not null, it means that we found a parent
+               --  Subp_Body and we've already taken into account
+               --  the Use_Parent_Decl_Canonical_Part flag.
+               Subp_Header_SLOC_Range   : constant Source_Location_Range :=
+                 (if Subp.Is_Null then No_Source_Location_Range
+                  else Get_Basic_Decl_Header_SLOC_Range (Subp));
 
             begin
+               --  If Subp has a header, then insert before it. This avoids
+               --  inserting between the header and the declaration.
                if Subp_Header_SLOC_Range /= No_Source_Location_Range then
-                  --  A Subp_Body was found and it's canonical part is
-                  --  itself. It also has a header.
                   return
                     Insertion_Point_Type'
-                      (To_Unbounded_String
-                         (Subp_Body_Canonical_Part.Unit.Get_Filename),
-                       Start_Sloc (Subp_Header_SLOC_Range));
-               elsif not Subp_Body_Canonical_Part.Is_Null then
-                  --  A Subp_Body was found but it does not have a header
+                      (To_Unbounded_String (Subp.Unit.Get_Filename),
+                       Source_Location'(Subp_Header_SLOC_Range.Start_Line, 1));
+
+               elsif not Subp.Is_Null then
                   return
                     Insertion_Point_Type'
-                      (To_Unbounded_String
-                         (Subp_Body_Canonical_Part.Unit.Get_Filename),
-                       (Subp_Body_Canonical_Part.Sloc_Range.Start_Line, 1));
+                      (To_Unbounded_String (Subp.Unit.Get_Filename),
+                       (Subp.Sloc_Range.Start_Line, 1));
                end if;
             end;
          end;
@@ -610,21 +617,68 @@ package body LAL_Refactor.Pull_Up_Declaration is
       --  we failed to attempt to compute an insertion point right before a
       --  subprogram. Therefore, proced with the default strategy.
 
-      return
-        (if Owner_Is_Decl_Block then
-            Insertion_Point_Type'
-              (To_Unbounded_String
-                 (Second_Enclosing_Declarative_Part.Unit.Get_Filename),
-               Source_Location'
-                 (Second_Enclosing_Declarative_Part.Sloc_Range.End_Line, 1))
-         else
-           Insertion_Point_Type'
-              (To_Unbounded_String
-                 (First_Enclosing_Declarative_Part.Unit.Get_Filename),
-               Source_Location'
-                 (First_Enclosing_Declarative_Part.P_Parent_Basic_Decl.
-                    Sloc_Range.Start_Line,
-                  1)));
+      case First_Enclosing_Declarative_Part.Parent.Kind is
+         when Ada_Decl_Block_Range =>
+            --  Definition will be pulled up to the last line of the next
+            --  enclosing Declarative_Part.
+            declare
+               Second_Enclosing_Declarative_Part : constant Declarative_Part :=
+                 Get_Enclosing_Declarative_Part
+                   (First_Enclosing_Declarative_Part.Parent);
+            begin
+               return
+                 Insertion_Point_Type'
+                   (To_Unbounded_String
+                      (Second_Enclosing_Declarative_Part.Unit.Get_Filename),
+                    Source_Location'
+                      (Second_Enclosing_Declarative_Part.Sloc_Range.End_Line,
+                       1));
+            end;
+
+         when Ada_Basic_Decl =>
+            --  Definition will be pulled up to the level of this parent,
+            --  which is a Basic_Decl, so extra checks need to be done
+            --  according to the Use_Parent_Decl_Canonical_Part flag and to
+            --  a possible header.
+
+            declare
+               Decl : constant Basic_Decl :=
+                 (if Use_Parent_Decl_Canonical_Part then
+                    First_Enclosing_Declarative_Part
+                      .P_Parent_Basic_Decl
+                      .P_Canonical_Part
+                  else
+                    First_Enclosing_Declarative_Part
+                      .P_Parent_Basic_Decl);
+               Header_SLOC_Range : constant Source_Location_Range :=
+                 Get_Basic_Decl_Header_SLOC_Range (Decl);
+            begin
+               if Header_SLOC_Range /= No_Source_Location_Range then
+                  return
+                    Insertion_Point_Type'
+                      (To_Unbounded_String (Decl.Unit.Get_Filename),
+                       Source_Location'(Header_SLOC_Range.Start_Line, 1));
+
+               else
+                  return
+                    Insertion_Point_Type'
+                      (To_Unbounded_String (Decl.Unit.Get_Filename),
+                       Source_Location'(Decl.Sloc_Range.Start_Line, 1));
+               end if;
+            end;
+
+         when others =>
+            --  Definition will be pulled up to the level of this parent
+            return
+              Insertion_Point_Type'
+                (To_Unbounded_String
+                   (First_Enclosing_Declarative_Part.Unit.Get_Filename),
+                 Source_Location'
+                   (First_Enclosing_Declarative_Part
+                      .P_Parent_Basic_Decl
+                      .Sloc_Range.Start_Line,
+                    1));
+      end case;
    end Get_Insertion_Point;
 
    --------------
@@ -1545,18 +1599,38 @@ package body LAL_Refactor.Pull_Up_Declaration is
    -----------------------------------
 
    function Create_Declaration_Pull_Upper
-     (Unit              : Analysis_Unit;
-      Definition_SLOC   : Source_Location;
-      Indentation       : Natural := 3;
-      Only_Dependencies : Boolean := False;
-      Try_Subp_Insertion_Point : Boolean := False)
+     (Unit                           : Analysis_Unit;
+      Definition_SLOC                : Source_Location;
+      Indentation                    : Natural := 3;
+      Only_Dependencies              : Boolean := False;
+      Try_Subp_Body_Insertion_Point  : Boolean := False;
+      Use_Parent_Decl_Canonical_Part : Boolean := False)
       return Declaration_Extractor
-   is ((Definition                      =>
-          (Unit.Root.Lookup (Definition_SLOC).As_Name.
-             P_Enclosing_Defining_Name.P_Canonical_Part),
-        Indentation                     => Indentation,
-        Only_Dependencies               => Only_Dependencies,
-        Try_Subp_Insertion_Point => Try_Subp_Insertion_Point));
+   is
+      Name       : constant Ada_Node :=
+        Unit.Root.Lookup (Definition_SLOC);
+      Definition : constant Defining_Name :=
+        (if Name.Is_Null or else Name.Kind not in Ada_Name
+         then No_Defining_Name
+         else Resolve_Name_Precisely (Name.As_Name));
+
+   begin
+      if Definition.Is_Null then
+         raise Invalid_Declaration with
+           "failed to resolve "
+           & Unit.Get_Filename
+           & ":"
+           & Image (Definition_SLOC);
+      end if;
+
+      return
+        Declaration_Extractor'
+          (Definition,
+           Indentation,
+           Only_Dependencies,
+           Try_Subp_Body_Insertion_Point,
+           Use_Parent_Decl_Canonical_Part);
+   end Create_Declaration_Pull_Upper;
 
    --------------
    -- Refactor --
@@ -1572,7 +1646,9 @@ package body LAL_Refactor.Pull_Up_Declaration is
 
       Insertion_Point : constant Insertion_Point_Type :=
         Get_Insertion_Point
-          (Self.Definition, Self.Try_Subp_Insertion_Point);
+          (Self.Definition,
+           Self.Try_Subp_Body_Insertion_Point,
+           Self.Use_Parent_Decl_Canonical_Part);
 
       Text_Edits : Text_Edit_Map;
       Edits      : Refactoring_Edits;
