@@ -17,6 +17,9 @@ with VSS.Strings.Conversions;
 
 package body LAL_Refactor.Subprogram_Signature is
 
+   Problem_Info : constant VSS.Strings.Virtual_String :=
+      "Can't change the controlling parameter of a primitive";
+
    --------------------------
    -- Generic_Array_Unique --
    --------------------------
@@ -1972,14 +1975,12 @@ package body LAL_Refactor.Subprogram_Signature is
       if Self.Relative_Position = (Before, 1)
         and then Subp_Hierarchy'Length > 1
       then
-         return
-           (Diagnostics =>
-              [Subprogram_Signature_Problem'
-                   (Subp => Self.Spec.P_Parent_Basic_Decl.As_Ada_Node,
-                    Info => VSS.Strings.Conversions.To_Virtual_String
-                      ("Can't change the controlling parameter "
-                       & "of a primitive"))],
-               others => <>);
+         return Result : Refactoring_Edits do
+            Result.Diagnostics.Append
+              (Subprogram_Signature_Problem'
+                 (Subp => Self.Spec.P_Parent_Basic_Decl.As_Ada_Node,
+                  Info => Problem_Info));
+         end return;
       end if;
 
       if Self.Full_Specification then
