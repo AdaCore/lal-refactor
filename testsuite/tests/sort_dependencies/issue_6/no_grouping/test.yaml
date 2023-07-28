@@ -1,0 +1,5 @@
+title: Sort without seperating groups with an empty line
+
+description: sort_dependencies tool test
+
+driver: shell_script
