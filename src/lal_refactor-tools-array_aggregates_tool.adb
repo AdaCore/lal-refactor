@@ -5,18 +5,22 @@
 --
 
 with Ada.Strings;
+with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
-with GNATCOLL.GMP.Integers; use GNATCOLL.GMP.Integers;
-with GNATCOLL.VFS;
 with GNAT.Regpat;
 
-with Libadalang.Common; use Libadalang.Common;
+with GNATCOLL.GMP.Integers; use GNATCOLL.GMP.Integers;
+with GNATCOLL.VFS;
 
 with LAL_Refactor.Command_Line;
 with LAL_Refactor.File_Edits;
 with LAL_Refactor.Utils;
+
+with Langkit_Support.Text;
+
+with Libadalang.Common; use Libadalang.Common;
 
 with VSS.Strings.Conversions;
 
@@ -335,6 +339,14 @@ package body LAL_Refactor.Tools.Array_Aggregates_Tool is
         (Node : Ada_Node'Class)
          return Visit_Status
       is
+         function Is_Ada_2022_Unit
+           (Unit : Compilation_Unit)
+            return Boolean;
+         --  Checks if Unit has any `pragma Ada_<Year>` in its prelude. If so,
+         --  returns True if <Year> = 2021.
+         --  If this does not contain a `pragma Ada_<Year>` in its predlude,
+         --  then Unit is also considered as an Ada 2022 unit.
+
          function Is_Array
            (Aggregate : Libadalang.Analysis.Aggregate)
             return Boolean;
@@ -389,8 +401,55 @@ package body LAL_Refactor.Tools.Array_Aggregates_Tool is
                return False;
          end Is_Array;
 
+         ----------------------
+         -- Is_Ada_2022_Unit --
+         ----------------------
+
+         function Is_Ada_2022_Unit
+           (Unit : Compilation_Unit)
+            return Boolean is
+         begin
+            for Node of Unit.F_Prelude loop
+               --  We're looking for:
+               --  pragma Ada_83
+               --  pragma Ada_95
+               --  pragma Ada_05
+               --  pragma Ada_2005
+               --  pragma Ada_12
+               --  pragma Ada_2012
+               --  pragma Ada_2022
+
+               if Node.Kind in Ada_Pragma_Node_Range then
+                  declare
+                     Pragma_Text : constant String :=
+                       Langkit_Support.Text.To_UTF8
+                         (Node.As_Pragma_Node.F_Id.Text);
+                  begin
+                     --  First check if it's an `pragma Ada_YY` or
+                     --  `pragma Ada_YYYY` node. If so, check that it's the
+                     --  the same as `pragma Ada_2022`.
+                     if Pragma_Text'Length in 6 | 8
+                       and then Ada.Strings.Equal_Case_Insensitive
+                                  (Pragma_Text
+                                     (Pragma_Text'First
+                                      .. Pragma_Text'First + 3),
+                                   "ada_")
+                     then
+                        return Ada.Strings.Equal_Case_Insensitive
+                                 (Pragma_Text, "ada_2022");
+                     end if;
+                  end;
+               end if;
+            end loop;
+            return True;
+         end Is_Ada_2022_Unit;
+
       begin
-         if Node.Kind = Ada_Aggregate then
+         if Node.Kind in Ada_Compilation_Unit_Range
+           and then not Is_Ada_2022_Unit (Node.As_Compilation_Unit)
+         then
+            return Over;
+         elsif Node.Kind in Ada_Aggregate then
             if Is_Array (Node.As_Aggregate)
               or else Node.As_Aggregate.P_Is_Subaggregate
             then
