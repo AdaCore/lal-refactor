@@ -67,6 +67,7 @@ package LAL_Refactor.Command_Line is
       Help        => "Specify an external reference for Project Files",
       Arg_Type    => Ada.Strings.Unbounded.Unbounded_String,
       Convert     => Ada.Strings.Unbounded.To_Unbounded_String,
+      Accumulate  => True,
       Name        => "nm=val");
 
    function To_Virtual_File

@@ -1,1 +1,1 @@
-lalrefactor array_aggregates -P test.gpr -X CONFIG=two OTHER_CONFIG=two --remove-indices --pipe
+lalrefactor array_aggregates -P test.gpr -XCONFIG=two -XOTHER_CONFIG=two --remove-indices --pipe
