@@ -1,0 +1,23 @@
+# Renaming node test.adb:4:14: 
+References:
+Unit:test.adb
+Line: 2
+Source Location Range:
+Start_Line: 2
+Start_Column: 24
+End_Line: 2
+End_Column: 29
+Line: 4
+Source Location Range:
+Start_Line: 4
+Start_Column: 14
+End_Line: 4
+End_Column: 19
+Unit:test.ads
+Line: 2
+Source Location Range:
+Start_Line: 2
+Start_Column: 24
+End_Line: 2
+End_Column: 29
+

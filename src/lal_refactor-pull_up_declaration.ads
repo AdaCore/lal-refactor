@@ -11,6 +11,8 @@
 
 package LAL_Refactor.Pull_Up_Declaration is
 
+   Invalid_Declaration : exception;
+
    function Is_Pull_Up_Declaration_Available
      (Unit      : Analysis_Unit;
       Node_SLOC : Source_Location)
@@ -22,17 +24,23 @@ package LAL_Refactor.Pull_Up_Declaration is
    type Declaration_Extractor is new Refactoring_Tool with private;
 
    function Create_Declaration_Pull_Upper
-     (Unit                     : Analysis_Unit;
-      Definition_SLOC          : Source_Location;
-      Indentation              : Natural := 3;
-      Only_Dependencies        : Boolean := False;
-      Try_Subp_Insertion_Point : Boolean := False)
+     (Unit                           : Analysis_Unit;
+      Definition_SLOC                : Source_Location;
+      Indentation                    : Natural := 3;
+      Only_Dependencies              : Boolean := False;
+      Try_Subp_Body_Insertion_Point  : Boolean := False;
+      Use_Parent_Decl_Canonical_Part : Boolean := False)
       return Declaration_Extractor
-     with Pre => Is_Pull_Up_Declaration_Available (Unit, Definition_SLOC);
+     with Pre => (Unit /= No_Analysis_Unit
+                  and Definition_SLOC /= No_Source_Location)
+                 and then Is_Pull_Up_Declaration_Available
+                            (Unit, Definition_SLOC);
    --  Declaration_Extractor constructor.
    --  Declaration_SLOC must be the SLOC of the declaration Name'Class node
    --  that will be extracted. Use Is_Pull_Up_Declaration_Available to check
    --  if a declaration can be extracted from Unit and Declaration_SLOC.
+   --  Raises an Invalid_Declaration if it fails to resolve the declaration
+   --  based on Unit and Definition_SLOC.
 
    overriding
    function Refactor
@@ -47,10 +55,11 @@ private
 
    type Declaration_Extractor is new Refactoring_Tool with
       record
-         Definition               : Defining_Name;
-         Indentation              : Natural := 3;
-         Only_Dependencies        : Boolean := False;
-         Try_Subp_Insertion_Point : Boolean := False;
+         Definition                     : Defining_Name;
+         Indentation                    : Natural := 3;
+         Only_Dependencies              : Boolean := False;
+         Try_Subp_Body_Insertion_Point  : Boolean := False;
+         Use_Parent_Decl_Canonical_Part : Boolean := False;
       end record
      with Dynamic_Predicate => not Definition.Is_Null;
 
