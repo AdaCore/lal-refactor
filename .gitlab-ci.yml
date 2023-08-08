@@ -4,7 +4,6 @@ variables:
 
 stages:
   - build_and_test
-  - downstream_ci
 
 #########
 # BUILD #
@@ -42,7 +41,7 @@ build_and_test:
     # Programmatically find the build space name
     - BUILD_SPACE=`anod eval lal-refactor --primitive test build_space_name $ACI_TRACK_QUALIFIER | tr -d "'"`
     - SB_BASE=$ANOD_DEFAULT_SANDBOX_DIR/x86_64-linux/$BUILD_SPACE
-
+    
     - e3-testsuite-report
         --failure-exit-code 1
         --xunit-output $CI_PROJECT_DIR/xunit_output.xml
@@ -54,20 +53,3 @@ build_and_test:
       - xunit_output.xml
     reports:
       junit: xunit_output.xml
-
-downstream_ci:
-  stage: downstream_ci
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      when: manual
-  inherit:
-    variables: false
-  variables:
-    ACI_UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    ACI_UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
-  parallel:
-    matrix:
-      - PROJECT: ["eng/ide/ada_language_server"]
-  trigger:
-    strategy: depend
-    project: $PROJECT
