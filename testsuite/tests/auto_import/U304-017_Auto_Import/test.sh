@@ -1,1 +1,1 @@
-refactor_imports -P default.gpr -S test.adb -L 16 -R 49
+auto_import -P default.gpr --source test.adb --line 16 --column 49

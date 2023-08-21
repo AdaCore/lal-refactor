@@ -1,0 +1,20 @@
+Available Imports:
+Import: Ada.Strings.Unbounded.Text_IO; Qualifier: Ada.Strings.Unbounded.Text_IO
+Import: Ada.Strings.Wide_Unbounded.Wide_Text_IO; Qualifier: Ada.Strings.Wide_Unbounded.Wide_Text_IO
+Import: Ada.Strings.Wide_Wide_Unbounded.Wide_Wide_Text_IO; Qualifier: Ada.Strings.Wide_Wide_Unbounded.Wide_Wide_Text_IO
+Import: Ada.Text_IO; Qualifier: Ada.Text_IO
+Import: Ada.Text_IO.Unbounded_IO; Qualifier: Ada.Text_IO.Unbounded_IO
+Import: Ada.Wide_Text_IO; Qualifier: Ada.Wide_Text_IO
+Import: Ada.Wide_Text_IO.Wide_Unbounded_IO; Qualifier: Ada.Wide_Text_IO.Wide_Unbounded_IO
+Import: Ada.Wide_Wide_Text_IO; Qualifier: Ada.Wide_Wide_Text_IO
+Import: Ada.Wide_Wide_Text_IO.Wide_Wide_Unbounded_IO; Qualifier: Ada.Wide_Wide_Text_IO.Wide_Wide_Unbounded_IO
+Import: GNAT.IO; Qualifier: GNAT.IO
+Import: System.IO; Qualifier: System.IO
+Import: Text_IO; Qualifier: Text_IO
+
+Edits:
+test.adb
+1:1-1:1 with Ada.Strings.Unbounded.Text_IO;
+
+4:7-4:7 Ada.Strings.Unbounded.Text_IO.
+

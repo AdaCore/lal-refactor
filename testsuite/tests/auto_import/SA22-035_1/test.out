@@ -1,36 +1,20 @@
-<SubpDecl ["Subprogram"] a.ads:15:4-15:25>
-A
-A.
-<SubpDecl ["Subprogram"] a.ads:28:7-28:28>
-A
-A.B.
-<SubpDecl ["Subprogram"] a.ads:41:10-41:31>
-A
-A.B.C.
-<SubpDecl ["Subprogram"] a.ads:54:13-54:34>
-A
-A.B.C.D.
-<SubpDecl ["Subprogram"] a.ads:15:4-15:25>
-E
-E.
-<SubpDecl ["Subprogram"] a.ads:28:7-28:28>
-E
-E.B.
-<SubpDecl ["Subprogram"] a.ads:41:10-41:31>
-E
-E.B.C.
-<SubpDecl ["Subprogram"] a.ads:54:13-54:34>
-E
-E.B.C.D.
-<SubpDecl ["Subprogram"] a.ads:15:4-15:25>
-F
-F.
-<SubpDecl ["Subprogram"] a.ads:28:7-28:28>
-F
-F.B.
-<SubpDecl ["Subprogram"] a.ads:41:10-41:31>
-F
-F.B.C.
-<SubpDecl ["Subprogram"] a.ads:54:13-54:34>
-F
-F.B.C.D.
+Available Imports:
+Import: A; Qualifier: A
+Import: A; Qualifier: A.B
+Import: A; Qualifier: A.B.C
+Import: A; Qualifier: A.B.C.D
+Import: E; Qualifier: E
+Import: E; Qualifier: E.B
+Import: E; Qualifier: E.B.C
+Import: E; Qualifier: E.B.C.D
+Import: F; Qualifier: F
+Import: F; Qualifier: F.B
+Import: F; Qualifier: F.B.C
+Import: F; Qualifier: F.B.C.D
+
+Edits:
+main.adb
+1:1-1:1 with A;
+
+4:4-4:4 A.
+
