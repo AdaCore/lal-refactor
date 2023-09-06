@@ -1,0 +1,3 @@
+description: This test checks that both the with clause and qualifier are added in a package spec.
+
+driver: shell_script
