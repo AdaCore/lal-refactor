@@ -1,3 +1,0 @@
-description: This test checks that overloaded subprograms do not cause a duplicated suggestion.
-
-driver: shell_script

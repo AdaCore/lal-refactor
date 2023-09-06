@@ -1,2 +1,2 @@
 #!/bin/sh
-auto_import -P default.gpr --source ./src/a.adb --line 49 --column 16
+refactor_imports -P default.gpr -S ./src/a.adb -L 49 -R 16

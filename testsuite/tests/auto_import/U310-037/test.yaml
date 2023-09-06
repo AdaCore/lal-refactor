@@ -1,3 +1,5 @@
-description: This test checks that subprograms declared on child packages are handled correctly.
+description:
+    This test checks that the Auto Imports refactoring correctly handles
+    subprograms declared on child packages.
 
 driver: shell_script

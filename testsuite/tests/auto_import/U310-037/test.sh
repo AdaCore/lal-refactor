@@ -1,1 +1,1 @@
-auto_import -P default.gpr --source main.adb --line 5 --column 4
+refactor_imports -P default.gpr -S main.adb -L 5 -R 4

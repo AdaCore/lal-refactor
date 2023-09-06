@@ -1,9 +1,0 @@
-Available Imports:
-Import: Ada.Strings.Unbounded.Text_IO; Qualifier: 
-Import: Ada.Text_IO; Qualifier: 
-Import: Text_IO; Qualifier: 
-
-Edits:
-test.adb
-6:7-6:7 
-

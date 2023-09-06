@@ -1,5 +1,4 @@
-description: >
-  This test checks that the tool is capable of finding declarations in nested packages as well as
-  renames for them.
+description:
+    refactor_imports simple import
 
 driver: shell_script
