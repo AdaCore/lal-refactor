@@ -1,3 +1,6 @@
-description: This test checks that the tool does not suggest anything if the name is resolved.
+description:
+    refactor_imports - Type of a generic package instantiation, with the instantiation renamed and nested in a renamed package.
+
+baseline_regexp: True
 
 driver: shell_script

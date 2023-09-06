@@ -1,3 +1,4 @@
-description: This test checks that the tool does not suggest anything if the name is resolved.
+description:
+    refactor_imports simple import
 
 driver: shell_script

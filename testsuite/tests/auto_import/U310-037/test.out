@@ -1,9 +1,3 @@
-Available Imports:
-Import: Foo.Bar; Qualifier: Foo.Bar
-
-Edits:
-main.adb
-2:1-2:1 with Foo.Bar;
-
-5:4-5:4 Foo.Bar.
-
+<SubpDecl ["B"] foo-bar.ads:3:4-3:16>
+Foo.Bar
+Foo.Bar.
