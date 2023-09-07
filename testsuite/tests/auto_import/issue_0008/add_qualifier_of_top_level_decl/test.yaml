@@ -1,5 +1,0 @@
-description: >
-    This test checks that the tool correctly computes the import and qualifier for a top level
-    declaration.
-
-driver: shell_script

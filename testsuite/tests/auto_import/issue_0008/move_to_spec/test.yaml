@@ -1,5 +1,0 @@
-description:
-    This test checks that if the with clause is needed in the spec but it already exists
-    in the body, it is moved from the body to the spec instead of being added.
-
-driver: shell_script
