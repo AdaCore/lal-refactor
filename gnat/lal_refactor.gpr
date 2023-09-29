@@ -7,6 +7,8 @@
 with "lal_refactor_common.gpr";
 
 with "lal_tools.gpr";
+with "vss_text";
+with "vss_json";
 
 library project LAL_Refactor is
 
