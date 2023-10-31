@@ -1,120 +1,56 @@
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
+Available Imports:
+Import: A; Qualifier: A.B.C.D.IHM
+Import: A; Qualifier: A.B.C.D.Integer_Hashed_Maps
+Import: A; Qualifier: A.B.C.D.PIHM
+Import: A; Qualifier: A.B.C.D.Private_Integer_Hashed_Maps
+Import: A; Qualifier: A.B.C.IHM
+Import: A; Qualifier: A.B.C.Integer_Hashed_Maps
+Import: A; Qualifier: A.B.C.PIHM
+Import: A; Qualifier: A.B.C.Private_Integer_Hashed_Maps
+Import: A; Qualifier: A.B.IHM
+Import: A; Qualifier: A.B.Integer_Hashed_Maps
+Import: A; Qualifier: A.B.PIHM
+Import: A; Qualifier: A.B.Private_Integer_Hashed_Maps
+Import: A; Qualifier: A.IHM
+Import: A; Qualifier: A.Integer_Hashed_Maps
+Import: A; Qualifier: A.PIHM
+Import: A; Qualifier: A.Private_Integer_Hashed_Maps
+Import: E; Qualifier: E.B.C.D.IHM
+Import: E; Qualifier: E.B.C.D.Integer_Hashed_Maps
+Import: E; Qualifier: E.B.C.D.PIHM
+Import: E; Qualifier: E.B.C.D.Private_Integer_Hashed_Maps
+Import: E; Qualifier: E.B.C.IHM
+Import: E; Qualifier: E.B.C.Integer_Hashed_Maps
+Import: E; Qualifier: E.B.C.PIHM
+Import: E; Qualifier: E.B.C.Private_Integer_Hashed_Maps
+Import: E; Qualifier: E.B.IHM
+Import: E; Qualifier: E.B.Integer_Hashed_Maps
+Import: E; Qualifier: E.B.PIHM
+Import: E; Qualifier: E.B.Private_Integer_Hashed_Maps
+Import: E; Qualifier: E.IHM
+Import: E; Qualifier: E.Integer_Hashed_Maps
+Import: E; Qualifier: E.PIHM
+Import: E; Qualifier: E.Private_Integer_Hashed_Maps
+Import: F; Qualifier: F.B.C.D.IHM
+Import: F; Qualifier: F.B.C.D.Integer_Hashed_Maps
+Import: F; Qualifier: F.B.C.D.PIHM
+Import: F; Qualifier: F.B.C.D.Private_Integer_Hashed_Maps
+Import: F; Qualifier: F.B.C.IHM
+Import: F; Qualifier: F.B.C.Integer_Hashed_Maps
+Import: F; Qualifier: F.B.C.PIHM
+Import: F; Qualifier: F.B.C.Private_Integer_Hashed_Maps
+Import: F; Qualifier: F.B.IHM
+Import: F; Qualifier: F.B.Integer_Hashed_Maps
+Import: F; Qualifier: F.B.PIHM
+Import: F; Qualifier: F.B.Private_Integer_Hashed_Maps
+Import: F; Qualifier: F.IHM
+Import: F; Qualifier: F.Integer_Hashed_Maps
+Import: F; Qualifier: F.PIHM
+Import: F; Qualifier: F.Private_Integer_Hashed_Maps
 
-A.B.C.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
+Edits:
+a.adb
+1:1-1:1 with A;
 
-A.B.C.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
+46:20-46:20 A.B.C.D.IHM.
 
-A.B.C.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
-
-A.B.C.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-A.B.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-A.B.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-A.B.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-A.B.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-A.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-A.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-A.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-A.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
-
-E.B.C.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
-
-E.B.C.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
-
-E.B.C.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
-
-E.B.C.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-E.B.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-E.B.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-E.B.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-E.B.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-E.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-E.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-E.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-E.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
-
-F.B.C.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:32:10\] \|>
-
-F.B.C.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
-
-F.B.C.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:75:10\] \|>
-
-F.B.C.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-F.B.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:19:7\] \|>
-
-F.B.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-F.B.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:92:7\] \|>
-
-F.B.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-F.IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:6:4\] \|>
-
-F.Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-F.PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:110:4\] \|>
-
-F.Private_Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:45:13\] \|>
-
-IHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:45:13\] \|>
-
-Integer_Hashed_Maps.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:58:13\] \|>
-
-PIHM.
-<\| ConcreteTypeDecl \["Map"\] a-cihama.ads:[1-9][0-9]*:[1-9][0-9]*-[1-9][0-9]*:[1-9][0-9]* \[a.ads:58:13\] \|>
-
-Private_Integer_Hashed_Maps.

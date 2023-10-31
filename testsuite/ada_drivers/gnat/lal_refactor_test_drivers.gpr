@@ -13,6 +13,7 @@ project LAL_Refactor_Test_Drivers is
 
    Tools_Mains :=
      ("add_parameter.adb",
+      "auto_import.adb",
       "change_parameter_mode.adb",
       "change_parameters_default_value.adb",
       "change_parameters_type.adb",
@@ -20,7 +21,6 @@ project LAL_Refactor_Test_Drivers is
       "introduce_parameter.adb",
       "move_parameter.adb",
       "pull_up_declaration.adb",
-      "refactor_imports.adb",
       "remove_parameter.adb",
       "replace_type.adb",
       "safe_rename.adb",
