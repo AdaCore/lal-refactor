@@ -1,0 +1,5 @@
+description: >
+    This test checks that, when a with clause is already present in a package spec unit, only the
+    qualifier is added to the name.
+
+driver: shell_script
