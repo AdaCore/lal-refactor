@@ -144,7 +144,16 @@ procedure Auto_Import is
    is
       pragma Unreferenced (Context);
 
+      Units_Array : Analysis_Unit_Array (1 .. Natural (Units.Length));
+
+      function Units_Provider return Analysis_Unit_Array is
+        (Units_Array);
+
    begin
+      for J in 1 .. Units.Length loop
+         Units_Array (Integer (J)) := Units.Element (Integer (J));
+      end loop;
+
       if Unit.Has_Diagnostics then
          --  For the purposes of testing, do nothing if this Unit has any
          --  diagnostics.
@@ -156,14 +165,18 @@ procedure Auto_Import is
 
       else
          declare
-            use type Ada.Containers.Count_Type;
-
             Name              : Libadalang.Analysis.Name;
             Available_Imports : Import_Type_Ordered_Set;
 
+            use type Ada.Containers.Count_Type;
+
          begin
             if Is_Auto_Import_Available
-                 (Unit, Location, Units, Name, Available_Imports)
+                 (Unit              => Unit,
+                  Location          => Location,
+                  Units             => Units_Provider'Access,
+                  Name              => Name,
+                  Available_Imports => Available_Imports)
             then
                Ada.Text_IO.Put_Line ("Available Imports:");
                for Available_Import of Available_Imports loop
@@ -172,24 +185,11 @@ procedure Auto_Import is
                Ada.Text_IO.New_Line;
 
                if Available_Imports.Length /= 0 then
-                  declare
-                     Units_Array :
-                       Analysis_Unit_Array (1 .. Integer (Units.Length));
-
-                     function Units_Provider return Analysis_Unit_Array is
-                       (Units_Array);
-
-                  begin
-                     for J in 1 .. Units.Length loop
-                        Units_Array (Integer (J)) :=
-                          Units.Element (Integer (J));
-                     end loop;
-                     Ada.Text_IO.Put_Line ("Edits:");
-                     LAL_Refactor.Print
-                       (Create_Auto_Importer
-                          (Unit, Location, Available_Imports.First_Element)
-                          .Refactor (Units_Provider'Access));
-                  end;
+                  Ada.Text_IO.Put_Line ("Edits:");
+                  LAL_Refactor.Print
+                    (Create_Auto_Importer
+                       (Unit, Location, Available_Imports.First_Element)
+                     .Refactor (Units_Provider'Access));
                end if;
             end if;
          end;
