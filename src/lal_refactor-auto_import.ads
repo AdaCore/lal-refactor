@@ -36,7 +36,7 @@ package LAL_Refactor.Auto_Import is
    function Is_Auto_Import_Available
      (Unit              : Analysis_Unit;
       Location          : Source_Location;
-      Units             : Analysis_Unit_Vector;
+      Units             : not null access function return Analysis_Unit_Array;
       Name              : out Libadalang.Analysis.Name;
       Available_Imports : out Import_Type_Ordered_Set)
       return Boolean;
