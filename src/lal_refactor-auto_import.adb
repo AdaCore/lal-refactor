@@ -96,7 +96,7 @@ package body LAL_Refactor.Auto_Import is
 
    function Get_Available_Imports
      (Name  : Libadalang.Analysis.Name;
-      Units : Analysis_Unit_Vector)
+      Units : Analysis_Unit_Array)
       return Import_Type_Ordered_Set;
    --  Returns an ordered set with all the with clause and qualifiers that make
    --  Name resolvable.
@@ -656,7 +656,7 @@ package body LAL_Refactor.Auto_Import is
 
    function Get_Available_Imports
      (Name  : Libadalang.Analysis.Name;
-      Units : Analysis_Unit_Vector)
+      Units : Analysis_Unit_Array)
       return Import_Type_Ordered_Set
    is
       Reachable_Declarations : Defining_Name_Hashed_Set;
@@ -841,7 +841,7 @@ package body LAL_Refactor.Auto_Import is
    function Is_Auto_Import_Available
      (Unit              : Analysis_Unit;
       Location          : Source_Location;
-      Units             : Analysis_Unit_Vector;
+      Units             : not null access function return Analysis_Unit_Array;
       Name              : out Libadalang.Analysis.Name;
       Available_Imports : out Import_Type_Ordered_Set)
       return Boolean
@@ -867,7 +867,7 @@ package body LAL_Refactor.Auto_Import is
             Available_Imports :=
               Get_Available_Imports
                 (Name  => Enclosing_Name,
-                 Units => Units);
+                 Units => Units.all);
 
             return not Available_Imports.Is_Empty;
 
