@@ -917,9 +917,42 @@ package body LAL_Refactor.Pull_Up_Declaration is
                      => Ref (Reference).P_Is_Write_Reference);
 
                   if First_Is_Write_Reference then
-                     --  First reference is a write reference so this
-                     --  parameter must be an `out` parameter.
-                     Parameters_Mode_Map.Include (Definition, Ada_Mode_Out);
+
+                     --  The first reference is a write reference, so we have
+                     --  two cases:
+                     --    * There is only one reference => The mode should be
+                     --       'out'
+                     --    * We have at least two references => Check if we are
+                     --      dealing with a self-referenced assignment
+                     --      (e.g: A := A + 1). In that case the mode should be
+                     --      'in out'
+                     if References'Length = 1 then
+                        Parameters_Mode_Map.Include (Definition, Ada_Mode_Out);
+                     else
+                        declare
+                           First_Ref_Node       : constant Ada_Node := Ref
+                             (References (References'First)).As_Ada_Node;
+                           Second_Ref_Node      : constant Ada_Node := Ref
+                             (References (References'First + 1)).As_Ada_Node;
+                           Common_Ancestor_Node : constant Ada_Node :=
+                             Find_First_Common_Parent
+                               (First_Ref_Node, Second_Ref_Node);
+                        begin
+                           --  See if the first common ancestor between the 2
+                           --  first references is an assigment: if yes, the
+                           --  mode should be 'in out'.
+                           if Common_Ancestor_Node.Is_Null
+                             or else Common_Ancestor_Node.Kind
+                           not in Ada_Assign_Stmt_Range
+                           then
+                              Parameters_Mode_Map.Include
+                                (Definition, Ada_Mode_Out);
+                           else
+                              Parameters_Mode_Map.Include
+                                (Definition, Ada_Mode_In_Out);
+                           end if;
+                        end;
+                     end if;
 
                   else
                      --  First reference is a read reference.
