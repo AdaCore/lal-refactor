@@ -1,0 +1,5 @@
+title: pull_up_decl_self_referenced_assignment
+
+description: pull_up_declaration tool test
+
+driver: shell_script
