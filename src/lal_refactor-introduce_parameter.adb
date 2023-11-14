@@ -565,7 +565,10 @@ package body LAL_Refactor.Introduce_Parameter is
         Unit.Root.Lookup (End_Sloc (SLOC_Range));
 
       Enclosing_Parent : constant Ada_Node :=
-        Find_First_Common_Parent (Start_Node, End_Node);
+        (if Start_Node.Is_Null or else End_Node.Is_Null then
+            No_Ada_Node
+         else
+            Find_First_Common_Parent (Start_Node, End_Node));
 
       function Is_Valid_Object_Decl_For_Pull_Up
         (Object_Definition : Defining_Name)
@@ -615,13 +618,16 @@ package body LAL_Refactor.Introduce_Parameter is
       end Is_Valid_Object_Decl_For_Pull_Up;
 
    begin
-      return
-        (Is_Object_Decl_With_Enclosing_Subp_Body (Enclosing_Parent)
-         and then Is_Valid_Object_Decl_For_Pull_Up
-                    (Enclosing_Parent.As_Name.P_Enclosing_Defining_Name))
-        or else Is_Expr_With_Non_Null_Type_And_Enclosing_Subp_Body
-                  (Enclosing_Parent);
-
+      if Enclosing_Parent.Is_Null then
+         return False;
+      else
+         return
+           (Is_Object_Decl_With_Enclosing_Subp_Body (Enclosing_Parent)
+            and then Is_Valid_Object_Decl_For_Pull_Up
+              (Enclosing_Parent.As_Name.P_Enclosing_Defining_Name))
+           or else Is_Expr_With_Non_Null_Type_And_Enclosing_Subp_Body
+             (Enclosing_Parent);
+      end if;
    exception
       when E : others =>
          Refactor_Trace.Trace
