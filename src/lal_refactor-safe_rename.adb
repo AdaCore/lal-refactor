@@ -881,7 +881,6 @@ package body LAL_Refactor.Safe_Rename is
          return Defining_Name
         with Pre => not Scope.Is_Null
                     and then Scope.Kind in Ada_Ada_Node_List
-                                             | Ada_Basic_Decl_List_Range
                                              | Ada_Param_Spec_List_Range;
       --  For every declaration of Scope, checks if it has the same name
       --  as Self.New_Name. If so, return a the Defining_Name of the
