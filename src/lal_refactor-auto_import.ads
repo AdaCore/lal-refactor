@@ -42,7 +42,9 @@ package LAL_Refactor.Auto_Import is
       return Boolean;
    --  Checks if Location in Unit is a Name which does not resolve. If so,
    --  fills Available_Imports with all the suggestions that would make Name
-   --  resolve.
+   --  resolve. Suggestions that have the component Qualifier equal to an
+   --  empty string means that the name does not need to be qualifier, only
+   --  imported.t
 
    type Auto_Importer is new Refactoring_Tool with private;
 
