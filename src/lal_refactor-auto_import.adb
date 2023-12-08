@@ -67,12 +67,13 @@ package body LAL_Refactor.Auto_Import is
    --  declarations seen.
 
    function Create_Available_Imports
-     (Reachable_Declarations : Defining_Name_Hashed_Set;
+     (Name_To_Import         : Name;
+      Reachable_Declarations : Defining_Name_Hashed_Set;
       Reachable_Renames      :
         Defining_Name_To_Defining_Name_Vector_Hashed_Map)
       return Import_Type_Ordered_Set;
    --  For every declaration of Reachable_Declarations, creates at least one
-   --  Import_Type that is added to the returned set.
+   --  Import_Type object that is added to the returned set.
    --  While creating the Import_Type, if there is any alias that can be used
    --  in Reachable_Renames, a new Import_Type is created and also added
    --  to the returned set.
@@ -87,6 +88,12 @@ package body LAL_Refactor.Auto_Import is
    --  A.D (an alias of D)
    --  C.B (an alias of A)
    --  C.D (an alias of A and an alias of D)
+   --
+   --  Name_To_Import is used to compare the original qualifier (which only
+   --  exits if its parent is a Dotted_Name) with the one that that needs to be
+   --  added. If they're the same, it means that it does not need to be added
+   --  (only imported), therefore, the Import_Type object added to the set will
+   --  contain an empty qualifier.
 
    function Get_Appropriate_Enclosing_Name
      (Base_Id : Libadalang.Analysis.Base_Id)
@@ -488,11 +495,22 @@ package body LAL_Refactor.Auto_Import is
    ------------------------------
 
    function Create_Available_Imports
-     (Reachable_Declarations : Defining_Name_Hashed_Set;
+     (Name_To_Import         : Name;
+      Reachable_Declarations : Defining_Name_Hashed_Set;
       Reachable_Renames      :
         Defining_Name_To_Defining_Name_Vector_Hashed_Map)
      return Import_Type_Ordered_Set
    is
+      use Ada.Strings.Wide_Wide_Unbounded;
+      use Langkit_Support.Text;
+
+      Original_Qualifier : constant Unbounded_Text_Type :=
+         (if Name_To_Import.Parent.Kind in Ada_Dotted_Name then
+            To_Unbounded_Text
+              (Name_To_Import.Parent.As_Dotted_Name.F_Prefix.Text)
+          else
+            Null_Unbounded_Wide_Wide_String);
+
       function Is_Top_Level_Declaration
         (Defining_Name : Libadalang.Analysis.Defining_Name)
          return Boolean
@@ -516,105 +534,130 @@ package body LAL_Refactor.Auto_Import is
         (Defining_Name : Libadalang.Analysis.Defining_Name)
          return Import_Type_Ordered_Set
       is
-         use Ada.Strings.Wide_Wide_Unbounded;
-         use Langkit_Support.Text;
-
          Parent_Packages : constant Basic_Decl_Vector :=
            Get_Parent_Packages (Defining_Name);
 
-         Result : Import_Type_Ordered_Set :=
+         Final_Imports : Import_Type_Ordered_Set :=
            [Import_Type'
               (Import    => Null_Unbounded_Wide_Wide_String,
                Qualifier => Null_Unbounded_Wide_Wide_String)];
 
+         procedure Update_Imports
+           (Imports          : in out Import_Type_Ordered_Set;
+            Parent_Qualifier : Unbounded_Text_Type;
+            Last_Parent      : Boolean);
+         --  Adds Parent_Qualifier as a qualifier to every Import_Type object
+         --  of Final_Imports. If Last_Parent is True, then adds
+         --  Parent_Qualifier as the unit to import too. These new Import_Type
+         --  objects are added to Imports.
+
+         --------------------
+         -- Update_Imports --
+         --------------------
+
+         procedure Update_Imports
+           (Imports          : in out Import_Type_Ordered_Set;
+            Parent_Qualifier : Unbounded_Text_Type;
+            Last_Parent      : Boolean)
+         is
+         begin
+            for Import of Final_Imports loop
+               declare
+                  New_Import : Import_Type :=
+                    ((if Last_Parent
+                      then Parent_Qualifier
+                      else Null_Unbounded_Wide_Wide_String),
+                     (if Langkit_Support.Text."="
+                           (Import.Qualifier,
+                            Null_Unbounded_Wide_Wide_String)
+                      then Parent_Qualifier
+                      else Parent_Qualifier & "." & Import.Qualifier));
+
+               begin
+                  if Langkit_Support.Text."="
+                       (New_Import.Qualifier, Original_Qualifier)
+                  then
+                     New_Import.Qualifier :=
+                       Null_Unbounded_Wide_Wide_String;
+                  end if;
+                  Imports.Include (New_Import);
+               end;
+            end loop;
+         end Update_Imports;
+
       begin
          if Is_Top_Level_Declaration (Defining_Name) then
             declare
-               Temp             : Import_Type_Ordered_Set := [];
+               Updated_Imports  : Import_Type_Ordered_Set := [];
                Declaration_Name : constant Unbounded_Text_Type :=
                  To_Unbounded_Text (Defining_Name.Text);
 
             begin
                declare
-                  New_Import : constant Import_Type :=
-                    (Declaration_Name,
-                     Null_Unbounded_Wide_Wide_String);
+                  New_Import : Import_Type :=
+                    (Declaration_Name, Declaration_Name);
                begin
-                  Temp.Include (New_Import);
-               end;
-               if Reachable_Renames.Contains (Defining_Name) then
-                  for Alias of
-                    Reachable_Renames.Constant_Reference (Defining_Name)
-                  loop
-                     for Import of Result loop
+                  Updated_Imports.Include (New_Import);
+                  if Langkit_Support.Text."="
+                     (New_Import.Qualifier, Original_Qualifier)
+                  then
+                     New_Import.Qualifier :=
+                       Null_Unbounded_Wide_Wide_String;
+                  end if;
+                  if Reachable_Renames.Contains (Defining_Name) then
+                     for Alias of
+                       Reachable_Renames.Constant_Reference (Defining_Name)
+                     loop
                         declare
                            Alias_Name : constant Unbounded_Text_Type :=
                              To_Unbounded_Text (Alias.Text);
-                           New_Import : constant Import_Type :=
-                             (Alias_Name, Null_Unbounded_Wide_Wide_String);
+
                         begin
-                           Temp.Include (New_Import);
+                           Update_Imports
+                             (Updated_Imports,
+                              Alias_Name,
+                              True);
                         end;
                      end loop;
-                  end loop;
-               end if;
-               Result := Temp;
+                  end if;
+               end;
+               Final_Imports := Updated_Imports;
             end;
-            return Result;
+            return Final_Imports;
          end if;
 
          for Parent of Parent_Packages loop
             declare
-               Temp             : Import_Type_Ordered_Set := [];
+               Updated_Imports  : Import_Type_Ordered_Set := [];
                Parent_Qualifier : constant Unbounded_Text_Type :=
                  To_Unbounded_Text (Parent.P_Defining_Name.Text);
 
             begin
-               for Import of Result loop
-                  declare
-                     New_Import : constant Import_Type :=
-                       ((if Parent = Parent_Packages.Last_Element
-                         then Parent_Qualifier
-                         else Null_Unbounded_Wide_Wide_String),
-                        (if Langkit_Support.Text."="
-                              (Import.Qualifier,
-                               Null_Unbounded_Wide_Wide_String)
-                         then Parent_Qualifier
-                         else Parent_Qualifier & "." & Import.Qualifier));
-
-                  begin
-                     Temp.Include (New_Import);
-                  end;
-               end loop;
+               Update_Imports
+                 (Updated_Imports,
+                  Parent_Qualifier,
+                  Parent = Parent_Packages.Last_Element);
                if Reachable_Renames.Contains (Parent.P_Defining_Name) then
                   for Alias of
                     Reachable_Renames.Constant_Reference
                       (Parent.P_Defining_Name)
                   loop
-                     for Import of Result loop
-                        declare
-                           Alias_Name : constant Unbounded_Text_Type :=
-                             To_Unbounded_Text (Alias.Text);
-                           New_Import : constant Import_Type :=
-                             ((if Parent = Parent_Packages.Last_Element
-                               then Alias_Name
-                               else Null_Unbounded_Wide_Wide_String),
-                              (if Langkit_Support.Text."="
-                                    (Import.Qualifier,
-                                     Null_Unbounded_Wide_Wide_String)
-                               then Alias_Name
-                               else Alias_Name & "." & Import.Qualifier));
-                        begin
-                           Temp.Include (New_Import);
-                        end;
-                     end loop;
+                     declare
+                        Alias_Name : constant Unbounded_Text_Type :=
+                          To_Unbounded_Text (Alias.Text);
+                     begin
+                        Update_Imports
+                          (Updated_Imports,
+                           Alias_Name,
+                           Parent = Parent_Packages.Last_Element);
+                     end;
                   end loop;
                end if;
-               Result := Temp;
+               Final_Imports := Updated_Imports;
             end;
          end loop;
 
-         return Result;
+         return Final_Imports;
       end Make_Imports;
 
       Result : Import_Type_Ordered_Set;
@@ -695,8 +738,10 @@ package body LAL_Refactor.Auto_Import is
          end if;
       end loop;
 
-      return
-        Create_Available_Imports (Reachable_Declarations, Reachable_Renames);
+      return Create_Available_Imports
+        (Name_To_Import         => Name,
+         Reachable_Declarations => Reachable_Declarations,
+         Reachable_Renames      => Reachable_Renames);
    end Get_Available_Imports;
 
    ----------------------------------
@@ -856,10 +901,12 @@ package body LAL_Refactor.Auto_Import is
       end if;
 
       declare
+         Ignore         : Boolean;
          Enclosing_Name : constant Libadalang.Analysis.Name :=
            Get_Appropriate_Enclosing_Name (Node.As_Base_Id);
          Resolved_Name  : constant Defining_Name :=
-           Laltools.Common.Resolve_Name_Precisely (Enclosing_Name);
+           Laltools.Common.Resolve_Name
+             (Enclosing_Name, LAL_Refactor.Refactor_Trace, Ignore);
 
       begin
          if Resolved_Name.Is_Null then
@@ -1279,7 +1326,12 @@ package body LAL_Refactor.Auto_Import is
 
    begin
       Add_Import;
-      Add_Qualifier;
+      if not Ada.Strings.Wide_Wide_Unbounded."="
+        (Self.Import.Qualifier,
+         Ada.Strings.Wide_Wide_Unbounded.Null_Unbounded_Wide_Wide_String)
+      then
+         Add_Qualifier;
+      end if;
 
       return Result;
    end Refactor;

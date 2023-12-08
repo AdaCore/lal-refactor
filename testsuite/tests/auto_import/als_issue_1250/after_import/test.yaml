@@ -1,0 +1,4 @@
+description: >
+    This test checks that, when the name is already resolved, the tool does not suggest to import anything.
+
+driver: shell_script
