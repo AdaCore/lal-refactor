@@ -1902,7 +1902,7 @@ package body LAL_Refactor.Safe_Rename is
                      --  If Self.Canonical_Definition is found, then it
                      --  can't be hidden, so stop the search.
 
-                     if Node.As_Basic_Decl.P_Canonical_Part =
+                     if Node.As_Basic_Decl.P_Defining_Name.P_Canonical_Part =
                        Self.Canonical_Definition.P_Basic_Decl
                        or else Node = Stop_Node
                      then
