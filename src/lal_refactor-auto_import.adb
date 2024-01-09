@@ -272,17 +272,32 @@ package body LAL_Refactor.Auto_Import is
          -------------------
 
          procedure Append_Rename (Package_Renaming : Package_Renaming_Decl) is
-            Renamed : constant Defining_Name :=
-              Package_Renaming.P_Renamed_Package.P_Defining_Name;
+            Renamed_Definition : constant Defining_Name :=
+              (declare
+                 Renamed_Package : constant Basic_Decl :=
+                   Package_Renaming.P_Renamed_Package;
+               begin
+                 (if Renamed_Package.Is_Null then No_Defining_Name
+                  else Renamed_Package.P_Defining_Name));
 
          begin
-            if Reachable_Renames.Contains (Renamed) then
+            if Renamed_Definition.Is_Null then
+               LAL_Refactor.Refactor_Trace.Trace
+                 ("Renamed package of "
+                  & Package_Renaming.Image
+                  & " has an unexpected null definition");
+
+               return;
+            end if;
+
+            if Reachable_Renames.Contains (Renamed_Definition) then
                Reachable_Renames
-                 .Reference (Renamed)
+                 .Reference (Renamed_Definition)
                  .Append (Package_Renaming.P_Defining_Name);
             else
                Reachable_Renames
-                 .Insert (Renamed, [Package_Renaming.P_Defining_Name]);
+                 .Insert
+                    (Renamed_Definition, [Package_Renaming.P_Defining_Name]);
             end if;
          end Append_Rename;
 
