@@ -1,0 +1,5 @@
+description:
+    Refactoring Safe Rename test that confirms that the tool does not crash when
+    checking Basic_Decl nodes that contain more than one Defining_Name.
+
+driver: shell_script

@@ -1249,21 +1249,27 @@ package body LAL_Refactor.Safe_Rename is
                  Get_Package_Decl_Private_Decls (Parent_Package);
             begin
                if Private_Decls /= No_Ada_Node_List then
-                  for Node of Private_Decls loop
-                     if Node.Kind in Ada_Basic_Decl
-                       and then Check_Rename_Conflict
-                         (Self.New_Name,
-                          Node.As_Basic_Decl.P_Defining_Name)
-                     then
-                        return
-                          Create_Rename_Problem
-                            (Name_Collision'
-                               (Canonical_Definition =>
-                                  Self.Canonical_Definition,
-                                New_Name             => Self.New_Name.Original,
-                                Conflicting_Id       =>
-                                  Node.As_Basic_Decl.P_Defining_Name.F_Name));
-                     end if;
+                  for Node of Private_Decls
+                    when Node.Kind in Ada_Basic_Decl
+                  loop
+                     for Private_Declaration of
+                       Node.As_Basic_Decl.P_Defining_Names
+                     loop
+                        if Check_Rename_Conflict
+                              (Self.New_Name,
+                               Private_Declaration)
+                        then
+                           return
+                             Create_Rename_Problem
+                               (Name_Collision'
+                                  (Canonical_Definition =>
+                                    Self.Canonical_Definition,
+                                  New_Name              =>
+                                    Self.New_Name.Original,
+                                  Conflicting_Id        =>
+                                    Private_Declaration.F_Name));
+                        end if;
+                     end loop;
                   end loop;
                end if;
             end;
@@ -1886,7 +1892,7 @@ package body LAL_Refactor.Safe_Rename is
 
                function Visit
                  (Node : Ada_Node'Class)
-                     return Visit_Status;
+                  return Visit_Status;
                --  Checks if Node is a conflict, and if so, sets Result
                --  to it, stopping the iterative process.
 
@@ -1896,22 +1902,21 @@ package body LAL_Refactor.Safe_Rename is
 
                function Visit
                  (Node : Ada_Node'Class)
-                     return Visit_Status is
+                  return Visit_Status is
                begin
                   if Node.Kind in Ada_Basic_Decl then
-                     --  If Self.Canonical_Definition is found, then it
-                     --  can't be hidden, so stop the search.
-
-                     if Node.As_Basic_Decl.P_Canonical_Part =
-                       Self.Canonical_Definition.P_Basic_Decl
-                       or else Node = Stop_Node
-                     then
-                        return Stop;
-                     end if;
-
                      for Definition of
                        Node.As_Basic_Decl.P_Defining_Names
                      loop
+                        --  If Self.Canonical_Definition is found, then it
+                        --  can't be hidden, so stop the search.
+                        if Definition.P_Canonical_Part =
+                             Self.Canonical_Definition
+                          or else Node = Stop_Node
+                        then
+                           return Stop;
+                        end if;
+
                         if Check_Conflict (Definition) then
                            Conflicting_Definition := Definition;
                            return Stop;
