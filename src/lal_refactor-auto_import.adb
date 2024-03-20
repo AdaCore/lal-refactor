@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2023, AdaCore
+--  Copyright (C) 2023-2024, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -1274,7 +1274,8 @@ package body LAL_Refactor.Auto_Import is
                      null;
                   else
                      Add_With_Clause (Unit);
-                     if Has_With_Clause (Other_Unit)
+                     if not Other_Unit.Is_Null
+                       and then Has_With_Clause (Other_Unit)
                        and then not Has_Use_Clause (Other_Unit)
                      then
                         Remove_With_Clause (Other_Unit);
