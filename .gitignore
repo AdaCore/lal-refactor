@@ -13,3 +13,6 @@ testsuite/out
 
 # Clang artifacts
 .clang-format
+
+# VSCode settings possibly modified by ancr
+.vscode/settings.json

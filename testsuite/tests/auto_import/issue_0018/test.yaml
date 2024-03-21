@@ -1,0 +1,5 @@
+description:
+    This test checks that the tool does not crash if the spec where the import
+    needs to be added does not contain a body part.
+
+driver: shell_script
