@@ -916,7 +916,7 @@ package body LAL_Refactor.Auto_Import is
       end if;
 
       declare
-         Ignore         : Libadalang.Common.Ref_Result_Kind;
+         Ignore         : Boolean;
          Enclosing_Name : constant Libadalang.Analysis.Name :=
            Get_Appropriate_Enclosing_Name (Node.As_Base_Id);
          Resolved_Name  : constant Defining_Name :=
