@@ -1,6 +1,5 @@
 Available Imports:
 Import: SomeLib.Logger; Qualifier: 
-Import: SomeLib.Logger; Qualifier: SomeLib.Logger
 
 Edits:
 mylib-timestampedlogger.ads
