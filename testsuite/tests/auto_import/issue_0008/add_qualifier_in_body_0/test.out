@@ -14,5 +14,5 @@ Import: Text_IO; Qualifier: Text_IO
 
 Edits:
 test.adb
-6:7-6:10 Ada.Strings.Unbounded.Text_IO
+6:7-6:7 Ada.Strings.Unbounded.Text_IO.
 

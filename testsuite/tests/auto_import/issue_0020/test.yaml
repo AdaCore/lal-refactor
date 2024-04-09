@@ -1,0 +1,5 @@
+description:
+    This test checks that we only propose the specified
+    qualifier's unit when there is one..
+
+driver: shell_script
