@@ -13,8 +13,11 @@ with Ada.Strings.Wide_Wide_Unbounded;
 with Langkit_Support.Errors;
 
 with Libadalang.Common; use Libadalang.Common;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package body LAL_Refactor.Auto_Import is
+
+   Me : constant Trace_Handle := Create ("LAL_REFACTOR.AUTO_IMPORT", Off);
 
    package Basic_Decl_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
@@ -717,9 +720,102 @@ package body LAL_Refactor.Auto_Import is
       Units : Analysis_Unit_Array)
       return Import_Type_Ordered_Set
    is
+      use Ada.Strings.Wide_Wide_Unbounded;
+
       Reachable_Declarations : Defining_Name_Hashed_Set;
       Reachable_Renames      :
         Defining_Name_To_Defining_Name_Vector_Hashed_Map;
+      Original_Qualifier_Text : constant
+        Langkit_Support.Text.Text_Type :=
+          (if not Name.Parent.Is_Null
+           and then Name.Parent.Kind in Ada_Dotted_Name
+           then
+              Name.Parent.As_Dotted_Name.F_Prefix.Text
+           else
+              "");
+      Lowered_Original_Qualifier : constant
+        Langkit_Support.Text.Unbounded_Text_Type :=
+          Langkit_Support.Text.To_Unbounded_Text
+            (Langkit_Support.Text.To_Lower (Original_Qualifier_Text));
+      Original_Qualifier : constant
+        Langkit_Support.Text.Unbounded_Text_Type :=
+          Langkit_Support.Text.To_Unbounded_Text
+            (Original_Qualifier_Text);
+
+      Available_Imports : Import_Type_Ordered_Set;
+      Stop_Iteration : Boolean := False;
+
+      procedure Process_Compilation_Unit
+        (Comp_Unit : Compilation_Unit);
+      --  Process the given compilation unit.
+      --  If we have no specified qualifier, look for all the reachable
+      --  declarations that match Name in the given unit.
+      --  Otherwise, just create an import clause for this unit if
+      --  the user speficied this unit in the qualifier.
+
+      function Get_Fully_Qualified_Name
+        (Comp_Unit : Compilation_Unit)
+         return Langkit_Support.Text.Unbounded_Text_Type;
+      --  Return the fully qualified name of the given unit
+      --  (e.g: "ada.text_io").
+      --  The returned qualified name is in lower-case.
+
+      ------------------------------
+      -- Get_Fully_Qualified_Name --
+      ------------------------------
+
+      function Get_Fully_Qualified_Name
+        (Comp_Unit : Compilation_Unit) return
+        Langkit_Support.Text.Unbounded_Text_Type
+      is
+         Names : constant Unbounded_Text_Type_Array :=
+           Comp_Unit.P_Syntactic_Fully_Qualified_Name;
+         Fully_Qualified_Name : Langkit_Support.Text.Unbounded_Text_Type;
+      begin
+         for Name of Names loop
+            Fully_Qualified_Name :=
+              (if Ada.Strings.Wide_Wide_Unbounded."/="
+                 (Fully_Qualified_Name, Null_Unbounded_Wide_Wide_String)
+               then
+                  Fully_Qualified_Name & "." & Name
+               else Name);
+         end loop;
+
+         return Fully_Qualified_Name;
+      end Get_Fully_Qualified_Name;
+
+      ------------------------------
+      -- Process_Compilation_Unit --
+      ------------------------------
+
+      procedure Process_Compilation_Unit
+        (Comp_Unit : Compilation_Unit) is
+      begin
+         Stop_Iteration := False;
+
+         if Comp_Unit.Is_Null then
+            return;
+         end if;
+
+         if Original_Qualifier = Null_Unbounded_Wide_Wide_String then
+            Append_Reachable_Declarations
+              (Name                   => Name,
+               Unit                   => Comp_Unit,
+               Reachable_Definitions  => Reachable_Declarations,
+               Reachable_Renames      => Reachable_Renames);
+
+         elsif Lowered_Original_Qualifier
+           = Get_Fully_Qualified_Name (Comp_Unit)
+         then
+            --  The qualified specified by the user matches the unit name: stop
+            --  processing other units and create an import directive for this
+            --  unit.
+            Available_Imports.Include
+              ((Import    => Original_Qualifier,
+                Qualifier => Null_Unbounded_Wide_Wide_String));
+            Stop_Iteration := True;
+         end if;
+      end Process_Compilation_Unit;
 
    begin
       for Unit of Units loop
@@ -728,23 +824,18 @@ package body LAL_Refactor.Auto_Import is
          then
             case Unit.Root.Kind is
                when Ada_Compilation_Unit_Range =>
-                  Append_Reachable_Declarations
-                    (Name                   => Name,
-                     Unit                   => Unit.Root.As_Compilation_Unit,
-                     Reachable_Definitions => Reachable_Declarations,
-                     Reachable_Renames      => Reachable_Renames);
+                  Process_Compilation_Unit  (Unit.Root.As_Compilation_Unit);
+
+                  if Stop_Iteration then
+                     return Available_Imports;
+                  end if;
 
                when Ada_Compilation_Unit_List_Range =>
-                  for Compilation_Unit of
-                    Unit.Root.As_Compilation_Unit_List
-                  loop
-                     if not Compilation_Unit.Is_Null then
-                        Append_Reachable_Declarations
-                          (Name                   => Name,
-                           Unit                   =>
-                             Compilation_Unit.As_Compilation_Unit,
-                           Reachable_Definitions => Reachable_Declarations,
-                           Reachable_Renames      => Reachable_Renames);
+                  for Comp_Unit of Unit.Root.As_Compilation_Unit_List loop
+                     Process_Compilation_Unit (Comp_Unit.As_Compilation_Unit);
+
+                     if Stop_Iteration then
+                        return Available_Imports;
                      end if;
                   end loop;
                when others =>
@@ -753,10 +844,12 @@ package body LAL_Refactor.Auto_Import is
          end if;
       end loop;
 
-      return Create_Available_Imports
+      Available_Imports := Create_Available_Imports
         (Name_To_Import         => Name,
          Reachable_Declarations => Reachable_Declarations,
          Reachable_Renames      => Reachable_Renames);
+
+      return Available_Imports;
    end Get_Available_Imports;
 
    ----------------------------------
@@ -925,6 +1018,11 @@ package body LAL_Refactor.Auto_Import is
 
       begin
          if Resolved_Name.Is_Null then
+            Me.Trace
+              ("Can't resolve name "
+               & Enclosing_Name.Image
+               & ": check for available imports");
+
             Name := Enclosing_Name;
             Available_Imports :=
               Get_Available_Imports
@@ -934,6 +1032,12 @@ package body LAL_Refactor.Auto_Import is
             return not Available_Imports.Is_Empty;
 
          else
+            Me.Trace
+              (Enclosing_Name.Image
+               & " can be resolved (result kind: "
+               & Ignore'Img
+               & "): "
+               & "no need to check for missing imports");
             return False;
          end if;
       end;
