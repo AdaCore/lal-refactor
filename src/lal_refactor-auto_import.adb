@@ -1009,12 +1009,12 @@ package body LAL_Refactor.Auto_Import is
       end if;
 
       declare
-         Is_Imprecise         : Boolean;
+         Ignore         : Libadalang.Common.Ref_Result_Kind;
          Enclosing_Name : constant Libadalang.Analysis.Name :=
            Get_Appropriate_Enclosing_Name (Node.As_Base_Id);
          Resolved_Name  : constant Defining_Name :=
            Laltools.Common.Resolve_Name
-             (Enclosing_Name, LAL_Refactor.Refactor_Trace, Is_Imprecise);
+             (Enclosing_Name, LAL_Refactor.Refactor_Trace, Ignore);
 
       begin
          if Resolved_Name.Is_Null then
@@ -1034,8 +1034,8 @@ package body LAL_Refactor.Auto_Import is
          else
             Me.Trace
               (Enclosing_Name.Image
-               & " can be resolved (imprecise: "
-               & Is_Imprecise'Img
+               & " can be resolved (result kind: "
+               & Ignore'Img
                & "): "
                & "no need to check for missing imports");
             return False;
