@@ -19,7 +19,7 @@ package LAL_Refactor.Sort_Dependencies is
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := False)
+      No_Separator     : Boolean := True)
      return Dependencies_Sorter;
    --  Dependencies_Sorter constructor
    --  Compilation_Unit is the unit that Dependencies_Sorter will use to
