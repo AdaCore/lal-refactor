@@ -60,7 +60,7 @@ package body LAL_Refactor.Sort_Dependencies is
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := False)
+      No_Separator     : Boolean := True)
       return Dependencies_Sorter
    is (Dependencies_Sorter'
          (Compilation_Unit => Compilation_Unit,
