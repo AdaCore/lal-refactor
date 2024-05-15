@@ -12,11 +12,15 @@ with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Wide_Wide_Unbounded;
 
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 with Libadalang.Common; use Libadalang.Common;
 
 package body LAL_Refactor.Sort_Dependencies is
+
+   Me : constant Trace_Handle := Create ("LAL_REFACTOR.SORT_DEPENDENCIES");
 
    ------------------------------------
    -- Is_Sort_Dependencies_Available --
@@ -60,11 +64,13 @@ package body LAL_Refactor.Sort_Dependencies is
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := True)
+      No_Separator     : Boolean := True;
+      Where            : Source_Location_Range := No_Source_Location_Range)
       return Dependencies_Sorter
    is (Dependencies_Sorter'
          (Compilation_Unit => Compilation_Unit,
-          No_Separator     => No_Separator));
+          No_Separator     => No_Separator,
+          Where            => Where));
 
    function Less (Left, Right : Unbounded_Text_Type) return Boolean is
      (Ada.Strings.Less_Case_Insensitive
@@ -507,6 +513,7 @@ package body LAL_Refactor.Sort_Dependencies is
             Compute_Edits_Helper (Limited_Clauses);
             Exceptional_Leading_Comments
               (Initial_Node, Token_Start, Token_End_Dummy);
+
             declare
                Initial_Location : constant Source_Location :=
                  (if Token_Start /= No_Token then
@@ -532,35 +539,50 @@ package body LAL_Refactor.Sort_Dependencies is
          end Compute_Edits;
 
          In_Initial_Pragma_List   : Boolean := True;
-
+         Rel_Pos                  : Relative_Position;
       begin
-         Final_Node_Non_Inclusive := Compilation_Unit.F_Body;
+
+         Me.Trace ("Range start line: " & Self.Where.Start_Line'Img);
+         Me.Trace ("Range end line: " & Self.Where.End_Line'Img);
+
+         --  TODO: doc
          for Prelude_Node of Compilation_Unit.F_Prelude loop
-            case Prelude_Node.Kind is
-               when Ada_Pragma_Node_Range =>
-                  --  If Prelude_Node belongs to the initial list of pragma
-                  --  nodes, ignore it.
 
-                  if In_Initial_Pragma_List then
-                     null;
+            Rel_Pos := Compare
+              (Self.Where, Prelude_Node.Sloc_Range.Start_Sloc);
 
-                  else
+            if Rel_Pos = Inside then
+               Me.Trace ("Indide node: " & Prelude_Node.Image);
+
+               case Prelude_Node.Kind is
+                  when Ada_Pragma_Node_Range =>
+                     --  If Prelude_Node belongs to the initial list of pragma
+                     --  nodes, ignore it.
+
+                     if In_Initial_Pragma_List then
+                        null;
+
+                     else
+                        Process_Prelude_Node (Prelude_Node);
+                     end if;
+
+                  when Ada_With_Clause_Range | Ada_Use_Package_Clause_Range =>
+                     if In_Initial_Pragma_List then
+                        In_Initial_Pragma_List := False;
+                        Initial_Node := Prelude_Node.As_Ada_Node;
+                     end if;
+
                      Process_Prelude_Node (Prelude_Node);
-                  end if;
 
-               when Ada_With_Clause_Range | Ada_Use_Package_Clause_Range =>
-                  if In_Initial_Pragma_List then
-                     In_Initial_Pragma_List := False;
-                     Initial_Node := Prelude_Node.As_Ada_Node;
-                  end if;
-
-                  Process_Prelude_Node (Prelude_Node);
-
-               when others =>
-                  --  Unexpected Node.Kind. No need to fail, however, this
-                  --  should be logged in the future.
-                  null;
-            end case;
+                  when others =>
+                     --  Unexpected Node.Kind. No need to fail, however, this
+                     --  should be logged in the future.
+                     null;
+               end case;
+            elsif Rel_Pos = After then
+               Me.Trace ("After node: " & Prelude_Node.Image);
+               Final_Node_Non_Inclusive := Prelude_Node.As_Ada_Node;
+            end if;
          end loop;
 
          Compute_Edits;

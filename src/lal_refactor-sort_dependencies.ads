@@ -19,7 +19,8 @@ package LAL_Refactor.Sort_Dependencies is
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := True)
+      No_Separator     : Boolean := True;
+      Where            : Source_Location_Range := No_Source_Location_Range)
      return Dependencies_Sorter;
    --  Dependencies_Sorter constructor
    --  Compilation_Unit is the unit that Dependencies_Sorter will use to
@@ -27,6 +28,7 @@ package LAL_Refactor.Sort_Dependencies is
    --  If No_Separator is True, Dependencies_Sorter will not separate with/use
    --  clauses groups by a new line (in this context, a group is composed
    --  by with/use clauses that have the same parent package).
+   --  TODO: doc
 
    overriding
    function Refactor
@@ -44,6 +46,9 @@ private
          Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
          No_Separator     : Boolean;
          --  If True, do not add an empty line between with/use clauses groups
+
+         Where            : Source_Location_Range := No_Source_Location_Range;
+         --  TODO: doc
       end record;
 
 end LAL_Refactor.Sort_Dependencies;
