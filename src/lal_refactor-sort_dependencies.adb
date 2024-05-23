@@ -232,13 +232,77 @@ package body LAL_Refactor.Sort_Dependencies is
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := True;
-      Where            : Source_Location_Range := No_Source_Location_Range)
+      No_Separator     : Boolean := True)
       return Dependencies_Sorter
    is (Dependencies_Sorter'
-         (Compilation_Unit => Compilation_Unit,
-          No_Separator     => No_Separator,
-          Where            => Where));
+         (Prelude_Node               => Compilation_Unit.F_Prelude,
+          Prelude_Clause_Start_Index =>
+            Compilation_Unit.F_Prelude.First_Child_Index,
+          Prelude_Clause_End_Index   =>
+            Compilation_Unit.F_Prelude.Last_Child_Index,
+          No_Separator               => No_Separator));
+
+   --------------------------------
+   -- Create_Dependencies_Sorter --
+   --------------------------------
+
+   function Create_Dependencies_Sorter
+     (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
+      Where            : Source_Location_Range;
+      No_Separator     : Boolean := True)
+      return Dependencies_Sorter
+   is
+      Prelude_Node : constant Ada_Node_List := Compilation_Unit.F_Prelude;
+
+      function Get_Prelude_Clause
+        (Location : Source_Location)
+         return Ada_Node
+      with Pre => Compare (Prelude_Node.Sloc_Range, Location) = Inside;
+
+      ------------------------
+      -- Get_Prelude_Clause --
+      ------------------------
+
+      function Get_Prelude_Clause
+        (Location : Source_Location)
+         return Ada_Node
+      is
+         Result : Ada_Node := Compilation_Unit.Lookup (Location);
+         Parent : Ada_Node := No_Ada_Node;
+
+      begin
+         --  NOTE: This is NOT a hot loop.
+         --  Given the pre condition of Create_Dependencies_Sorter and this
+         --  function (``Where`` must be inside ``Compilation_Unit.F_Prelude``,
+         --  we will always hit the return inside the loop). But just in case
+         --  this logic is somehow  wrong, exit when the ``Parent`` becomes
+         --  null and raise a ``Program_Error``.
+         loop
+            Parent := Result.Parent;
+            exit when Parent.Is_Null;
+
+            if Parent = Prelude_Node then
+               return Result;
+            end if;
+            Result := Parent;
+         end loop;
+
+         raise Program_Error with "Failed to get prelude clause";
+      end Get_Prelude_Clause;
+
+      Prelude_Clause_Start_Index : constant Positive :=
+        Get_Prelude_Clause (Where.Start_Sloc).Child_Index + 1;
+      Prelude_Clause_End_Index   : constant Positive :=
+        Get_Prelude_Clause (Where.End_Sloc).Child_Index + 1;
+
+   begin
+      return
+        Dependencies_Sorter'
+          (Prelude_Node,
+           Prelude_Clause_Start_Index,
+           Prelude_Clause_End_Index,
+           No_Separator);
+   end Create_Dependencies_Sorter;
 
    ----------------------
    -- Leading_Comments --
@@ -375,6 +439,17 @@ package body LAL_Refactor.Sort_Dependencies is
       end;
    end Is_Sort_Dependencies_Available;
 
+   ------------------------------------
+   -- Is_Sort_Dependencies_Available --
+   ------------------------------------
+
+   function Is_Sort_Dependencies_Available
+     (Unit      : Analysis_Unit;
+      Selection : Source_Location_Range)
+      return Boolean
+   is (Is_Sort_Dependencies_Available (Unit, Selection.Start_Sloc)
+       and Is_Sort_Dependencies_Available (Unit, Selection.End_Sloc));
+
    --------------
    -- Refactor --
    --------------
@@ -387,30 +462,25 @@ package body LAL_Refactor.Sort_Dependencies is
    is
       Edits : Refactoring_Edits;
 
-      procedure Process_Compilation_Unit
-        (Compilation_Unit : Libadalang.Analysis.Compilation_Unit);
+      procedure Process_Prelude
+        (Start_Clause_Index : Positive;
+         End_Clause_Index   : Positive);
       --  Steps:
       --  1) Skip initial pragma list (this does not need to be sorted)
       --  2) Processes each remaining node of the prelude by building a
       --     Prelude_Type object
       --  3) Renders the Prelude_Type object and adds it to Edits
 
-      ------------------------------
-      -- Process_Compilation_Unit --
-      ------------------------------
+      ---------------------
+      -- Process_Prelude --
+      ---------------------
 
-      procedure Process_Compilation_Unit
-        (Compilation_Unit : Libadalang.Analysis.Compilation_Unit)
+      procedure Process_Prelude
+        (Start_Clause_Index : Positive;
+         End_Clause_Index   : Positive)
       is
-         Prelude_Node                : constant Ada_Node_List :=
-           Compilation_Unit.F_Prelude;
-         Prelude_Node_Cursor         : Positive               :=
-           Ada_Node_List_First (Prelude_Node);
-
-         Initial_Node             : Ada_Node := No_Ada_Node;
-         --  First node of the prelude that will be sorted
-         Final_Node_Non_Inclusive : Ada_Node := No_Ada_Node;
-         --  Where the prelude ends
+         Adjusted_Start_Clause_Index : Positive := Start_Clause_Index;
+         --  First and last node of the prelude that will be sorted
 
          Current_Clause : Packages_Clause_Access := null;
 
@@ -421,9 +491,9 @@ package body LAL_Refactor.Sort_Dependencies is
          --  The edits source location range is given by Initial_Node and
          --  Final_Node_Non_Inclusive.
 
-         procedure Process_Prelude_Node
-           (Prelude_Node : Libadalang.Analysis.Ada_Node);
-         --  If `Prelude_Node` is a `WithClause` or `UsePackageClause`:
+         procedure Process_Prelude_Clause
+           (Prelude_Clause : Libadalang.Analysis.Ada_Node);
+         --  If `Prelude_Clause` is a `WithClause` or `UsePackageClause`:
          --     1) if `Current_Clause /= null` then `Current_Clause` is
          --        is considered as finished and is added to `Prelude`
          --     2) rebuilds `Current_Clause` based on `Prelude_Node`
@@ -440,8 +510,22 @@ package body LAL_Refactor.Sort_Dependencies is
          -------------------
 
          procedure Compute_Edits is
+            use Ada.Strings.Wide_Wide_Unbounded;
+
             Token_Start : Token_Reference := No_Token;
-            Token_End_Dummy : Token_Reference := No_Token;
+            Token_End   : Token_Reference := No_Token;
+            Token_Dummy : Token_Reference := No_Token;
+
+            Start_Node             : constant Ada_Node'Class :=
+              Ada_Node_List_Element
+                (Self.Prelude_Node, Adjusted_Start_Clause_Index);
+            End_Node_Non_Inclusive : constant Ada_Node'Class :=
+              (if Self.Prelude_Clause_End_Index
+                  = Self.Prelude_Node.Last_Child_Index
+               then Self.Prelude_Node.Next_Sibling
+               else Ada_Node_List_Element
+                      (Self.Prelude_Node, End_Clause_Index)
+                      .Next_Sibling);
 
             Prelude_Text : Unbounded_Text_Type;
 
@@ -452,17 +536,29 @@ package body LAL_Refactor.Sort_Dependencies is
             Prelude.Sort;
             Prelude_Text := To_Ada_Source (Prelude, Self.No_Separator);
 
+            --  Add a blank line between the prelude and the unit body
+            if Self.Prelude_Clause_End_Index
+                  = Self.Prelude_Node.Last_Child_Index
+            then
+               Append (Prelude_Text, Ada.Characters.Wide_Wide_Latin_1.LF);
+            end if;
+
             Leading_Comments
-              (Initial_Node, Token_Start, Token_End_Dummy);
+              (Start_Node, Token_Start, Token_Dummy);
+            Leading_Comments
+              (End_Node_Non_Inclusive, Token_End, Token_Dummy);
 
             declare
                Initial_Location : constant Source_Location :=
                  (if Token_Start /= No_Token then
                     Start_Sloc (Sloc_Range (Data (Token_Start)))
                   else
-                     Start_Sloc (Initial_Node.Sloc_Range));
+                     Start_Sloc (Start_Node.Sloc_Range));
                Final_Location   : constant Source_Location :=
-                 Start_Sloc (Final_Node_Non_Inclusive.Sloc_Range);
+                 (if Token_End /= No_Token then
+                    Start_Sloc (Sloc_Range (Data (Token_End)))
+                  else
+                     Start_Sloc (End_Node_Non_Inclusive.Sloc_Range));
                Edit_SLOC_Range  : constant Source_Location_Range :=
                  Make_Range (Initial_Location, Final_Location);
 
@@ -475,16 +571,17 @@ package body LAL_Refactor.Sort_Dependencies is
 
             begin
                Safe_Insert
-                 (Edits.Text_Edits, Compilation_Unit.Unit.Get_Filename, Edit);
+                 (Edits.Text_Edits,
+                  Self.Prelude_Node.Unit.Get_Filename, Edit);
             end;
          end Compute_Edits;
 
-         --------------------------
-         -- Process_Prelude_Node --
-         --------------------------
+         ----------------------------
+         -- Process_Prelude_Clause --
+         ----------------------------
 
-         procedure Process_Prelude_Node
-           (Prelude_Node : Libadalang.Analysis.Ada_Node)
+         procedure Process_Prelude_Clause
+           (Prelude_Clause : Libadalang.Analysis.Ada_Node)
          is
             function First_Name
               (Name : Libadalang.Analysis.Name)
@@ -498,14 +595,14 @@ package body LAL_Refactor.Sort_Dependencies is
             Leading_Comments  : constant Unbounded_Text_Type :=
               LAL_Refactor
                 .Sort_Dependencies
-                .Leading_Comments (Prelude_Node);
+                .Leading_Comments (Prelude_Clause);
             Trailing_Comments : constant Unbounded_Text_Type :=
               LAL_Refactor
                 .Sort_Dependencies
-                .Trailing_Comments (Prelude_Node);
+                .Trailing_Comments (Prelude_Clause);
 
          begin
-            if Prelude_Node.Kind in Ada_With_Clause_Range then
+            if Prelude_Clause.Kind in Ada_With_Clause_Range then
                if Current_Clause /= null then
                   Current_Clause.Accept_Visitor (Prelude);
                   Free (Current_Clause);
@@ -515,7 +612,7 @@ package body LAL_Refactor.Sort_Dependencies is
                declare
                   With_Clause              :
                     constant Libadalang.Analysis.With_Clause                :=
-                      Prelude_Node.As_With_Clause;
+                      Prelude_Clause.As_With_Clause;
                   Packages                 : constant Unbounded_Text_Vector :=
                     [for Package_Name of With_Clause.F_Packages
                      => To_Unbounded_Text (Package_Name.Text)];
@@ -529,7 +626,7 @@ package body LAL_Refactor.Sort_Dependencies is
                begin
                   Current_Clause :=
                     new With_Clause_Type'
-                          (Node                     => Prelude_Node,
+                          (Node                     => Prelude_Clause,
                            Is_Dotted_Name           => Is_Dotted_Name,
                            Packages                 => Packages,
                            First_Package_First_Name =>
@@ -542,7 +639,7 @@ package body LAL_Refactor.Sort_Dependencies is
                              Use_Package_Clause_Vectors.Empty_Vector);
                end;
 
-            elsif Prelude_Node.Kind in Ada_Use_Package_Clause_Range then
+            elsif Prelude_Clause.Kind in Ada_Use_Package_Clause_Range then
                if Current_Clause /= null then
                   Current_Clause.Accept_Visitor (Prelude);
                   Free (Current_Clause);
@@ -552,7 +649,7 @@ package body LAL_Refactor.Sort_Dependencies is
                declare
                   Use_Package_Clause       :
                     constant Libadalang.Analysis.Use_Package_Clause         :=
-                      Prelude_Node.As_Use_Package_Clause;
+                      Prelude_Clause.As_Use_Package_Clause;
                   Packages                 : constant Unbounded_Text_Vector :=
                     [for Package_Name of Use_Package_Clause.F_Packages
                      => To_Unbounded_Text (Package_Name.Text)];
@@ -566,7 +663,7 @@ package body LAL_Refactor.Sort_Dependencies is
                begin
                   Current_Clause :=
                     new Use_Package_Clause_Type'
-                          (Node                     => Prelude_Node,
+                          (Node                     => Prelude_Clause,
                            Is_Dotted_Name           => Is_Dotted_Name,
                            Packages                 => Packages,
                            First_Package_First_Name =>
@@ -577,11 +674,11 @@ package body LAL_Refactor.Sort_Dependencies is
                              Pragma_Clause_Vectors.Empty_Vector);
                end;
 
-            elsif Prelude_Node.Kind in Ada_Pragma_Node_Range then
+            elsif Prelude_Clause.Kind in Ada_Pragma_Node_Range then
                declare
                   Clause : constant Pragma_Clause_Type :=
                     Pragma_Clause_Type'
-                      (Prelude_Node, Leading_Comments, Trailing_Comments);
+                      (Prelude_Clause, Leading_Comments, Trailing_Comments);
 
                begin
                   Current_Clause.Associated_Pragmas.Append (Clause);
@@ -592,10 +689,11 @@ package body LAL_Refactor.Sort_Dependencies is
                --  WithClause, UsePackageClause and PragmaNode nodes should be
                --  in the prelude.
                raise Program_Error
-                 with "Unexpected prelude node kind " & Prelude_Node.Kind_Name;
+                 with "Unexpected prelude node kind "
+                      & Prelude_Clause.Kind_Name;
 
             end if;
-         end Process_Prelude_Node;
+         end Process_Prelude_Clause;
 
          ------------------------------
          -- Skip_Initial_Pragma_List --
@@ -606,29 +704,36 @@ package body LAL_Refactor.Sort_Dependencies is
          begin
             Me.Trace ("Skipping the initial pragma list");
 
-            while Ada_Node_List_Has_Element (Prelude_Node, Prelude_Node_Cursor)
+            while Ada_Node_List_Has_Element
+                    (Self.Prelude_Node, Adjusted_Start_Clause_Index)
             loop
                exit when
-                 Ada_Node_List_Element (Prelude_Node, Prelude_Node_Cursor).Kind
-                 not in Ada_Pragma_Node_Range;
+                 Ada_Node_List_Element
+                   (Self.Prelude_Node, Adjusted_Start_Clause_Index)
+                   .Kind
+                 not in Ada_Pragma_Node_Range
+                 or Adjusted_Start_Clause_Index >= End_Clause_Index;
 
                if GNATCOLL.Traces.Is_Active (Me) then
                   Me.Trace
                     ("Skipping "
                      & Ada_Node_List_Element
-                         (Prelude_Node, Prelude_Node_Cursor)
+                         (Self.Prelude_Node, Adjusted_Start_Clause_Index)
                          .Image);
                end if;
 
-               Prelude_Node_Cursor :=
-                 Ada_Node_List_Next (Prelude_Node, Prelude_Node_Cursor);
+               Adjusted_Start_Clause_Index :=
+                 Ada_Node_List_Next
+                   (Self.Prelude_Node, Adjusted_Start_Clause_Index);
             end loop;
          end Skip_Initial_Pragma_List;
 
       begin
          Skip_Initial_Pragma_List;
 
-         if not Ada_Node_List_Has_Element (Prelude_Node, Prelude_Node_Cursor)
+         if not Ada_Node_List_Has_Element
+                  (Self.Prelude_Node, Adjusted_Start_Clause_Index)
+            or Adjusted_Start_Clause_Index >= End_Clause_Index
          then
             Me.Trace
               ("All the prelude elements have been skipped");
@@ -636,33 +741,26 @@ package body LAL_Refactor.Sort_Dependencies is
             return;
          end if;
 
-         Initial_Node             :=
-           Ada_Node_List_Element (Prelude_Node, Prelude_Node_Cursor)
-             .As_Ada_Node;
-         Final_Node_Non_Inclusive := Compilation_Unit.F_Body;
-
          if GNATCOLL.Traces.Is_Active (Me) then
-            Me.Trace ("Initial node: " & Initial_Node.Image);
             Me.Trace
-              ("Final node: " & Final_Node_Non_Inclusive.Image);
+              ("Initial node index:" & Adjusted_Start_Clause_Index'Image);
+            Me.Trace ("Final node index: " & End_Clause_Index'Image);
          end if;
 
-         while Ada_Node_List_Has_Element
-                 (Prelude_Node, Prelude_Node_Cursor)
+         for Prelude_Clause_Index in
+           Adjusted_Start_Clause_Index .. End_Clause_Index
          loop
             if GNATCOLL.Traces.Is_Active (Me) then
                Me.Trace
-                 ("Process prelude node "
-                  & Ada_Node_List_Element (Prelude_Node, Prelude_Node_Cursor)
+                 ("Process prelude clause "
+                  & Ada_Node_List_Element
+                      (Self.Prelude_Node, Prelude_Clause_Index)
                       .Image);
             end if;
 
-            Process_Prelude_Node
-              (Ada_Node_List_Element (Prelude_Node, Prelude_Node_Cursor)
+            Process_Prelude_Clause
+              (Ada_Node_List_Element (Self.Prelude_Node, Prelude_Clause_Index)
                  .As_Ada_Node);
-
-            Prelude_Node_Cursor :=
-              Ada_Node_List_Next (Prelude_Node, Prelude_Node_Cursor);
          end loop;
 
          pragma Assert (Current_Clause /= null);
@@ -673,10 +771,12 @@ package body LAL_Refactor.Sort_Dependencies is
          Me.Trace ("Finished processing prelude");
 
          Compute_Edits;
-      end Process_Compilation_Unit;
+      end Process_Prelude;
 
    begin
-      Process_Compilation_Unit (Self.Compilation_Unit);
+      Process_Prelude
+        (Self.Prelude_Clause_Start_Index,
+         Self.Prelude_Clause_End_Index);
 
       return Edits;
    end Refactor;
@@ -783,9 +883,6 @@ package body LAL_Refactor.Sort_Dependencies is
          end loop;
       end;
 
-      --  Extra LF to leave a blank line between the prelude and the next node
-      Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
-
       return Result;
    end To_Ada_Source;
 
@@ -800,16 +897,63 @@ package body LAL_Refactor.Sort_Dependencies is
    is
       use Ada.Strings.Wide_Wide_Unbounded;
 
+      All_Sections : constant Unbounded_Text_Vector :=
+        [To_Ada_Source (Self.Public_Section, No_Separator),
+         To_Ada_Source (Self.Private_Section, No_Separator),
+         To_Ada_Source (Self.Limited_Section, No_Separator),
+         To_Ada_Source (Self.Limited_Private_Section, No_Separator)];
+
+      --  NOTE: The following spec is commented due to a GNAT bug
+      --  function Filter_Empty (Sections : Unbounded_Text_Vector)
+      --    return Unbounded_Text_Vector;
+      --  Returns Sections without Null_Unbounded_Wide_Wide_String elements
+
+      function Join_With_LF (Sections : Unbounded_Text_Vector)
+         return Unbounded_Text_Type;
+      --  Joins Sections elements with an LF
+
+      -------------------
+      --  Filter_Empty --
+      -------------------
+
+      function Filter_Empty (Sections : Unbounded_Text_Vector)
+         return Unbounded_Text_Vector
+      is ([for Section of Sections
+           when not Langkit_Support.Text."="
+                      (Section, Null_Unbounded_Wide_Wide_String)
+           => Section]);
+
+      ------------------
+      -- Join_With_LF --
+      ------------------
+
+      function Join_With_LF (Sections : Unbounded_Text_Vector)
+         return Unbounded_Text_Type
+      is
+         use Unbounded_Text_Vectors;
+
+         Result : Unbounded_Text_Type;
+
+         Section_Cursor : Cursor := Sections.First;
+
+      begin
+         if not Has_Element (Section_Cursor) then
+            return Result;
+         end if;
+
+         Append (Result, Element (Section_Cursor));
+         Next (Section_Cursor);
+         while Has_Element (Section_Cursor) loop
+            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
+            Append (Result, Element (Section_Cursor));
+            Next (Section_Cursor);
+         end loop;
+
+         return Result;
+      end Join_With_LF;
+
    begin
-      return Result : Unbounded_Text_Type do
-         Append (Result, To_Ada_Source (Self.Public_Section, No_Separator));
-         Append (Result, To_Ada_Source (Self.Private_Section, No_Separator));
-         Append (Result, To_Ada_Source (Self.Limited_Section, No_Separator));
-         Append
-           (Result,
-            To_Ada_Source (Self.Limited_Private_Section, No_Separator));
-         Append (Result, To_Ada_Source (Self.Leftover_Use_Section));
-      end return;
+      return Join_With_LF (Filter_Empty (All_Sections));
    end To_Ada_Source;
 
    -------------------

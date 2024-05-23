@@ -21,13 +21,19 @@ package LAL_Refactor.Sort_Dependencies is
       Sloc             : Source_Location)
       return Boolean;
    --  Returns True if Sloc is inside a compilation unit prelude
+      --
+
+   function Is_Sort_Dependencies_Available
+     (Unit      : Analysis_Unit;
+      Selection : Source_Location_Range)
+      return Boolean;
+   --  Returns True if Selection is inside a compilation unit prelude
 
    type Dependencies_Sorter is new Refactoring_Tool with private;
 
    function Create_Dependencies_Sorter
      (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-      No_Separator     : Boolean := True;
-      Where            : Source_Location_Range := No_Source_Location_Range)
+      No_Separator     : Boolean := True)
      return Dependencies_Sorter;
    --  Dependencies_Sorter constructor.
    --
@@ -62,6 +68,27 @@ package LAL_Refactor.Sort_Dependencies is
    --  with Garply;
    --  ```
 
+   function Create_Dependencies_Sorter
+     (Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
+      Where            : Source_Location_Range;
+      No_Separator     : Boolean := True)
+     return Dependencies_Sorter
+   with Pre =>
+          (Where /= No_Source_Location_Range
+           and then
+             Compare
+               (Compilation_Unit.F_Prelude.Sloc_Range,
+                Where.Start_Sloc)
+             = Inside
+           and then
+             Compare
+               (Compilation_Unit.F_Prelude.Sloc_Range,
+                Where.End_Sloc)
+             = Inside);
+   --  Dependencies_Sorter constructor for sorting a slice of the prelude.
+   --
+   --  Where defines the clauses to be sorted.
+
    overriding
    function Refactor
      (Self           : Dependencies_Sorter;
@@ -75,12 +102,11 @@ private
 
    type Dependencies_Sorter is new Refactoring_Tool with
       record
-         Compilation_Unit : Libadalang.Analysis.Compilation_Unit;
-         No_Separator     : Boolean;
+         Prelude_Node               : Ada_Node_List;
+         Prelude_Clause_Start_Index : Positive;
+         Prelude_Clause_End_Index   : Positive;
+         No_Separator : Boolean;
          --  If True, do not add an empty line between with/use clauses groups
-
-         Where            : Source_Location_Range := No_Source_Location_Range;
-         --  TODO: doc
       end record;
 
    type Clause_Type is abstract tagged
