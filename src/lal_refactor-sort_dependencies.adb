@@ -734,13 +734,11 @@ package body LAL_Refactor.Sort_Dependencies is
                  not in Ada_Pragma_Node_Range
                  or Adjusted_Start_Clause_Index >= End_Clause_Index;
 
-               if GNATCOLL.Traces.Is_Active (Me) then
-                  Me.Trace
-                    ("Skipping "
-                     & Ada_Node_List_Element
-                         (Self.Prelude_Node, Adjusted_Start_Clause_Index)
-                         .Image);
-               end if;
+               Me.Trace
+                 ("Skipping "
+                  & Ada_Node_List_Element
+                      (Self.Prelude_Node, Adjusted_Start_Clause_Index)
+                      .Image);
 
                Adjusted_Start_Clause_Index :=
                  Ada_Node_List_Next
@@ -761,22 +759,17 @@ package body LAL_Refactor.Sort_Dependencies is
             return;
          end if;
 
-         if GNATCOLL.Traces.Is_Active (Me) then
-            Me.Trace
-              ("Initial node index:" & Adjusted_Start_Clause_Index'Image);
-            Me.Trace ("Final node index: " & End_Clause_Index'Image);
-         end if;
+         Me.Trace ("Initial node index:" & Adjusted_Start_Clause_Index'Image);
+         Me.Trace ("Final node index: " & End_Clause_Index'Image);
 
          for Prelude_Clause_Index in
            Adjusted_Start_Clause_Index .. End_Clause_Index
          loop
-            if GNATCOLL.Traces.Is_Active (Me) then
-               Me.Trace
-                 ("Process prelude clause "
-                  & Ada_Node_List_Element
-                      (Self.Prelude_Node, Prelude_Clause_Index)
-                      .Image);
-            end if;
+            Me.Trace
+              ("Process prelude clause "
+               & Ada_Node_List_Element
+                   (Self.Prelude_Node, Prelude_Clause_Index)
+                   .Image);
 
             Process_Prelude_Clause
               (Ada_Node_List_Element (Self.Prelude_Node, Prelude_Clause_Index)
