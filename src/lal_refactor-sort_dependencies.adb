@@ -15,6 +15,20 @@ package body LAL_Refactor.Sort_Dependencies is
 
    Me : constant Trace_Handle := Create ("LAL_REFACTOR.SORT_DEPENDENCIES");
 
+   function Join
+     (Vector    : Unbounded_Text_Vector;
+      Separator : Unbounded_Text_Type)
+      return Unbounded_Text_Type;
+   --  Joins Vector elements with Separator
+
+   function Join_With_Double_LF (Vector : Unbounded_Text_Vector)
+      return Unbounded_Text_Type;
+   --  Joins Vector elements with two LFs
+
+   function Join_With_LF (Vector : Unbounded_Text_Vector)
+      return Unbounded_Text_Type;
+   --  Joins Vector elements with an LF
+
    function Leading_Comments
      (Node : Ada_Node'Class)
       return Unbounded_Text_Type;
@@ -322,6 +336,66 @@ package body LAL_Refactor.Sort_Dependencies is
       end;
    end Create_Dependencies_Sorter;
 
+   ----------
+   -- Join --
+   ----------
+
+   function Join
+     (Vector    : Unbounded_Text_Vector;
+      Separator : Unbounded_Text_Type)
+      return Unbounded_Text_Type
+   is
+      use Ada.Strings.Wide_Wide_Unbounded;
+      use Unbounded_Text_Vectors;
+
+      Result : Unbounded_Text_Type;
+
+      Element_Cursor : Cursor := Vector.First;
+
+   begin
+      if not Has_Element (Element_Cursor) then
+         return Result;
+      end if;
+
+      Append (Result, Element (Element_Cursor));
+      Next (Element_Cursor);
+      while Has_Element (Element_Cursor) loop
+         Append (Result, Separator);
+         Append (Result, Element (Element_Cursor));
+         Next (Element_Cursor);
+      end loop;
+
+      return Result;
+   end Join;
+
+   -------------------------
+   -- Join_With_Double_LF --
+   -------------------------
+
+   function Join_With_Double_LF (Vector : Unbounded_Text_Vector)
+      return Unbounded_Text_Type
+   is
+      use Ada.Characters.Wide_Wide_Latin_1;
+      use Ada.Strings.Wide_Wide_Unbounded;
+
+   begin
+      return Join (Vector, 2 * LF);
+   end Join_With_Double_LF;
+
+   ------------------
+   -- Join_With_LF --
+   ------------------
+
+   function Join_With_LF (Vector : Unbounded_Text_Vector)
+      return Unbounded_Text_Type
+   is
+      use Ada.Characters.Wide_Wide_Latin_1;
+      use Ada.Strings.Wide_Wide_Unbounded;
+
+   begin
+      return Join (Vector, 1 * LF);
+   end Join_With_LF;
+
    ----------------------
    -- Leading_Comments --
    ----------------------
@@ -530,23 +604,101 @@ package body LAL_Refactor.Sort_Dependencies is
          procedure Compute_Edits is
             use Ada.Strings.Wide_Wide_Unbounded;
 
-            Token_Start : Token_Reference := No_Token;
-            Token_End   : Token_Reference := No_Token;
-            Token_Dummy : Token_Reference := No_Token;
+            function Compute_End_Location return Source_Location;
+            --  Computes the end location of the text edit.
+            --  If Self.Prelude_Clause_End_Index is the last clause of the
+            --  prelude, then this is the the start location of the unit body
+            --  or of its leading comments if existent.
+            --  Otherwise, it is the start location of the token after the
+            --  clause defined by Self.Prelude_Clause_End_Index.
 
-            Start_Node             : constant Ada_Node'Class :=
-              Ada_Node_List_Element
-                (Self.Prelude_Node, Adjusted_Start_Clause_Index);
-            End_Node_Non_Inclusive : constant Ada_Node'Class :=
-              (if Self.Prelude_Clause_End_Index
+            function Compute_Start_Location return Source_Location;
+            --  Computes the start location of the text edit.
+            --  This is the start location of the first clause or of its
+            --  leading comments if existent.
+
+            --------------------------
+            -- Compute_End_Location --
+            --------------------------
+
+            function Compute_End_Location return Source_Location
+            is
+               Token_End   : Token_Reference := No_Token;
+               Token_Dummy : Token_Reference := No_Token;
+
+               End_Node : Ada_Node := No_Ada_Node;
+               --  This node is used to to compute the last position of the
+               --  text edit. It needs to be this Node's leading comments first
+               --  token, if existent, or this Node's first token if not.
+
+            begin
+               if Self.Prelude_Clause_End_Index
                   = Self.Prelude_Node.Last_Child_Index
-               then Self.Prelude_Node.Next_Sibling
-               else Ada_Node_List_Element
-                      (Self.Prelude_Node, End_Clause_Index)
-                      .Next_Sibling);
-            --  This node is used to to compute the last position of the text
-            --  edit. It needs to be this Node's leading comments first token,
-            --  if existent, or this Node's first token if not.
+               then
+                  --  Self.Prelude_Clause_End_Index is the last clause of the
+                  --  prelude. Compute the end location based on the
+                  --  compilation unit body.
+
+                  End_Node := Self.Prelude_Node.Next_Sibling;
+                  --  This is equivalent to
+                  --  Self.Prelude_Node.P_Enclosing_Compilation_Unit.F_Body
+                  Leading_Comments (End_Node, Token_End, Token_Dummy);
+                  if Token_End = No_Token then
+                     Token_End := End_Node.Token_Start;
+                  end if;
+                  --  If End_Node has leading comments, then Token_End is the
+                  --  is the text edit last token (non inclusive).
+
+                  return Start_Sloc (Sloc_Range (Data (Token_End)));
+
+               else
+                  --  Self.Prelude_Clause_End_Index is not the last clause of
+                  --  the prelude. Compute the end location based on the next
+                  --  clause.
+
+                  End_Node :=
+                    Ada_Node_List_Element
+                      (Self.Prelude_Node, End_Clause_Index).As_Ada_Node;
+
+                  Trailing_Comments (End_Node, Token_Dummy, Token_End);
+                  if Token_End = No_Token then
+                     Token_End := End_Node.Token_End;
+                  end if;
+                  --  If End_Node has trailing comments, then Token_End is the
+                  --  text edit last token (non inclusive).
+
+                  return Start_Sloc (Sloc_Range (Data (Next (Token_End))));
+               end if;
+            end Compute_End_Location;
+
+            ----------------------------
+            -- Compute_Start_Location --
+            ----------------------------
+
+            function Compute_Start_Location return Source_Location
+            is
+               Token_Start : Token_Reference := No_Token;
+               Token_Dummy : Token_Reference := No_Token;
+
+               Start_Node  : constant Ada_Node'Class :=
+                 Ada_Node_List_Element
+                   (Self.Prelude_Node, Adjusted_Start_Clause_Index);
+
+            begin
+               Leading_Comments
+                 (Start_Node, Token_Start, Token_Dummy);
+               --  If Start_Node has leading comments, then Token_Start is the
+               --  text edit first token.
+
+               return
+                 (if Token_Start /= No_Token then
+                    Start_Sloc (Sloc_Range (Data (Token_Start)))
+                  else
+                    Start_Sloc (Start_Node.Sloc_Range));
+               --  If Token_Start /= No_Token then Start_Node has leading
+               --  comments. Use Token_Start start location as the text edit
+               --  initial location. Otherwise use Start_Node start location.
+            end Compute_Start_Location;
 
             Prelude_Text : Unbounded_Text_Type;
 
@@ -556,43 +708,18 @@ package body LAL_Refactor.Sort_Dependencies is
             Prelude.Associate_Use_Package_Clauses;
             Prelude.Sort;
             Prelude_Text := To_Ada_Source (Prelude, Self.No_Separator);
-
-            --  Add a blank line between the prelude and the unit body
             if Self.Prelude_Clause_End_Index
-                  = Self.Prelude_Node.Last_Child_Index
+               = Self.Prelude_Node.Last_Child_Index
             then
+               --  Add a blank line between the prelude and the unit body.
+               --  Double LF because Prelude_Text does not end with LF.
+               Append (Prelude_Text, Ada.Characters.Wide_Wide_Latin_1.LF);
                Append (Prelude_Text, Ada.Characters.Wide_Wide_Latin_1.LF);
             end if;
 
-            Leading_Comments
-              (Start_Node, Token_Start, Token_Dummy);
-            --  If Start_Node has leading comments, then Token_Start is the
-            --  text edit first token.
-            Leading_Comments
-              (End_Node_Non_Inclusive, Token_End, Token_Dummy);
-            --  If End_Node_Non_Inclusive has leading comments, then Token_End
-            --  is the text edit last token (non inclusive).
-
             declare
-               Initial_Location : constant Source_Location :=
-                 (if Token_Start /= No_Token then
-                    Start_Sloc (Sloc_Range (Data (Token_Start)))
-                  else
-                     Start_Sloc (Start_Node.Sloc_Range));
-               --  If Token_Start /= No_Token then Start_Node has leading
-               --  comments. Use Token_Start start location as the text edit
-               --  initial location. Otherwise use Start_Node start location.
-               Final_Location   : constant Source_Location :=
-                 (if Token_End /= No_Token then
-                    Start_Sloc (Sloc_Range (Data (Token_End)))
-                  else
-                     Start_Sloc (End_Node_Non_Inclusive.Sloc_Range));
-               --  If Token_Start /= No_Token then End_Node_Non_Inclusive has
-               --  leading comments. Use Token_End start location as the text
-               --  edit final location. Otherwise use End_Node start location.
-
                Edit_SLOC_Range  : constant Source_Location_Range :=
-                 Make_Range (Initial_Location, Final_Location);
+                 Make_Range (Compute_Start_Location, Compute_End_Location);
 
                Edit : constant Text_Edit :=
                  Text_Edit'
@@ -813,17 +940,11 @@ package body LAL_Refactor.Sort_Dependencies is
    function To_Ada_Source
      (Self : Pragma_Clause_Vector) return Unbounded_Text_Type
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
+      Pragma_Clauses : constant Unbounded_Text_Vector :=
+        [for Pragma_Clause of Self => Pragma_Clause.To_Ada_Source];
 
    begin
-      return Result : Unbounded_Text_Type := Null_Unbounded_Wide_Wide_String do
-         for Pragma_Clause of Self loop
-            Append (Result, Pragma_Clause.Leading_Comments);
-            Append (Result, Pragma_Clause.Node.Text);
-            Append (Result, Pragma_Clause.Trailing_Comments);
-            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
-         end loop;
-      end return;
+      return Join_With_LF (Pragma_Clauses);
    end To_Ada_Source;
 
    -------------------
@@ -841,7 +962,6 @@ package body LAL_Refactor.Sort_Dependencies is
          Append (Result, Self.Leading_Comments);
          Append (Result, Self.Node.Text);
          Append (Result, Self.Trailing_Comments);
-         Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
       end return;
    end To_Ada_Source;
 
@@ -877,6 +997,8 @@ package body LAL_Refactor.Sort_Dependencies is
          With_Clause_Vectors.Next (Clauses_Cursor);
 
          while With_Clause_Vectors.Has_Element (Clauses_Cursor) loop
+            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
+
             declare
                Element          :
                  constant With_Clause_Vectors.Constant_Reference_Type :=
@@ -933,10 +1055,6 @@ package body LAL_Refactor.Sort_Dependencies is
       --    return Unbounded_Text_Vector;
       --  Returns Sections without Null_Unbounded_Wide_Wide_String elements
 
-      function Join_With_LF (Sections : Unbounded_Text_Vector)
-         return Unbounded_Text_Type;
-      --  Joins Sections elements with an LF
-
       -------------------
       --  Filter_Empty --
       -------------------
@@ -948,37 +1066,8 @@ package body LAL_Refactor.Sort_Dependencies is
                       (Section, Null_Unbounded_Wide_Wide_String)
            => Section]);
 
-      ------------------
-      -- Join_With_LF --
-      ------------------
-
-      function Join_With_LF (Sections : Unbounded_Text_Vector)
-         return Unbounded_Text_Type
-      is
-         use Unbounded_Text_Vectors;
-
-         Result : Unbounded_Text_Type;
-
-         Section_Cursor : Cursor := Sections.First;
-
-      begin
-         if not Has_Element (Section_Cursor) then
-            return Result;
-         end if;
-
-         Append (Result, Element (Section_Cursor));
-         Next (Section_Cursor);
-         while Has_Element (Section_Cursor) loop
-            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
-            Append (Result, Element (Section_Cursor));
-            Next (Section_Cursor);
-         end loop;
-
-         return Result;
-      end Join_With_LF;
-
    begin
-      return Join_With_LF (Filter_Empty (All_Sections));
+      return Join_With_Double_LF (Filter_Empty (All_Sections));
    end To_Ada_Source;
 
    -------------------
@@ -988,14 +1077,11 @@ package body LAL_Refactor.Sort_Dependencies is
    function To_Ada_Source
      (Self : Use_Package_Clause_Vector) return Unbounded_Text_Type
    is
-      use Ada.Strings.Wide_Wide_Unbounded;
+      Use_Package_Clauses : constant Unbounded_Text_Vector :=
+        [for Use_Package_Clause of Self => Use_Package_Clause.To_Ada_Source];
 
    begin
-      return Result : Unbounded_Text_Type := Null_Unbounded_Wide_Wide_String do
-         for Use_Package_Clause of Self loop
-            Append (Result, Use_Package_Clause.To_Ada_Source);
-         end loop;
-      end return;
+      return Join_With_LF (Use_Package_Clauses);
    end To_Ada_Source;
 
    -------------------
@@ -1013,10 +1099,10 @@ package body LAL_Refactor.Sort_Dependencies is
          Append (Result, Self.Leading_Comments);
          Append (Result, Self.Node.Text);
          Append (Result, Self.Trailing_Comments);
-         Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
 
          --  Then process the pragmas associated to this clause
          for Associated_Pragma of Self.Associated_Pragmas loop
+            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
             Append (Result, Associated_Pragma.To_Ada_Source);
          end loop;
       end return;
@@ -1071,15 +1157,18 @@ package body LAL_Refactor.Sort_Dependencies is
          then
             Append (Result, Ada.Characters.Wide_Wide_Latin_1.Space);
 
-         else
+         elsif not Self.Associated_Use_Package_Clauses.Is_Empty then
             Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
          end if;
-
          --  Then process the Use_Package_Clauses associated to this clause
          Append (Result, To_Ada_Source (Self.Associated_Use_Package_Clauses));
 
+         if not Self.Associated_Pragmas.Is_Empty then
+            Append (Result, Ada.Characters.Wide_Wide_Latin_1.LF);
+         end if;
          --  Then process the pragmas associated to this clause
          Append (Result, To_Ada_Source (Self.Associated_Pragmas));
+
       end return;
    end To_Ada_Source;
 
