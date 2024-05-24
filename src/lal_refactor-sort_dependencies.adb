@@ -256,9 +256,9 @@ package body LAL_Refactor.Sort_Dependencies is
 
       function Get_Prelude_Clause
         (Location : Source_Location)
-         return Ada_Node
-      with Pre => Compare (Prelude_Node.Sloc_Range, Location) = Inside;
-      --  Lookup the prelude clause that contains Location.
+         return Ada_Node;
+      --  Lookup the prelude clause that contains Location. Returns No_Ada_Node
+      --  is non was found.
 
       ------------------------
       -- Get_Prelude_Clause --
@@ -268,46 +268,58 @@ package body LAL_Refactor.Sort_Dependencies is
         (Location : Source_Location)
          return Ada_Node
       is
-         Result : Ada_Node := Compilation_Unit.Lookup (Location);
-         Parent : Ada_Node := No_Ada_Node;
+         Bottom_Most_Node : constant Ada_Node :=
+           Compilation_Unit.Lookup (Location);
+         Previous_Child   : Ada_Node          :=  Bottom_Most_Node;
 
       begin
-         --  NOTE: This is NOT a hot loop.
-         --  Given the pre condition of Create_Dependencies_Sorter and this
-         --  function (``Where`` must be inside ``Compilation_Unit.F_Prelude``,
-         --  we will always hit the return inside the loop). But just in case
-         --  this logic is somehow  wrong, exit when the ``Parent`` becomes
-         --  null and raise a ``Program_Error``.
-         loop
-            Parent := Result.Parent;
-            exit when Parent.Is_Null;
+         if Bottom_Most_Node.Is_Null then
+            return No_Ada_Node;
+         end if;
 
-            if Parent = Prelude_Node then
-               return Result;
+         --  Given the pre condition of Create_Dependencies_Sorter (``Where``
+         --  must be inside ``Compilation_Unit.F_Prelude``), we should always
+         --  hit the return inside the loop.
+         for Node of Bottom_Most_Node.Parents (With_Self => False) loop
+            if Node = Prelude_Node then
+               return Previous_Child;
             end if;
-            Result := Parent;
+            Previous_Child := Node;
          end loop;
 
-         raise Program_Error with "Failed to get prelude clause";
+         return No_Ada_Node;
       end Get_Prelude_Clause;
 
-      --  Node.Child_Index returns the 0-based index for Node in its parent's
-      --  children. Both Dependencies_Sorter.Prelude_Clause_Start_Index and
-      --  Dependencies_Sorter.Prelude_Clause_End_Index expect a 1-based index
-      --  so that it's compatible with Ada_Node_List (the kind of node the
-      --  prelude is).
-      Prelude_Clause_Start_Index : constant Positive :=
-        Get_Prelude_Clause (Where.Start_Sloc).Child_Index + 1;
-      Prelude_Clause_End_Index   : constant Positive :=
-        Get_Prelude_Clause (Where.End_Sloc).Child_Index + 1;
+      Start_Prelude_Clause : constant Ada_Node :=
+        Get_Prelude_Clause (Where.Start_Sloc);
+      End_Prelude_Clause   : constant Ada_Node :=
+        Get_Prelude_Clause (Where.End_Sloc);
 
    begin
-      return
-        Dependencies_Sorter'
-          (Prelude_Node,
-           Prelude_Clause_Start_Index,
-           Prelude_Clause_End_Index,
-           No_Separator);
+      if Start_Prelude_Clause.Is_Null or End_Prelude_Clause.Is_Null then
+         raise Program_Error with "Failed to get prelude clause";
+      end if;
+
+      declare
+         --  Node.Child_Index returns the 0-based index for Node in its
+         --  parent's children. Both
+         --  Dependencies_Sorter.Prelude_Clause_Start_Index and
+         --  Dependencies_Sorter.Prelude_Clause_End_Index expect a 1-based
+         --  index so that it's compatible with Ada_Node_List (the kind of node
+         --  the prelude is).
+         Prelude_Clause_Start_Index : constant Positive :=
+           Start_Prelude_Clause.Child_Index + 1;
+         Prelude_Clause_End_Index   : constant Positive :=
+           End_Prelude_Clause.Child_Index + 1;
+
+      begin
+         return
+           Dependencies_Sorter'
+             (Prelude_Node,
+              Prelude_Clause_Start_Index,
+              Prelude_Clause_End_Index,
+              No_Separator);
+      end;
    end Create_Dependencies_Sorter;
 
    ----------------------
