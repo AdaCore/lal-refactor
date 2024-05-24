@@ -258,6 +258,7 @@ package body LAL_Refactor.Sort_Dependencies is
         (Location : Source_Location)
          return Ada_Node
       with Pre => Compare (Prelude_Node.Sloc_Range, Location) = Inside;
+      --  Lookup the prelude clause that contains Location.
 
       ------------------------
       -- Get_Prelude_Clause --
@@ -290,6 +291,11 @@ package body LAL_Refactor.Sort_Dependencies is
          raise Program_Error with "Failed to get prelude clause";
       end Get_Prelude_Clause;
 
+      --  Node.Child_Index returns the 0-based index for Node in its parent's
+      --  children. Both Dependencies_Sorter.Prelude_Clause_Start_Index and
+      --  Dependencies_Sorter.Prelude_Clause_End_Index expect a 1-based index
+      --  so that it's compatible with Ada_Node_List (the kind of node the
+      --  prelude is).
       Prelude_Clause_Start_Index : constant Positive :=
         Get_Prelude_Clause (Where.Start_Sloc).Child_Index + 1;
       Prelude_Clause_End_Index   : constant Positive :=
@@ -526,6 +532,9 @@ package body LAL_Refactor.Sort_Dependencies is
                else Ada_Node_List_Element
                       (Self.Prelude_Node, End_Clause_Index)
                       .Next_Sibling);
+            --  This node is used to to compute the last position of the text
+            --  edit. It needs to be this Node's leading comments first token,
+            --  if existent, or this Node's first token if not.
 
             Prelude_Text : Unbounded_Text_Type;
 
@@ -545,8 +554,12 @@ package body LAL_Refactor.Sort_Dependencies is
 
             Leading_Comments
               (Start_Node, Token_Start, Token_Dummy);
+            --  If Start_Node has leading comments, then Token_Start is the
+            --  text edit first token.
             Leading_Comments
               (End_Node_Non_Inclusive, Token_End, Token_Dummy);
+            --  If End_Node_Non_Inclusive has leading comments, then Token_End
+            --  is the text edit last token (non inclusive).
 
             declare
                Initial_Location : constant Source_Location :=
@@ -554,11 +567,18 @@ package body LAL_Refactor.Sort_Dependencies is
                     Start_Sloc (Sloc_Range (Data (Token_Start)))
                   else
                      Start_Sloc (Start_Node.Sloc_Range));
+               --  If Token_Start /= No_Token then Start_Node has leading
+               --  comments. Use Token_Start start location as the text edit
+               --  initial location. Otherwise use Start_Node start location.
                Final_Location   : constant Source_Location :=
                  (if Token_End /= No_Token then
                     Start_Sloc (Sloc_Range (Data (Token_End)))
                   else
                      Start_Sloc (End_Node_Non_Inclusive.Sloc_Range));
+               --  If Token_Start /= No_Token then End_Node_Non_Inclusive has
+               --  leading comments. Use Token_End start location as the text
+               --  edit final location. Otherwise use End_Node start location.
+
                Edit_SLOC_Range  : constant Source_Location_Range :=
                  Make_Range (Initial_Location, Final_Location);
 

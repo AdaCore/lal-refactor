@@ -105,7 +105,7 @@ private
          Prelude_Node               : Ada_Node_List;
          Prelude_Clause_Start_Index : Positive;
          Prelude_Clause_End_Index   : Positive;
-         No_Separator : Boolean;
+         No_Separator               : Boolean;
          --  If True, do not add an empty line between with/use clauses groups
       end record;
 
