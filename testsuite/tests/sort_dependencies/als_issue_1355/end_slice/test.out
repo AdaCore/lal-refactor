@@ -1,8 +1,6 @@
 main.adb
-2:1-7:1 with Ada.Calendar;
+2:1-5:22 with Ada.Calendar;
 with Ada.Command_Line;
 with Ada.Numerics.Elementary_Functions;
 with Random_Booleans;
-
-
 

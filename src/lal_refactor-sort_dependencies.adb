@@ -626,49 +626,23 @@ package body LAL_Refactor.Sort_Dependencies is
                Token_End   : Token_Reference := No_Token;
                Token_Dummy : Token_Reference := No_Token;
 
-               End_Node : Ada_Node := No_Ada_Node;
-               --  This node is used to to compute the last position of the
-               --  text edit. It needs to be this Node's leading comments first
-               --  token, if existent, or this Node's first token if not.
+               End_Node : constant Ada_Node'Class :=
+                 Ada_Node_List_Element (Self.Prelude_Node, End_Clause_Index);
 
             begin
-               if Self.Prelude_Clause_End_Index
-                  = Self.Prelude_Node.Last_Child_Index
-               then
-                  --  Self.Prelude_Clause_End_Index is the last clause of the
-                  --  prelude. Compute the end location based on the
-                  --  compilation unit body.
+               Trailing_Comments (End_Node, Token_Dummy, Token_End);
 
-                  End_Node := Self.Prelude_Node.Next_Sibling;
-                  --  This is equivalent to
-                  --  Self.Prelude_Node.P_Enclosing_Compilation_Unit.F_Body
-                  Leading_Comments (End_Node, Token_End, Token_Dummy);
-                  if Token_End = No_Token then
-                     Token_End := End_Node.Token_Start;
-                  end if;
-                  --  If End_Node has leading comments, then Token_End is the
-                  --  is the text edit last token (non inclusive).
+               --  If End_Node has trailing comments, then Token_End is the
+               --  text edit last token. Otherwise use End_Node.Token_End.
 
-                  return Start_Sloc (Sloc_Range (Data (Token_End)));
-
-               else
-                  --  Self.Prelude_Clause_End_Index is not the last clause of
-                  --  the prelude. Compute the end location based on the next
-                  --  clause.
-
-                  End_Node :=
-                    Ada_Node_List_Element
-                      (Self.Prelude_Node, End_Clause_Index).As_Ada_Node;
-
-                  Trailing_Comments (End_Node, Token_Dummy, Token_End);
-                  if Token_End = No_Token then
-                     Token_End := End_Node.Token_End;
-                  end if;
-                  --  If End_Node has trailing comments, then Token_End is the
-                  --  text edit last token (non inclusive).
-
-                  return Start_Sloc (Sloc_Range (Data (Next (Token_End))));
+               if Token_End = No_Token then
+                  Token_End := End_Node.Token_End;
                end if;
+
+               --  The end location of the text edit is non inclusive.
+               --  Therefore, use the start location of the token after
+               --  Token_End.
+               return Start_Sloc (Sloc_Range (Data (Next (Token_End))));
             end Compute_End_Location;
 
             ----------------------------
@@ -708,14 +682,6 @@ package body LAL_Refactor.Sort_Dependencies is
             Prelude.Associate_Use_Package_Clauses;
             Prelude.Sort;
             Prelude_Text := To_Ada_Source (Prelude, Self.No_Separator);
-            if Self.Prelude_Clause_End_Index
-               = Self.Prelude_Node.Last_Child_Index
-            then
-               --  Add a blank line between the prelude and the unit body.
-               --  Double LF because Prelude_Text does not end with LF.
-               Append (Prelude_Text, Ada.Characters.Wide_Wide_Latin_1.LF);
-               Append (Prelude_Text, Ada.Characters.Wide_Wide_Latin_1.LF);
-            end if;
 
             declare
                Edit_SLOC_Range  : constant Source_Location_Range :=
@@ -725,8 +691,7 @@ package body LAL_Refactor.Sort_Dependencies is
                  Text_Edit'
                    (Location => Edit_SLOC_Range,
                     Text     =>
-                      To_Unbounded_String
-                        (To_UTF8 (To_Text (Prelude_Text))));
+                      To_Unbounded_String (To_UTF8 (To_Text (Prelude_Text))));
 
             begin
                Safe_Insert
