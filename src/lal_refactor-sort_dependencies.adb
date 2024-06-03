@@ -314,6 +314,10 @@ package body LAL_Refactor.Sort_Dependencies is
          raise Program_Error with "Failed to get prelude clause";
       end if;
 
+      if Start_Prelude_Clause = End_Prelude_Clause then
+         return Create_Dependencies_Sorter (Compilation_Unit, No_Separator);
+      end if;
+
       declare
          --  Node.Child_Index returns the 0-based index for Node in its
          --  parent's children. Both
@@ -540,7 +544,8 @@ package body LAL_Refactor.Sort_Dependencies is
       Selection : Source_Location_Range)
       return Boolean
    is (Is_Sort_Dependencies_Available (Unit, Selection.Start_Sloc)
-       and Is_Sort_Dependencies_Available (Unit, Selection.End_Sloc));
+       and (Selection.Start_Sloc = Selection.End_Sloc
+            or Is_Sort_Dependencies_Available (Unit, Selection.End_Sloc)));
 
    --------------
    -- Refactor --

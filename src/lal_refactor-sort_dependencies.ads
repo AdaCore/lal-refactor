@@ -87,7 +87,9 @@ package LAL_Refactor.Sort_Dependencies is
              = Inside);
    --  Dependencies_Sorter constructor for sorting a slice of the prelude.
    --
-   --  Where defines the clauses to be sorted.
+   --  Where defines the clauses to be sorted. If bot hWhere.Start_Sloc and
+   --  Where.End_Sloc enclosing clause is the same, then the entire prelude is
+   --  sorted.
 
    overriding
    function Refactor
