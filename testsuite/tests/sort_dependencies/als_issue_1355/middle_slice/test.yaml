@@ -1,0 +1,5 @@
+title: Ensure that there are not repeated clauses
+
+description: sort_dependencies tool test
+
+driver: shell_script
