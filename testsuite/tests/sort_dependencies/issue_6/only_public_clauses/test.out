@@ -1,8 +1,6 @@
 main.adb
-1:1-5:1 with Ada.Containers;
+1:1-3:32 with Ada.Containers;
 with Ada.Text_IO;
 
 with System.Address_Operations;
-
-
 
