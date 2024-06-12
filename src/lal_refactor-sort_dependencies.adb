@@ -66,6 +66,9 @@ package body LAL_Refactor.Sort_Dependencies is
    --  Gets the block of comments after Node up until the next Node is found
    --  or it's exceptional leading comments.
 
+   function To_Text_Vector (List : Name_List) return Unbounded_Text_Vector;
+   --  Create a vector with the contents of List
+
    ---------
    -- "<" --
    ---------
@@ -743,8 +746,7 @@ package body LAL_Refactor.Sort_Dependencies is
                     constant Libadalang.Analysis.With_Clause                :=
                       Prelude_Clause.As_With_Clause;
                   Packages                 : constant Unbounded_Text_Vector :=
-                    [for Package_Name of With_Clause.F_Packages
-                     => To_Unbounded_Text (Package_Name.Text)];
+                    To_Text_Vector (With_Clause.F_Packages);
                   First_Package            : constant Name                  :=
                     With_Clause.F_Packages.First_Child.As_Name;
                   Is_Dotted_Name           : constant Boolean               :=
@@ -780,8 +782,7 @@ package body LAL_Refactor.Sort_Dependencies is
                     constant Libadalang.Analysis.Use_Package_Clause         :=
                       Prelude_Clause.As_Use_Package_Clause;
                   Packages                 : constant Unbounded_Text_Vector :=
-                    [for Package_Name of Use_Package_Clause.F_Packages
-                     => To_Unbounded_Text (Package_Name.Text)];
+                    To_Text_Vector (Use_Package_Clause.F_Packages);
                   First_Package            : constant Name                  :=
                      Use_Package_Clause.F_Packages.First_Child.As_Name;
                   Is_Dotted_Name           : constant Boolean               :=
@@ -910,10 +911,13 @@ package body LAL_Refactor.Sort_Dependencies is
    function To_Ada_Source
      (Self : Pragma_Clause_Vector) return Unbounded_Text_Type
    is
-      Pragma_Clauses : constant Unbounded_Text_Vector :=
-        [for Pragma_Clause of Self => Pragma_Clause.To_Ada_Source];
+      Pragma_Clauses : Unbounded_Text_Vector;
 
    begin
+      for Pragma_Clause of Self loop
+         Pragma_Clauses.Append (Pragma_Clause.To_Ada_Source);
+      end loop;
+
       return Join_With_LF (Pragma_Clauses);
    end To_Ada_Source;
 
@@ -1020,9 +1024,8 @@ package body LAL_Refactor.Sort_Dependencies is
          To_Ada_Source (Self.Limited_Section, No_Separator),
          To_Ada_Source (Self.Limited_Private_Section, No_Separator)];
 
-      --  NOTE: The following spec is commented due to a GNAT bug
-      --  function Filter_Empty (Sections : Unbounded_Text_Vector)
-      --    return Unbounded_Text_Vector;
+      function Filter_Empty (Sections : Unbounded_Text_Vector)
+         return Unbounded_Text_Vector;
       --  Returns Sections without Null_Unbounded_Wide_Wide_String elements
 
       -------------------
@@ -1031,10 +1034,18 @@ package body LAL_Refactor.Sort_Dependencies is
 
       function Filter_Empty (Sections : Unbounded_Text_Vector)
          return Unbounded_Text_Vector
-      is ([for Section of Sections
+      is
+         Result : Unbounded_Text_Vector;
+      begin
+         for Section of Sections
            when not Langkit_Support.Text."="
                       (Section, Null_Unbounded_Wide_Wide_String)
-           => Section]);
+         loop
+            Result.Append (Section);
+         end loop;
+
+         return Result;
+      end Filter_Empty;
 
    begin
       return Join_With_Double_LF (Filter_Empty (All_Sections));
@@ -1047,10 +1058,13 @@ package body LAL_Refactor.Sort_Dependencies is
    function To_Ada_Source
      (Self : Use_Package_Clause_Vector) return Unbounded_Text_Type
    is
-      Use_Package_Clauses : constant Unbounded_Text_Vector :=
-        [for Use_Package_Clause of Self => Use_Package_Clause.To_Ada_Source];
+      Use_Package_Clauses : Unbounded_Text_Vector;
 
    begin
+      for Use_Package_Clause of Self loop
+         Use_Package_Clauses.Append (Use_Package_Clause.To_Ada_Source);
+      end loop;
+
       return Join_With_LF (Use_Package_Clauses);
    end To_Ada_Source;
 
@@ -1141,6 +1155,20 @@ package body LAL_Refactor.Sort_Dependencies is
 
       end return;
    end To_Ada_Source;
+
+   --------------------
+   -- To_Text_Vector --
+   --------------------
+
+   function To_Text_Vector (List : Name_List) return Unbounded_Text_Vector is
+      Result : Unbounded_Text_Vector;
+   begin
+      for Package_Name of List loop
+         Result.Append (To_Unbounded_Text (Package_Name.Text));
+      end loop;
+
+      return Result;
+   end To_Text_Vector;
 
    ----------
    -- Sort --
