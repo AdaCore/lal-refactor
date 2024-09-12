@@ -1,6 +1,5 @@
 # Renaming node foo.ads:1:9: 
 WARNING: File foo-bar-monitor.ads not found
-WARNING: File foo-bar-monitor.adb not found
 References:
 Unit:foo-bar.ads
 Line: 1
