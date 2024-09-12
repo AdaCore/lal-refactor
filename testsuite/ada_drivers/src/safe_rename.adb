@@ -21,14 +21,13 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPR2.Project.Attribute;
+with GPR2.Project.Attribute_Index;
 
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 with Langkit_Support.Text; use Langkit_Support.Text;
@@ -38,6 +37,7 @@ with LAL_Refactor.Safe_Rename; use LAL_Refactor.Safe_Rename;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
+with Libadalang.Project_Provider; use Libadalang.Project_Provider;
 
 with Printers; use Printers;
 
@@ -139,9 +139,8 @@ procedure Safe_Rename is
       Algorithm   : constant Problem_Finder_Algorithm_Kind :=
         Args.Algorithm.Get;
 
-      All_Sources : constant GNATCOLL.VFS.File_Array_Access :=
-        Context.Provider.Project.Root_Project.Source_Files (Recursive => True);
-      Set : File_Info_Set;
+      Files : constant Filename_Vectors.Vector :=
+        Source_Files (Context.Provider.Project);
 
       package Analysis_Unit_Vectors is new Ada.Containers.Vectors
         (Index_Type   => Positive,
@@ -161,48 +160,50 @@ procedure Safe_Rename is
 
       Put_Line ("# Renaming node " & Image (Node.Full_Sloc_Image));
 
-      for J in All_Sources'Range loop
-         Set := Context.Provider.Project.Info_Set (All_Sources (J));
-
-         if not Set.Is_Empty then
-            --  The file can be listed in several projects with different
-            --  Info_Sets, in the case of aggregate projects. However, assume
-            --  that the language is the same in all projects, so look only at
-            --  the first entry in the set.
-
-            declare
-               Info : constant File_Info'Class :=
-                 File_Info'Class (Set.First_Element);
-               Filename : constant Filesystem_String :=
-                 All_Sources (J).Full_Name;
-
-            begin
-               if To_Lower (Info.Language) = "ada" then
-                  Units.Append
-                    (Jobs (1).Analysis_Ctx.Get_From_File (String (Filename)));
-               end if;
-            end;
-         end if;
+      for File of Files loop
+         Units.Append (Jobs (1).Analysis_Ctx.Get_From_File (To_String (File)));
       end loop;
 
       declare
          function Attribute_Value_Provider_Callback
-           (Attribute : GNATCOLL.Projects.Attribute_Pkg_String;
+           (Attribute : GPR2.Q_Attribute_Id;
             Index : String := "";
             Default : String := "";
-            Use_Extended : Boolean := False)
-            return String
-         is (if Context.Provider.Kind = Project_File
-               and then Context.Provider.Project /= null
-             then
-                Root_Project (Context.Provider.Project.all).
-                  Attribute_Value (Attribute, Index, Default,  Use_Extended)
-             else
-                Default);
+            Ignored_Use_Extended : Boolean := False)
+            return String;
          --  Attribute provider for the project on this Context
 
-         Attribute_Value_Provider : constant Attribute_Value_Provider_Access :=
-           Attribute_Value_Provider_Callback'Unrestricted_Access;
+         ---------------------------------------
+         -- Attribute_Value_Provider_Callback --
+         ---------------------------------------
+
+         function Attribute_Value_Provider_Callback
+           (Attribute : GPR2.Q_Attribute_Id;
+            Index : String := "";
+            Default : String := "";
+            Ignored_Use_Extended : Boolean := False)
+            return String
+         is
+            Attr : constant GPR2.Project.Attribute.Object :=
+              Context
+              .Provider
+              .Project
+              .Root_Project
+              .Attribute
+                (Name  => Attribute,
+                 Index => (if Index = ""
+                           then GPR2.Project.Attribute_Index.Undefined
+                           else GPR2.Project.Attribute_Index.Create
+                                  (GPR2.Value_Type (Index))));
+         begin
+            return (if Attr.Is_Defined
+                    then Attr.Value.Text
+                    else Default);
+         end Attribute_Value_Provider_Callback;
+
+         Attribute_Value_Provider : constant
+            GPR2_Attribute_Value_Provider_Access :=
+               Attribute_Value_Provider_Callback'Unrestricted_Access;
 
          Renamer : constant Safe_Renamer :=
            Create_Safe_Renamer
