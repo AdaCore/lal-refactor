@@ -41,7 +41,6 @@ with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 with Langkit_Support.Text;
@@ -54,6 +53,7 @@ use LAL_Refactor.Subprogram_Signature;
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Helpers; use Libadalang.Helpers;
+with Libadalang.Project_Provider; use Libadalang.Project_Provider;
 
 procedure Change_Parameter_Mode is
 
@@ -128,10 +128,10 @@ procedure Change_Parameter_Mode is
 
       Found : Boolean := False;
 
-      Files : constant File_Array_Access :=
-        Context.Provider.Project.Root_Project.Source_Files;
+      Files : constant Filename_Vectors.Vector :=
+        Source_Files (Context.Provider.Project);
 
-      Number_Of_Units : constant Positive := Files'Length;
+      Number_Of_Units : constant Positive := Natural (Files.Length);
       Units_Index     : Positive := 1;
       Units           : Analysis_Unit_Array (1 .. Number_Of_Units);
 
@@ -168,16 +168,10 @@ procedure Change_Parameter_Mode is
 
       Node := Main_Unit.Root.Lookup (Sloc);
 
-      for File of Files.all loop
-         declare
-            Filename : constant GNATCOLL.VFS.Filesystem_String :=
-              File.Full_Name;
-
-         begin
-            Units (Units_Index) :=
-              Node.Unit.Context.Get_From_File (String (Filename));
-            Units_Index := Units_Index + 1;
-         end;
+      for File of Files loop
+         Units (Units_Index) :=
+           Node.Unit.Context.Get_From_File (To_String (File));
+         Units_Index := Units_Index + 1;
       end loop;
 
       if Ada.Strings.Unbounded.Equal_Case_Insensitive

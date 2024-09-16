@@ -1,4 +1,4 @@
-with Bar; use Bar;
+with Baz; use Baz;
 
 procedure Main is
 begin

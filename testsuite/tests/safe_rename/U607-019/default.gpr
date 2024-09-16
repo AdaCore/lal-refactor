@@ -1,3 +1,10 @@
 project Default is
     for Main use ("main.adb");
+
+    package Naming is
+       for Spec ("qux_1") use "qux.ads" at 1;
+       for Spec ("qux_2") use "qux.ads" at 2;
+       for Body ("qux_1") use "qux.adb" at 1;
+       for Body ("qux_2") use "qux.adb" at 2;
+    end Naming;
 end Default;

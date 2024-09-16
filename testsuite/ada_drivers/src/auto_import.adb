@@ -9,7 +9,7 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPR2.Project.View.Set;
 
 with LAL_Refactor;
 with LAL_Refactor.Auto_Import; use LAL_Refactor.Auto_Import;
@@ -18,6 +18,7 @@ with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
+with Libadalang.Project_Provider; use Libadalang.Project_Provider;
 
 --  This procedure defines the Refactor Auto Import Tool. Given the location of
 --  a Base_Id in a source code file and the project it belongs to, prints
@@ -103,19 +104,22 @@ procedure Auto_Import is
       Line_Number   : constant Natural := Line.Get;
       Column_Number : constant Natural := Column.Get;
 
-      Files : constant GNATCOLL.VFS.File_Array :=
-        Context
-          .Provider
-          .Project
-          .Root_Project
-          .Get_Environment
-          .Predefined_Source_Files;
+      Projects : GPR2.Project.View.Set.Object;
+      Files    : Filename_Vectors.Vector;
    begin
+      Projects.Include (Context.Provider.Project.Runtime_Project);
+      Files :=
+        Source_Files
+          (Tree     => Context.Provider.Project,
+           Mode     => Whole_Project_With_Runtime,
+           Projects => Projects);
       Unit :=
         Jobs (1).Analysis_Ctx.Get_From_File
           (Ada.Strings.Unbounded.To_String (Source_File));
       for F of Files loop
-         Units.Append (Jobs (1).Analysis_Ctx.Get_From_File (+F.Full_Name));
+         Units.Append
+           (Jobs (1).Analysis_Ctx.Get_From_File
+              (Ada.Strings.Unbounded.To_String (F)));
       end loop;
       Location :=
         (Line   => Langkit_Support.Slocs.Line_Number (Line_Number),
