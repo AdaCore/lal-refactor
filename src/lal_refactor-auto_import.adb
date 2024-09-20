@@ -954,13 +954,12 @@ package body LAL_Refactor.Auto_Import is
         and then
           Parent_Packages
             .Last_Element
-            .P_Defining_Name
             .P_Parent_Basic_Decl
             .Kind in Ada_Generic_Package_Instantiation
       then
          declare
             Instantiation : constant Basic_Decl :=
-              Parent_Packages.Last_Element.P_Defining_Name.P_Parent_Basic_Decl;
+              Parent_Packages.Last_Element.P_Parent_Basic_Decl;
 
          begin
             Parent_Packages.Delete_Last;
