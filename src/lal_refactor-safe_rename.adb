@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2021-2023, AdaCore
+--  Copyright (C) 2021-2024, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -16,7 +16,6 @@ with Ada.Strings.Unbounded.Text_IO; use Ada.Strings.Unbounded.Text_IO;
 with Ada.Strings.UTF_Encoding; use Ada.Strings.UTF_Encoding;
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
---  with Ada.Unchecked_Deallocation;
 
 with GPR2.Project.Registry.Attribute;
 
@@ -2849,28 +2848,54 @@ package body LAL_Refactor.Safe_Rename is
               (if Enclosing_Defining_Name.Is_Null then No_Basic_Decl
                else Enclosing_Defining_Name.P_Basic_Decl);
 
+            function Has_Spec_Or_Body_Attribute return Boolean;
+            --  Checks if in the Naming package there's a Spec of Body name
+            --  attribute for Enclosing_Basic_Decl.
+
+            --------------------------------
+            -- Has_Spec_Or_Body_Attribute --
+            --------------------------------
+
+            function Has_Spec_Or_Body_Attribute return Boolean
+            is (declare
+                  Enclosing_Basic_Decl_Name : constant String :=
+                    To_UTF8 (Enclosing_Basic_Decl.P_Defining_Name.Text);
+                begin
+                  (Self.Attribute_Value_Provider /= null
+                   and then (Self.Attribute_Value_Provider.all
+                              (GNATCOLL.Projects.Spec_Attribute,
+                               Enclosing_Basic_Decl_Name)
+                             /= ""
+                             or Self.Attribute_Value_Provider.all
+                                  (GNATCOLL.Projects.Body_Attribute,
+                                   Enclosing_Basic_Decl_Name)
+                                 /= ""))
+                  or (Self.GPR2_Attribute_Value_Provider /= null
+                      and then (Self.GPR2_Attribute_Value_Provider.all
+                                 (GPR2.Project.Registry.Attribute.Naming.Spec,
+                                  Enclosing_Basic_Decl_Name)
+                                /= ""
+                                or Self.GPR2_Attribute_Value_Provider.all
+                                     (GPR2
+                                        .Project
+                                        .Registry
+                                        .Attribute
+                                        .Naming
+                                        .Body_N,
+                                      Enclosing_Basic_Decl_Name)
+                                   /= "")));
+
          begin
-            --  Only rename sources if Enclosing_Basic_Decl is a top level
-            --  declaration of its compilation unit, and its analysis unit
-            --  only has one compilation unit.
+            --  Only rename sources if:
+            --  1) Enclosing_Basic_Decl is a top level declaration of its
+            --  compilation unit
+            --  2) its analysis unit only has one compilation unit
+            --  3) The spec or body name does not have a custom attribute
+            --  in the gpr Naming package
             if Self.Is_Top_Level_Decl (Enclosing_Basic_Decl)
               and then Enclosing_Basic_Decl.Unit.Root.Kind in
                 Ada_Compilation_Unit_Range
-              and then
-                  ((Self.Attribute_Value_Provider = null
-                    and Self.GPR2_Attribute_Value_Provider = null)
-                   or else (Self.Attribute_Value_Provider /= null
-                            and then Self.Attribute_Value_Provider.all
-                              (GNATCOLL.Projects.Spec_Attribute,
-                               To_UTF8
-                                 (Enclosing_Basic_Decl.P_Defining_Name.Text)) =
-                                "")
-                   or else (Self.GPR2_Attribute_Value_Provider /= null
-                            and then Self.GPR2_Attribute_Value_Provider.all
-                              (GPR2.Project.Registry.Attribute.Naming.Spec,
-                               To_UTF8
-                                 (Enclosing_Basic_Decl.P_Defining_Name.Text)) =
-                                ""))
+              and then not Has_Spec_Or_Body_Attribute
 
             then
                File_Rename.Filepath :=

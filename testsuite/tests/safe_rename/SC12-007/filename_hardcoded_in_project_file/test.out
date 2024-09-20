@@ -20,6 +20,4 @@ Start_Line: 3
 Start_Column: 5
 End_Line: 3
 End_Column: 10
-File renames:
-corge.ads -> Fox.1.ada
 
