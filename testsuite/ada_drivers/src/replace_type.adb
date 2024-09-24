@@ -24,12 +24,12 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
-with GNATCOLL.VFS;
 
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
+with Libadalang.Project_Provider; use Libadalang.Project_Provider;
 
 with LAL_Refactor; use LAL_Refactor;
 with LAL_Refactor.Replace_Type;
@@ -110,10 +110,10 @@ procedure Replace_Type is
         ((Line_Number (Args.Source_Line.Get),
          Column_Number (Args.Source_Column.Get)));
 
-      Files : constant GNATCOLL.VFS.File_Array_Access :=
-        Context.Provider.Project.Root_Project.Source_Files (Recursive => True);
+      Files : constant Filename_Vectors.Vector :=
+        Source_Files (Context.Provider.Project);
 
-      Max_Number_Of_Units  : constant Natural := Files'Length;
+      Max_Number_Of_Units  : constant Natural := Natural (Files.Length);
       True_Number_Of_Units : Natural := 0;
       Units                : Analysis_Unit_Array (1 .. Max_Number_Of_Units);
 
@@ -121,16 +121,10 @@ procedure Replace_Type is
         (Units (1 .. True_Number_Of_Units));
 
    begin
-      for File of Files.all loop
+      for File of Files loop
          True_Number_Of_Units := @ + 1;
-         declare
-            Filename : constant GNATCOLL.VFS.Filesystem_String :=
-              File.Full_Name;
-
-         begin
-            Units (True_Number_Of_Units) :=
-              Jobs (1).Analysis_Ctx.Get_From_File (String (Filename));
-         end;
+         Units (True_Number_Of_Units) :=
+           Jobs (1).Analysis_Ctx.Get_From_File (To_String (File));
       end loop;
 
       if Is_Replace_Type_Available

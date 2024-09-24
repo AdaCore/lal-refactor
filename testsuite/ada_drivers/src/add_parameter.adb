@@ -58,7 +58,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse; use GNATCOLL.Opt_Parse;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
@@ -70,6 +69,7 @@ use LAL_Refactor.Subprogram_Signature;
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
 with Libadalang.Common; use Libadalang.Common;
+with Libadalang.Project_Provider; use Libadalang.Project_Provider;
 
 procedure Add_Parameter is
 
@@ -135,11 +135,11 @@ procedure Add_Parameter is
         (Line_Number (Line.Get), Column_Number (Column.Get));
       New_Parameter : constant Unbounded_String := Parameter.Get;
 
-      Files : constant File_Array_Access :=
-        Context.Provider.Project.Root_Project.Source_Files (Recursive => True);
+      Files : constant Filename_Vectors.Vector :=
+        Source_Files (Context.Provider.Project);
 
       Unit            : Analysis_Unit;
-      Number_Of_Units : constant Positive := Files'Length;
+      Number_Of_Units : constant Positive := Natural (Files.Length);
       Units_Index     : Positive := 1;
       Units           : Analysis_Unit_Array (1 .. Number_Of_Units);
 
@@ -156,16 +156,10 @@ procedure Add_Parameter is
       if Is_Add_Parameter_Available
         (Unit, Location, Requires_Full_Specification)
       then
-         for File of Files.all loop
-            declare
-               Filename : constant GNATCOLL.VFS.Filesystem_String :=
-                 File.Full_Name;
-
-            begin
-               Units (Units_Index) :=
-                 Jobs (1).Analysis_Ctx.Get_From_File (String (Filename));
-               Units_Index := Units_Index + 1;
-            end;
+         for File of Files loop
+            Units (Units_Index) :=
+              Jobs (1).Analysis_Ctx.Get_From_File (To_String (File));
+            Units_Index := Units_Index + 1;
          end loop;
 
          --  Full parameter specification is required, so check if the input

@@ -11,6 +11,8 @@ project Default is
          when "config_2" =>
             for Body ("Foo.Bar.Monitor.Initialize") use "initialize_2.ads";
       end case;
+
+      for Body ("foo.bar.monitor") use "foo-bar-monitor_body.adb";
    end Naming;
 
    for Excluded_Source_Files use ("foo-bar-monitor.ads");

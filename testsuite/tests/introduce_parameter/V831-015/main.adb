@@ -1,4 +1,4 @@
-procedure Hello is
+procedure Main is
 begin
    declare
       Z : constant Integer := 10;
@@ -12,4 +12,4 @@ begin
    begin
       Foo (Z);
    end;
-end Hello;
+end Main;
