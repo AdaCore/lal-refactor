@@ -11,6 +11,7 @@
 --     - Change Parameter Mode
 --     - Move Parameter Left/Right
 
+with Laltools.Common; use Laltools.Common;
 with Libadalang.Common; use Libadalang.Common;
 with VSS.Strings;
 

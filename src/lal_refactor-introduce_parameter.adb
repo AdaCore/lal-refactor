@@ -10,6 +10,8 @@ with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Strings.Hash;
 
+with Laltools.Common; use Laltools.Common;
+
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 with Libadalang.Common; use Libadalang.Common;
