@@ -10,6 +10,8 @@ with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
 with Langkit_Support.Text; use Langkit_Support.Text;
 
+with Laltools.Common; use Laltools.Common;
+
 with Libadalang.Common; use Libadalang.Common;
 
 package body LAL_Refactor.Suppress_Separate is

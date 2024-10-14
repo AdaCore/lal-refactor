@@ -15,8 +15,6 @@ with GNATCOLL.Traces;
 
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
-with Laltools.Common; use Laltools.Common;
-
 with Libadalang.Analysis; use Libadalang.Analysis;
 
 package LAL_Refactor is

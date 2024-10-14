@@ -18,6 +18,8 @@ with GNATCOLL.Projects;
 
 with GPR2;
 
+with Laltools.Common; use Laltools.Common;
+
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 private with Ada.Strings.Wide_Wide_Unbounded;
