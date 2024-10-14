@@ -13,6 +13,8 @@ with Ada.Strings.Fixed;
 
 with GNAT.String_Split;
 
+with Laltools.Common; use Laltools.Common;
+
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 with Libadalang.Common; use Libadalang.Common;
