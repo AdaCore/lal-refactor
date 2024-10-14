@@ -15,6 +15,8 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Wide_Wide_Fixed;
 
+with Laltools.Common; use Laltools.Common;
+
 with Langkit_Support.Text;
 
 package body LAL_Refactor.Extract_Subprogram is

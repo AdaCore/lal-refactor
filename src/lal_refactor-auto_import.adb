@@ -10,6 +10,8 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Wide_Wide_Unbounded;
 
+with Laltools.Common; use Laltools.Common;
+
 with Langkit_Support.Errors;
 
 with Libadalang.Common; use Libadalang.Common;
