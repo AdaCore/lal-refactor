@@ -99,7 +99,7 @@ package body LAL_Refactor.Auto_Import is
    --  contain an empty qualifier.
 
    function Get_Appropriate_Enclosing_Name
-     (Base_Id : Libadalang.Analysis.Base_Id)
+     (Identifier : Libadalang.Analysis.Identifier)
       return Name;
    --  Returns the top dotted name parent suffix if Base_Id is part of one,
    --  or Base_Id casted as Name if it is not.
@@ -491,7 +491,7 @@ package body LAL_Refactor.Auto_Import is
    is
       Node           : constant Ada_Node := Unit.Root.Lookup (Location);
       Enclosing_Name : constant Name :=
-        Get_Appropriate_Enclosing_Name (Node.As_Base_Id);
+        Get_Appropriate_Enclosing_Name (Node.As_Identifier);
 
    begin
       return Create_Auto_Importer (Enclosing_Name, Import);
@@ -693,10 +693,10 @@ package body LAL_Refactor.Auto_Import is
    ------------------------------------
 
    function Get_Appropriate_Enclosing_Name
-     (Base_Id : Libadalang.Analysis.Base_Id)
+     (Identifier : Libadalang.Analysis.Identifier)
       return Name
    is
-      Aux : Ada_Node := Base_Id.As_Ada_Node;
+      Aux : Ada_Node := Identifier.As_Ada_Node;
 
    begin
       while Aux.Parent.Kind in Ada_Dotted_Name loop
@@ -706,7 +706,7 @@ package body LAL_Refactor.Auto_Import is
       if Aux.Kind in Ada_Dotted_Name then
          return Aux.As_Dotted_Name.F_Suffix.As_Name;
       else
-         return Base_Id.As_Name;
+         return Identifier.As_Name;
       end if;
 
    end Get_Appropriate_Enclosing_Name;
@@ -1003,14 +1003,14 @@ package body LAL_Refactor.Auto_Import is
    begin
       Available_Imports := [];
 
-      if Node.Kind not in Ada_Base_Id then
+      if Node.Kind not in Ada_Identifier_Range then
          return False;
       end if;
 
       declare
          Ignore         : Libadalang.Common.Ref_Result_Kind;
          Enclosing_Name : constant Libadalang.Analysis.Name :=
-           Get_Appropriate_Enclosing_Name (Node.As_Base_Id);
+           Get_Appropriate_Enclosing_Name (Node.As_Identifier);
          Resolved_Name  : constant Defining_Name :=
            Laltools.Common.Resolve_Name
              (Enclosing_Name, LAL_Refactor.Refactor_Trace, Ignore);
