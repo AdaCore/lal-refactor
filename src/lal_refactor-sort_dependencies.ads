@@ -17,11 +17,10 @@ with Langkit_Support.Text; use Langkit_Support.Text;
 package LAL_Refactor.Sort_Dependencies is
 
    function Is_Sort_Dependencies_Available
-     (Unit             : Analysis_Unit;
-      Sloc             : Source_Location)
+     (Unit : Analysis_Unit;
+      Sloc : Source_Location)
       return Boolean;
    --  Returns True if Sloc is inside a compilation unit prelude
-      --
 
    function Is_Sort_Dependencies_Available
      (Unit      : Analysis_Unit;
@@ -73,21 +72,10 @@ package LAL_Refactor.Sort_Dependencies is
       Where            : Source_Location_Range;
       No_Separator     : Boolean := True)
      return Dependencies_Sorter
-   with Pre =>
-          (Where /= No_Source_Location_Range
-           and then
-             Compare
-               (Compilation_Unit.F_Prelude.Sloc_Range,
-                Where.Start_Sloc)
-             = Inside
-           and then
-             Compare
-               (Compilation_Unit.F_Prelude.Sloc_Range,
-                Where.End_Sloc)
-             = Inside);
+   with Pre => Is_Sort_Dependencies_Available (Compilation_Unit.Unit, Where);
    --  Dependencies_Sorter constructor for sorting a slice of the prelude.
    --
-   --  Where defines the clauses to be sorted. If bot hWhere.Start_Sloc and
+   --  Where defines the clauses to be sorted. If both Where.Start_Sloc and
    --  Where.End_Sloc enclosing clause is the same, then the entire prelude is
    --  sorted.
 
