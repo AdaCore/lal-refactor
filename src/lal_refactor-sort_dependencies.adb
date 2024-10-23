@@ -320,12 +320,12 @@ package body LAL_Refactor.Sort_Dependencies is
          return No_Ada_Node;
       end Get_Prelude_Clause;
 
-   begin
       Start_Prelude_Clause : constant Ada_Node :=
         Get_Prelude_Clause (Where.Start_Sloc, LAL_Refactor.Utils.Forward);
       End_Prelude_Clause   : constant Ada_Node :=
         Get_Prelude_Clause (Where.End_Sloc, LAL_Refactor.Utils.Backward);
 
+   begin
       if Start_Prelude_Clause.Is_Null or End_Prelude_Clause.Is_Null then
          raise Program_Error with "Failed to get prelude clause";
       end if;
@@ -522,21 +522,21 @@ package body LAL_Refactor.Sort_Dependencies is
       declare
          Node                  : constant Ada_Node :=
            Unit.Root.Lookup (Sloc);
+         Node_Compilation_Unit : Libadalang.Analysis.Compilation_Unit :=
+           No_Compilation_Unit;
+         Node_Prelude          : Ada_Node_List := No_Ada_Node_List;
 
       begin
          if Node.Is_Null then
             return False;
          end if;
 
-         Node_Compilation_Unit :
-           constant Libadalang.Analysis.Compilation_Unit :=
-             Node.P_Enclosing_Compilation_Unit;
+         Node_Compilation_Unit := Node.P_Enclosing_Compilation_Unit;
          if Node_Compilation_Unit.Is_Null then
             return False;
          end if;
 
-         Node_Prelude : constant Ada_Node_List :=
-           Node_Compilation_Unit.F_Prelude;
+         Node_Prelude := Node_Compilation_Unit.F_Prelude;
          if Node_Prelude.Is_Null then
             return False;
          end if;
@@ -565,6 +565,9 @@ package body LAL_Refactor.Sort_Dependencies is
       Selection : Source_Location_Range)
       return Boolean
    is
+      Start_Location : Source_Location := No_Source_Location;
+      End_Location   : Source_Location := No_Source_Location;
+
    begin
       if (Unit = No_Analysis_Unit or else Unit.Root.Is_Null)
          or Selection.Start_Sloc = No_Source_Location
@@ -577,31 +580,34 @@ package body LAL_Refactor.Sort_Dependencies is
       --  some sort of whitespace. Skip all trivia and consider the next non
       --  trivia token as start location.
 
-      Start_Location : constant Source_Location :=
-        (declare
-           Start_Token : constant Token_Reference :=
-             LAL_Refactor.Utils.Skip_Trivia
-               (Unit.Lookup_Token (Selection.Start_Sloc),
-                LAL_Refactor.Utils.Forward);
-         begin
+      declare
+         Start_Token : constant Token_Reference :=
+           LAL_Refactor.Utils.Skip_Trivia
+             (Unit.Lookup_Token (Selection.Start_Sloc),
+              LAL_Refactor.Utils.Forward);
+
+      begin
+         Start_Location :=
            (if Start_Token = No_Token
             then No_Source_Location
-            else Start_Token.Data.Sloc_Range.Start_Sloc));
+            else Start_Token.Data.Sloc_Range.Start_Sloc);
+      end;
 
       --  Selection.End_Sloc can point to a trivia token, either a comment or
       --  some sort of whitespace. Skip all trivia and consider the previous
       --  non trivia as end location.
 
-      End_Location : constant Source_Location :=
-        (declare
-           End_Token : constant Token_Reference :=
-             LAL_Refactor.Utils.Skip_Trivia
-               (Unit.Lookup_Token (Selection.End_Sloc),
-                LAL_Refactor.Utils.Backward);
-         begin
-           (if End_Token = No_Token
-            then No_Source_Location
-            else End_Token.Data.Sloc_Range.End_Sloc));
+      declare
+         End_Token : constant Token_Reference :=
+           LAL_Refactor.Utils.Skip_Trivia
+             (Unit.Lookup_Token (Selection.End_Sloc),
+              LAL_Refactor.Utils.Backward);
+      begin
+         End_Location :=
+            (if End_Token = No_Token
+             then No_Source_Location
+             else End_Token.Data.Sloc_Range.End_Sloc);
+      end;
 
       return
         Is_Sort_Dependencies_Available (Unit, Start_Location)
