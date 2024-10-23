@@ -205,4 +205,32 @@ package body LAL_Refactor.Utils is
       end return;
    end Get_Project_Analysis_Units;
 
+   -----------------
+   -- Skip_Trivia --
+   -----------------
+
+   function Skip_Trivia
+     (Token     : Libadalang.Common.Token_Reference;
+      Direction : Search_Direction_Type)
+      return Libadalang.Common.Token_Reference
+   is
+      use Libadalang.Common;
+
+   begin
+      if Token = No_Token then
+         return No_Token;
+      end if;
+
+      if not Token.Is_Trivia then
+         return Token;
+      end if;
+
+      case Direction is
+         when Forward =>
+            return Next (Token, Exclude_Trivia => True);
+         when Backward =>
+            return Previous (Token, Exclude_Trivia => True);
+      end case;
+   end Skip_Trivia;
+
 end LAL_Refactor.Utils;

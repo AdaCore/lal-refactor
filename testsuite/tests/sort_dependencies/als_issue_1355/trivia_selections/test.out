@@ -1,0 +1,6 @@
+main.adb
+3:1-7:19 with Ada.Calendar;
+with Ada.Command_Line;
+with Ada.Integer_Text_IO, Ada.Text_IO, Ada.Float_Text_IO;
+with Ada.Numerics.Elementary_Functions;
+
