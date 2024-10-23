@@ -11,6 +11,8 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Libadalang.Common; use Libadalang.Common;
 
+with LAL_Refactor.Utils;
+
 package body LAL_Refactor.Sort_Dependencies is
 
    Me : constant Trace_Handle := Create ("LAL_REFACTOR.SORT_DEPENDENCIES");
@@ -47,17 +49,6 @@ package body LAL_Refactor.Sort_Dependencies is
 
    function Is_Single_Line_Break (Token : Token_Reference) return Boolean;
    --  Checks if Token is a Whitespace token with multiple line breaks
-
-   type Search_Direction_Type is (Forward, Backward);
-
-   function Skip_Trivia
-     (Token     : Token_Reference;
-      Direction : Search_Direction_Type)
-      return Token_Reference;
-   --  If Token is trivia, returns the next or previous one that is not.
-   --  Direction controls the search direction. Forward will return the next
-   --  token and Backward will return the previous one.
-   --  If Token is No_Token, returns No_Token.
 
    function Text
      (Token_Start, Token_End : Token_Reference)
@@ -284,7 +275,7 @@ package body LAL_Refactor.Sort_Dependencies is
 
       function Get_Prelude_Clause
         (Location         : Source_Location;
-         Search_Direction : Search_Direction_Type)
+         Search_Direction : LAL_Refactor.Utils.Search_Direction_Type)
          return Ada_Node;
       --  Lookup the prelude clause that contains Location.
       --  If the token in Location is a trivia token, then first gets the
@@ -299,11 +290,11 @@ package body LAL_Refactor.Sort_Dependencies is
 
       function Get_Prelude_Clause
         (Location         : Source_Location;
-         Search_Direction : Search_Direction_Type)
+         Search_Direction : LAL_Refactor.Utils.Search_Direction_Type)
          return Ada_Node
       is
          Token            : constant Token_Reference :=
-           Skip_Trivia
+           LAL_Refactor.Utils.Skip_Trivia
              (Compilation_Unit.Unit.Lookup_Token (Location), Search_Direction);
          Bottom_Most_Node : constant Ada_Node :=
            (if Token = No_Token
@@ -331,9 +322,9 @@ package body LAL_Refactor.Sort_Dependencies is
 
    begin
       Start_Prelude_Clause : constant Ada_Node :=
-        Get_Prelude_Clause (Where.Start_Sloc, Forward);
+        Get_Prelude_Clause (Where.Start_Sloc, LAL_Refactor.Utils.Forward);
       End_Prelude_Clause   : constant Ada_Node :=
-        Get_Prelude_Clause (Where.End_Sloc, Backward);
+        Get_Prelude_Clause (Where.End_Sloc, LAL_Refactor.Utils.Backward);
 
       if Start_Prelude_Clause.Is_Null or End_Prelude_Clause.Is_Null then
          raise Program_Error with "Failed to get prelude clause";
@@ -589,7 +580,9 @@ package body LAL_Refactor.Sort_Dependencies is
       Start_Location : constant Source_Location :=
         (declare
            Start_Token : constant Token_Reference :=
-             Skip_Trivia (Unit.Lookup_Token (Selection.Start_Sloc), Forward);
+             LAL_Refactor.Utils.Skip_Trivia
+               (Unit.Lookup_Token (Selection.Start_Sloc),
+                LAL_Refactor.Utils.Forward);
          begin
            (if Start_Token = No_Token
             then No_Source_Location
@@ -602,7 +595,9 @@ package body LAL_Refactor.Sort_Dependencies is
       End_Location : constant Source_Location :=
         (declare
            End_Token : constant Token_Reference :=
-             Skip_Trivia (Unit.Lookup_Token (Selection.End_Sloc), Backward);
+             LAL_Refactor.Utils.Skip_Trivia
+               (Unit.Lookup_Token (Selection.End_Sloc),
+                LAL_Refactor.Utils.Backward);
          begin
            (if End_Token = No_Token
             then No_Source_Location
@@ -1233,31 +1228,6 @@ package body LAL_Refactor.Sort_Dependencies is
 
       return Result;
    end To_Text_Vector;
-
-   -----------------
-   -- Skip_Trivia --
-   -----------------
-
-   function Skip_Trivia
-     (Token     : Token_Reference;
-      Direction : Search_Direction_Type)
-      return Token_Reference is
-   begin
-      if Token = No_Token then
-         return No_Token;
-      end if;
-
-      if not Token.Is_Trivia then
-         return Token;
-      end if;
-
-      case Direction is
-         when Forward =>
-            return Next (Token, Exclude_Trivia => True);
-         when Backward =>
-            return Previous (Token, Exclude_Trivia => True);
-      end case;
-   end Skip_Trivia;
 
    ----------
    -- Sort --

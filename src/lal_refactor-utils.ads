@@ -6,6 +6,7 @@
 
 with Ada.Strings.Unbounded;
 
+with Libadalang.Common;
 with Libadalang.Analysis;
 
 package LAL_Refactor.Utils is
@@ -28,5 +29,16 @@ package LAL_Refactor.Utils is
    --  If Project_Filename is defined, then uses it to create a unit provider.
    --  Project_Filename can either be a full path or a filename in the current
    --  directory.
+
+   type Search_Direction_Type is (Forward, Backward);
+
+   function Skip_Trivia
+     (Token     : Libadalang.Common.Token_Reference;
+      Direction : Search_Direction_Type)
+      return Libadalang.Common.Token_Reference;
+   --  If Token is trivia, returns the next or previous one that is not.
+   --  Direction controls the search direction. Forward will return the next
+   --  token and Backward will return the previous one.
+   --  If Token is No_Token, returns No_Token.
 
 end LAL_Refactor.Utils;
