@@ -2053,8 +2053,8 @@ package body LAL_Refactor.Subprogram_Signature is
             Edit      => Text_Edit'
               (Location =>
                  Make_Range
-                   (End_Sloc (Subp_Spec.Sloc_Range),
-                    End_Sloc (Subp_Spec.Sloc_Range)),
+                   (End_Sloc (Subp_Spec.F_Subp_Name.Sloc_Range),
+                    End_Sloc (Subp_Spec.F_Subp_Name.Sloc_Range)),
                Text     => " (" & Self.New_Parameter & ")"));
          return;
       end if;

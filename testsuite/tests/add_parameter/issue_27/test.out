@@ -1,0 +1,6 @@
+Adding parameter Success : out Boolean
+main_package.adb
+3:27-3:27  (Success : out Boolean)
+main_package.ads
+3:27-3:27  (Success : out Boolean)
+
