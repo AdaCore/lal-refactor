@@ -25,8 +25,8 @@ build_and_test:
     - !reference [.basic-setup]
 
     # Build and test
-    - anod build lal-refactor $ACI_TRACK_QUALIFIER
-    - anod test lal-refactor  $ACI_TRACK_QUALIFIER
+    - anod build lal-refactor $ACI_TRACK_QUALIFIER --latest
+    - anod test lal-refactor  $ACI_TRACK_QUALIFIER --latest
 
     # Programmatically find the build space name
     - BUILD_SPACE=`anod eval lal-refactor --primitive test build_space_name $ACI_TRACK_QUALIFIER | tr -d "'"`
