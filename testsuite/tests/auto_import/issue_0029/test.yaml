@@ -1,0 +1,4 @@
+description:
+    Test that the Auto Import tool does not crash inside a Begin_Block.
+
+driver: shell_script
