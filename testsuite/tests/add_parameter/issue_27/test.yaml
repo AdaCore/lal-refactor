@@ -1,0 +1,5 @@
+description: |+
+    The that the Add Parameter tool correctly adds a parameter to a function
+    without parameters.
+
+driver: shell_script
