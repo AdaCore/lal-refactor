@@ -56,12 +56,12 @@ End_Column: 18
 # Renaming node main.adb:7:8: 
 References:
 Unit:__standard
-Line: 4
+Line: 6
 Source Location Range:
-Start_Line: 4
-Start_Column: 8
-End_Line: 4
-End_Column: 15
+Start_Line: 6
+Start_Column: 9
+End_Line: 6
+End_Column: 16
 Unit:bar.ads
 Line: 5
 Source Location Range:
@@ -136,12 +136,12 @@ End_Column: 50
 # Renaming node main.adb:7:8: 
 References:
 Unit:__standard
-Line: 4
+Line: 6
 Source Location Range:
-Start_Line: 4
-Start_Column: 8
-End_Line: 4
-End_Column: 15
+Start_Line: 6
+Start_Column: 9
+End_Line: 6
+End_Column: 16
 Unit:bar.ads
 Line: 5
 Source Location Range:
