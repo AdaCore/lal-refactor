@@ -455,7 +455,7 @@ package body LAL_Refactor.Pull_Up_Declaration is
             --  - when the last token is not a whole line comment nor a
             --    whitespace
             exit when Current_Token = No_Token
-              or else abs (Line_Distance (Current_Token, Last_Token)) > 1
+              or else abs Line_Distance (Current_Token, Last_Token) > 1
               or else (Kind (Data (Current_Token)) not in
                          Ada_Whitespace | Ada_Comment
                        and then not Is_Whole_Line_Comment (Current_Token));
@@ -1049,8 +1049,8 @@ package body LAL_Refactor.Pull_Up_Declaration is
                if Is_Whole_Line_Comment (Token_1)
                  and then Is_Whole_Line_Comment (Token_2)
                  and then Is_Whole_Line_Comment (Token_3)
-                 and then abs (Line_Distance (Token_2, Token_1)) = 1
-                 and then abs (Line_Distance (Token_3, Token_2)) = 1
+                 and then abs Line_Distance (Token_2, Token_1) = 1
+                 and then abs Line_Distance (Token_3, Token_2) = 1
                  and then Is_Header_Edge (Token_1, +Subprogram_Name)
                  and then Is_Header_Body (Token_2, +Subprogram_Name)
                  and then Is_Header_Edge (Token_3, +Subprogram_Name)
