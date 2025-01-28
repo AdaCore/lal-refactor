@@ -743,9 +743,16 @@ package body LAL_Refactor.Auto_Import is
         Langkit_Support.Text.Unbounded_Text_Type :=
           Langkit_Support.Text.To_Unbounded_Text
             (Original_Qualifier_Text);
+      Lowered_Full_Name : constant
+        Langkit_Support.Text.Text_Type :=
+          Langkit_Support.Text.To_Lower
+            (if not Name.Parent.Is_Null
+             and then Name.Parent.Kind in Ada_Dotted_Name
+             then Name.Parent.Text else "");
 
       Available_Imports : Import_Type_Ordered_Set;
-      Stop_Iteration : Boolean := False;
+      Found_Unit_Name : Boolean := False;
+      Found_Qualifier : Boolean := False;
 
       procedure Process_Compilation_Unit
         (Comp_Unit : Compilation_Unit);
@@ -776,11 +783,8 @@ package body LAL_Refactor.Auto_Import is
       begin
          for Name of Names loop
             Fully_Qualified_Name :=
-              (if Ada.Strings.Wide_Wide_Unbounded."/="
-                 (Fully_Qualified_Name, Null_Unbounded_Wide_Wide_String)
-               then
-                  Fully_Qualified_Name & "." & Name
-               else Name);
+              (if Fully_Qualified_Name = "" then Name
+               else Fully_Qualified_Name & "." & Name);
          end loop;
 
          return Fully_Qualified_Name;
@@ -791,35 +795,34 @@ package body LAL_Refactor.Auto_Import is
       ------------------------------
 
       procedure Process_Compilation_Unit
-        (Comp_Unit : Compilation_Unit) is
+        (Comp_Unit : Compilation_Unit)
+      is
+         Unit_Name : constant Langkit_Support.Text.Unbounded_Text_Type :=
+           (if Original_Qualifier = "" or else Comp_Unit.Is_Null
+            then Null_Unbounded_Wide_Wide_String
+            else Get_Fully_Qualified_Name (Comp_Unit));
       begin
-         Stop_Iteration := False;
-
          if Comp_Unit.Is_Null then
             return;
          end if;
 
-         if Original_Qualifier = Null_Unbounded_Wide_Wide_String then
+         if Original_Qualifier = "" then
             Append_Reachable_Declarations
               (Name                   => Name,
                Unit                   => Comp_Unit,
                Reachable_Definitions  => Reachable_Declarations,
                Reachable_Renames      => Reachable_Renames);
 
-         elsif Lowered_Original_Qualifier
-           = Get_Fully_Qualified_Name (Comp_Unit)
-         then
-            --  The qualified specified by the user matches the unit name: stop
-            --  processing other units and create an import directive for this
-            --  unit.
-            Available_Imports.Include
-              ((Import    => Original_Qualifier,
-                Qualifier => Null_Unbounded_Wide_Wide_String));
-            Stop_Iteration := True;
+         elsif Lowered_Full_Name = Unit_Name then
+            Found_Unit_Name := True;
+
+         elsif Lowered_Original_Qualifier = Unit_Name then
+            Found_Qualifier := True;
          end if;
       end Process_Compilation_Unit;
 
    begin
+      For_Each_Unit :
       for Unit of Units loop
          if not Unit.Root.Is_Null
            and then not Unit.Has_Diagnostics
@@ -828,28 +831,43 @@ package body LAL_Refactor.Auto_Import is
                when Ada_Compilation_Unit_Range =>
                   Process_Compilation_Unit  (Unit.Root.As_Compilation_Unit);
 
-                  if Stop_Iteration then
-                     return Available_Imports;
-                  end if;
+                  exit For_Each_Unit when Found_Unit_Name;
 
                when Ada_Compilation_Unit_List_Range =>
                   for Comp_Unit of Unit.Root.As_Compilation_Unit_List loop
                      Process_Compilation_Unit (Comp_Unit.As_Compilation_Unit);
 
-                     if Stop_Iteration then
-                        return Available_Imports;
-                     end if;
+                     exit For_Each_Unit when Found_Unit_Name;
                   end loop;
                when others =>
                   null;
             end case;
          end if;
-      end loop;
+      end loop For_Each_Unit;
 
-      Available_Imports := Create_Available_Imports
-        (Name_To_Import         => Name,
-         Reachable_Declarations => Reachable_Declarations,
-         Reachable_Renames      => Reachable_Renames);
+      if Found_Unit_Name then
+         --  The Name specified by the user matches the unit name: stop
+         --  processing other units and create an import directive for this
+         --  unit.
+         Available_Imports.Include
+           ((Import    =>
+               Langkit_Support.Text.To_Unbounded_Text (Name.Parent.Text),
+             Qualifier => Null_Unbounded_Wide_Wide_String));
+
+      elsif Found_Qualifier then
+         --  The qualified specified by the user matches the unit name: stop
+         --  processing other units and create an import directive for this
+         --  unit.
+         Available_Imports.Include
+           ((Import    => Original_Qualifier,
+             Qualifier => Null_Unbounded_Wide_Wide_String));
+
+      else
+         Available_Imports := Create_Available_Imports
+           (Name_To_Import         => Name,
+            Reachable_Declarations => Reachable_Declarations,
+            Reachable_Renames      => Reachable_Renames);
+      end if;
 
       return Available_Imports;
    end Get_Available_Imports;
