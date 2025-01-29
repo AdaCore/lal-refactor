@@ -1,0 +1,3 @@
+description: This test checks that Ada.Containers.Vectors are imported correctly.
+
+driver: shell_script
