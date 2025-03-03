@@ -608,25 +608,48 @@ package body LAL_Refactor.Auto_Import is
       begin
          if Is_Top_Level_Declaration (Defining_Name) then
             declare
+
                Updated_Imports  : Import_Type_Ordered_Set := [];
                Declaration_Name : constant Unbounded_Text_Type :=
                  To_Unbounded_Text (Defining_Name.Text);
-
+               Name_Text        : constant Unbounded_Text_Type :=
+                 Langkit_Support.Text.To_Unbounded_Text (Name_To_Import.Text);
             begin
                declare
                   New_Import : Import_Type :=
                     (Declaration_Name, Declaration_Name);
                begin
-                  Updated_Imports.Include (New_Import);
+                  --  The qualifier already specified by the user is the same
+                  --  as the one we have computed from the missing unit: in
+                  --  that case we don't need to add any additional qualifier.
                   if Langkit_Support.Text."="
-                     (New_Import.Qualifier, Original_Qualifier)
+                       (New_Import.Qualifier, Original_Qualifier)
                   then
-                     New_Import.Qualifier :=
-                       Null_Unbounded_Wide_Wide_String;
+                     New_Import.Qualifier := Null_Unbounded_Wide_Wide_String;
+
+                  --  The declaration's fully qualified name (e.g: 'A.B.C')
+                  --  ends with the name for which we are computing
+                  --  imports/qualifiers (e.g: 'C'): in that case, just take
+                  --  the missing part as the qualifier (e.g: 'A.B').
+                  elsif Langkit_Support.Text."="
+                    (Declaration_Name.Tail (Name_Text.Length), Name_Text)
+                  then
+                     declare
+                        New_Length : constant Integer :=
+                          (if Declaration_Name.Length > Name_Text.Length
+                           then Declaration_Name.Length - Name_Text.Length - 1
+                           else 0);
+                     begin
+                        New_Import.Qualifier :=
+                          Declaration_Name.Head (New_Length);
+                     end;
                   end if;
+
+                  Updated_Imports.Include (New_Import);
+
                   if Reachable_Renames.Contains (Defining_Name) then
-                     for Alias of
-                       Reachable_Renames.Constant_Reference (Defining_Name)
+                     for Alias
+                       of Reachable_Renames.Constant_Reference (Defining_Name)
                      loop
                         declare
                            Alias_Name : constant Unbounded_Text_Type :=
@@ -634,15 +657,17 @@ package body LAL_Refactor.Auto_Import is
 
                         begin
                            Update_Imports
-                             (Updated_Imports,
-                              Alias_Name,
-                              True);
+                             (Imports          => Updated_Imports,
+                              Parent_Qualifier => Alias_Name,
+                              Last_Parent      => True);
                         end;
                      end loop;
                   end if;
                end;
+
                Final_Imports := Updated_Imports;
             end;
+
             return Final_Imports;
          end if;
 
@@ -855,7 +880,7 @@ package body LAL_Refactor.Auto_Import is
              Qualifier => Null_Unbounded_Wide_Wide_String));
 
       elsif Found_Qualifier then
-         --  The qualified specified by the user matches the unit name: stop
+         --  The qualifier specified by the user matches the unit name: stop
          --  processing other units and create an import directive for this
          --  unit.
          Available_Imports.Include
