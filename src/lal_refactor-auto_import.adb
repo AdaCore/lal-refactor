@@ -1053,14 +1053,16 @@ package body LAL_Refactor.Auto_Import is
       end if;
 
       declare
-         Ignore         : Libadalang.Common.Ref_Result_Kind;
+         Ref_Kind       : Libadalang.Common.Ref_Result_Kind;
          Enclosing_Name : constant Libadalang.Analysis.Name :=
            Get_Appropriate_Enclosing_Name (Node.As_Identifier);
          Resolved_Name  : constant Defining_Name :=
            Laltools.Common.Resolve_Name
-             (Enclosing_Name, LAL_Refactor.Refactor_Trace, Ignore);
+             (Enclosing_Name, LAL_Refactor.Refactor_Trace, Ref_Kind);
 
       begin
+         --  We could not resolve the node's definition or not in a precise
+         --  way: check for available imports.
          if Resolved_Name.Is_Null then
             Me.Trace
               ("Can't resolve name "
@@ -1070,8 +1072,7 @@ package body LAL_Refactor.Auto_Import is
             Name := Enclosing_Name;
             Available_Imports :=
               Get_Available_Imports
-                (Name  => Enclosing_Name,
-                 Units => Units.all);
+                (Name => Enclosing_Name, Units => Units.all);
 
             return not Available_Imports.Is_Empty;
 
@@ -1079,9 +1080,10 @@ package body LAL_Refactor.Auto_Import is
             Me.Trace
               (Enclosing_Name.Image
                & " can be resolved (result kind: "
-               & Ignore'Img
-               & "): "
-               & "no need to check for missing imports");
+               & Ref_Kind'Img
+               & ") to "
+               & Resolved_Name.Image
+               & ": no need to check for missing imports");
             return False;
          end if;
       end;
