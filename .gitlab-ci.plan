@@ -1,0 +1,19 @@
+def build_(qualifier={}):
+    with defaults(qualifier=qualifier):
+        anod_build("lal-refactor")
+
+
+def test_(qualifier={}):
+    with defaults(qualifier=qualifier):
+        anod_install("lal-refactor")
+        anod_test("lal-refactor")
+
+# Edge
+
+edge_qualifier={"edge": True}
+
+def build_edge():
+    build_(edge_qualifier)
+
+def test_edge():
+    test_(edge_qualifier)
