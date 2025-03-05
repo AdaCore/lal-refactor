@@ -1,0 +1,9 @@
+Available Imports:
+Import: Parent.Child; Qualifier: Parent
+
+Edits:
+main.adb
+1:1-1:1 with Parent.Child;
+
+2:8-2:8 Parent.
+

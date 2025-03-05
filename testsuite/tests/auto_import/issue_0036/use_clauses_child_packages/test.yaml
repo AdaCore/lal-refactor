@@ -1,0 +1,4 @@
+description:
+  This test checks that we correctly handle use-clauses on child packages
+
+driver: shell_script
