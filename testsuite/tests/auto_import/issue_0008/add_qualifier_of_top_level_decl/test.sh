@@ -1,1 +1,1 @@
-auto_import -P default.gpr --source test.adb --line 6 --column 7
+auto_import -P default.gpr --source test.adb --line 5 --column 9

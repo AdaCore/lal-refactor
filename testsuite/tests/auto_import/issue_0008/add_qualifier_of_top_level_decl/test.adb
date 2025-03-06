@@ -1,9 +1,6 @@
-with Ada.Strings.Unbounded.Text_IO;
+with Parent.Child.Great_Child;
 
-package body Test is
-   procedure Foo is
-   begin
-      Text_IO;
-      Put_Line ("Foo");
-   end Foo;
+procedure Test is
+begin
+   Great_Child;
 end Test;

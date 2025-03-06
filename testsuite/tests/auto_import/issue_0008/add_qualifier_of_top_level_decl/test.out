@@ -1,9 +1,7 @@
 Available Imports:
-Import: Ada.Strings.Unbounded.Text_IO; Qualifier: Ada.Strings.Unbounded.Text_IO
-Import: Ada.Text_IO; Qualifier: Ada.Text_IO
-Import: Text_IO; Qualifier: Text_IO
+Import: Parent.Child.Great_Child; Qualifier: Parent.Child
 
 Edits:
 test.adb
-6:7-6:7 Ada.Strings.Unbounded.Text_IO.
+5:4-5:4 Parent.Child.
 

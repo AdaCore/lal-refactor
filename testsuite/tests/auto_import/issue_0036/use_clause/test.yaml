@@ -1,0 +1,5 @@
+description:
+  This test checks that we correcly add missing import
+  for use-clauses that reference toplevel packages.
+
+driver: shell_script
