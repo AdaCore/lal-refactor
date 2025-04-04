@@ -1,0 +1,2 @@
+description: Test that there is no conflict when renaming functions that do not have the same return type.
+driver: shell_script

@@ -350,46 +350,53 @@ package body LAL_Refactor.Safe_Rename is
          return False;
       end if;
 
-      --  At this point we know that:
-      --    * both subprogram specs are not null
-      --    * both subprograms are of the same kind
-      --  If they do not have parameters, then:
-      --    * if they're both procedures or entry decls, then they're type
-      --      conformant
-      --    * otherwise, they must both be functions and if they have different
-      --      return types, then they're not type conformant
-      --  If only one has parameters, then they're not type conformant.
+      --  If both subprograms are functions but have different return types,
+      --  there's no collision.
 
-      if Both_Params_Null then
-         if Both_Procedures or else Both_Entry_Decls then
-            return True;
-         else
-            Assert (Both_Functions);
-            if Hash (Subp_A_Spec.As_Subp_Spec.P_Return_Type.As_Ada_Node) /=
-                 Hash (Subp_B_Spec.As_Subp_Spec.P_Return_Type.As_Ada_Node)
-            then
-               return False;
-            end if;
-         end if;
-      elsif Only_One_Params_Null then
+      if Both_Functions
+        and then Hash (Subp_A_Spec.As_Subp_Spec.P_Return_Type.As_Ada_Node)
+                 /= Hash (Subp_B_Spec.As_Subp_Spec.P_Return_Type.As_Ada_Node)
+      then
          return False;
       end if;
 
       --  At this point we know that:
       --    * both subprogram specs are not null
       --    * both subprograms are of the same kind
-      --    * both subprograms have parameters
+      --    * if they are functions, they have the same return type
+
+      --  If they do not have parameters, check if they're both procedures or
+      --  entry decls.
+
+      if Both_Params_Null and then (Both_Procedures or else Both_Entry_Decls)
+      then
+         return True;
+      end if;
+
+      --  If only one has parameters, then they're not type conformant.
+
+      if Only_One_Params_Null then
+         return False;
+      end if;
+
+      --  At this point we know that:
+      --    * both subprogram specs are not null
+      --    * both subprograms are of the same kind
       --    * if both subprogram are functions, they have the same return type
-      --  The only thing left to check are their parameters.
+      --    * both subprograms have parameters
+
+      --  The only thing left to check is if their parameters are the same.
 
       case Check_Modes is
-         when True
-            => return Create_Parameter_Data_Vector (Subp_A_Params) =
-                        Create_Parameter_Data_Vector (Subp_B_Params);
+         when True =>
+            return
+              Create_Parameter_Data_Vector (Subp_A_Params)
+              = Create_Parameter_Data_Vector (Subp_B_Params);
 
-         when False
-            => return Create_Hash_Vector (Subp_A_Params) =
-                        Create_Hash_Vector (Subp_B_Params);
+         when False =>
+            return
+              Create_Hash_Vector (Subp_A_Params)
+              = Create_Hash_Vector (Subp_B_Params);
       end case;
    end Are_Subprograms_Type_Conformant;
 
@@ -965,7 +972,6 @@ package body LAL_Refactor.Safe_Rename is
                then
                   --  If Decl is a subprogram, then not only check the name
                   --  but also its signature.
-
                   if Check_Subp_Rename_Conflict
                     (Canonical_Decl,
                      Self.New_Name,

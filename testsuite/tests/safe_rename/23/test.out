@@ -1,0 +1,16 @@
+# Renaming node test.ads:2:13: 
+References:
+Unit:test.ads
+Line: 2
+Source Location Range:
+Start_Line: 2
+Start_Column: 13
+End_Line: 2
+End_Column: 20
+Line: 6
+Source Location Range:
+Start_Line: 6
+Start_Column: 17
+End_Line: 6
+End_Column: 24
+
