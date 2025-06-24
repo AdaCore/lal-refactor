@@ -15,7 +15,8 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Wide_Wide_Fixed;
 
-with Laltools.Common; use Laltools.Common;
+with Laltools.Common;    use Laltools.Common;
+with LAL_Refactor.Tools; use LAL_Refactor.Tools;
 
 with Langkit_Support.Text;
 
@@ -48,26 +49,6 @@ package body LAL_Refactor.Extract_Subprogram is
          | Ada_Exception_Handler_Range
          | Ada_Extended_Return_Stmt_Range)
      with Pre => not Node.Is_Null;
-
-   type Direction  is (Forward, Backward);
-
-   function Lookup
-     (Unit  : Analysis_Unit;
-      Token : Token_Reference;
-      Going : Direction)
-      return Ada_Node;
-   --  Finds the next Ada_Node relative to Token. Going controls the lookup
-   --  direction. If Token already belongs to an Ada_Node, that node is
-   --  returned. Returns No_Ada_Node if no node is found or if
-   --  Token = No_Token.
-
-   function Next_Non_Whitespace
-     (Token : Token_Reference;
-      Going : Direction)
-      return Token_Reference;
-   --  Finds the next non white Token_Reference relative to Token. Going
-   --  controls the lookup direction. Returns No_Token if no whitespace
-   --  if found or if Token = No_Token.
 
    function To_String
      (Mode          : Ada_Mode;
@@ -186,78 +167,6 @@ package body LAL_Refactor.Extract_Subprogram is
 
       return Mode;
    end Get_Parameter_Mode_From_Reference;
-
-   ------------
-   -- Lookup --
-   ------------
-
-   function Lookup
-     (Unit  : Analysis_Unit;
-      Token : Token_Reference;
-      Going : Direction)
-      return Ada_Node
-   is
-      Aux_Token      : Token_Reference := Token;
-      Aux_Token_Kind : Libadalang.Common.Token_Kind :=
-        Kind (Data (Aux_Token));
-
-   begin
-      --  Do nothing if Aux_Token <=> Token is a No_Token or already belongs to
-      --  an Ada_Node.
-
-      while not (Aux_Token = No_Token)
-        and then Aux_Token_Kind in Ada_Comment | Ada_Whitespace
-      loop
-         case Going is
-            when Forward => Aux_Token := Next (Aux_Token);
-            when Backward => Aux_Token := Previous (Aux_Token);
-         end case;
-
-         Aux_Token_Kind := Kind (Data (Aux_Token));
-      end loop;
-
-      --  No Ada_Node was found relative to Token
-
-      if Aux_Token = No_Token then
-         return No_Ada_Node;
-      end if;
-
-      return Unit.Root.Lookup (Start_Sloc (Sloc_Range (Data (Aux_Token))));
-   end Lookup;
-
-   -------------------------
-   -- Next_Non_Whitespace --
-   -------------------------
-
-   function Next_Non_Whitespace
-     (Token : Token_Reference;
-      Going : Direction)
-      return Token_Reference
-   is
-      Result : Token_Reference := Token;
-
-   begin
-      --  Do nothing if Result <=> Token is a No_Token
-
-      while Result /= No_Token loop
-         case Going is
-            when Forward => Result := Next (Result);
-            when Backward => Result := Previous (Result);
-         end case;
-
-         exit when Kind (Data (Result)) /= Ada_Whitespace;
-      end loop;
-
-      if Result /= No_Token
-         and then Kind (Data (Result)) /= Ada_Whitespace
-      then
-         --  No whitespace relative to Token
-         return Result;
-
-      else
-         return No_Token;
-      end if;
-   end Next_Non_Whitespace;
 
    ----------------------
    -- To_String_Vector --
@@ -2258,8 +2167,10 @@ package body LAL_Refactor.Extract_Subprogram is
              (Section_To_Extract.End_Line,
               Section_To_Extract.End_Column));
 
-      Start_Node : constant Ada_Node := Lookup (Unit, Start_Token, Forward);
-      End_Node   : constant Ada_Node := Lookup (Unit, End_Token, Backward);
+      Start_Node : constant Ada_Node := LAL_Refactor.Tools.Lookup
+        (Unit, Start_Token, LAL_Refactor.Tools.Forward);
+      End_Node   : constant Ada_Node := LAL_Refactor.Tools.Lookup
+        (Unit, End_Token, LAL_Refactor.Tools.Backward);
 
       --  Section_To_Extract might no be complete, for instance, the
       --  Start_Line/Column might be in a whitespace.
