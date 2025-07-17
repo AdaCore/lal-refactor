@@ -226,16 +226,26 @@ package body LAL_Refactor.File_Edits is
 
                         if Current_Text_Edit /= No_Text_Edit then
                            if Current_Line_Number =
-                                Natural (Current_Text_Edit.Location.Start_Line)
-                             and then Current_Column_Number =
-                                        Natural
-                                          (Current_Text_Edit.Location.
-                                             Start_Column)
+                             Natural (Current_Text_Edit.Location.Start_Line)
+                             and then Current_Column_Number <=
+                               Natural
+                                 (Current_Text_Edit.Location.Start_Column)
                            then
+                              if Current_Text_Edit.Location.Start_Sloc =
+                                Current_Text_Edit.Location.End_Sloc
+                              then
+                                 --  8:1-8:1 Extracted ...
+                                 --  Insert looks like above so add insertion.
+
+                                 Output_Buffer.Prepend
+                                   (VSS.Strings.Conversions.To_Virtual_String
+                                      (To_String (Current_Text_Edit.Text)));
+                              end if;
+
                               Text_Edit_Ordered_Sets.Previous
                                 (Text_Edits_Cursor);
                               if Text_Edit_Ordered_Sets.
-                                   Has_Element (Text_Edits_Cursor)
+                                Has_Element (Text_Edits_Cursor)
                               then
                                  Current_Text_Edit :=
                                    Text_Edit_Ordered_Sets.
@@ -246,12 +256,11 @@ package body LAL_Refactor.File_Edits is
                               Inside_Text_Edit := False;
                            end if;
 
-                           if Current_Line_Number =
-                                Natural (Current_Text_Edit.Location.End_Line)
-                             and then Current_Column_Number =
-                                        Natural
-                                          (Current_Text_Edit.Location.
-                                             End_Column)
+                           if not Inside_Text_Edit
+                             and then Current_Line_Number =
+                               Natural (Current_Text_Edit.Location.End_Line)
+                             and then Current_Column_Number <=
+                               Natural (Current_Text_Edit.Location.End_Column)
                            then
                               Output_Buffer.Prepend
                                 (VSS.Strings.Conversions.To_Virtual_String

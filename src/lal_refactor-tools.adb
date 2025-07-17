@@ -23,6 +23,140 @@ package body LAL_Refactor.Tools is
          raise Parse_Tool_Exception;
    end Convert;
 
+   ------------
+   -- Lookup --
+   ------------
+
+   function Lookup
+     (Unit  : Analysis_Unit;
+      Token : in out Token_Reference;
+      Going : Direction;
+      Skip  : Token_Kinds)
+      return Ada_Node
+   is
+      Aux_Token      : Token_Reference := Token;
+      Aux_Token_Kind : Token_Kind      := Kind (Data (Aux_Token));
+
+      -----------------
+      -- Should_Skip --
+      -----------------
+
+      function Should_Skip (Kind : Token_Kind) return Boolean;
+      function Should_Skip (Kind : Token_Kind) return Boolean is
+      begin
+         for K of Skip loop
+            if K = Kind then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Should_Skip;
+
+   begin
+      --  Do nothing if Aux_Token <=> Token is a No_Token or already belongs to
+      --  an Ada_Node.
+
+      while not (Aux_Token = No_Token)
+        and then Should_Skip (Aux_Token_Kind)
+      loop
+         case Going is
+            when Forward => Aux_Token := Next (Aux_Token);
+            when Backward => Aux_Token := Previous (Aux_Token);
+         end case;
+
+         Aux_Token_Kind := Kind (Data (Aux_Token));
+      end loop;
+
+      --  No Ada_Node was found relative to Token
+
+      if Aux_Token = No_Token then
+         return No_Ada_Node;
+      end if;
+
+      Token := Aux_Token;
+      return Unit.Root.Lookup (Start_Sloc (Sloc_Range (Data (Aux_Token))));
+   end Lookup;
+
+   ------------
+   -- Lookup --
+   ------------
+
+   function Lookup
+     (Unit  : Analysis_Unit;
+      Token : Token_Reference;
+      Going : Direction)
+      return Ada_Node
+   is
+      Aux_Token : Token_Reference := Token;
+   begin
+      return Lookup
+        (Unit, Aux_Token, Going, (Ada_Comment, Ada_Whitespace));
+   end Lookup;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (Token : Token_Reference;
+      Kind  : Token_Kind;
+      Going : Direction)
+      return Token_Reference
+   is
+      Aux_Token      : Token_Reference := Token;
+      Aux_Token_Kind : Token_Kind      :=
+        Libadalang.Common.Kind (Data (Aux_Token));
+
+   begin
+      while Aux_Token /= No_Token
+        and then Aux_Token_Kind /= Kind
+      loop
+         case Going is
+            when Forward => Aux_Token := Next (Aux_Token);
+            when Backward => Aux_Token := Previous (Aux_Token);
+         end case;
+
+         Aux_Token_Kind := Libadalang.Common.Kind (Data (Aux_Token));
+      end loop;
+
+      return Aux_Token;
+   end Find;
+
+   -------------------------
+   -- Next_Non_Whitespace --
+   -------------------------
+
+   function Next_Non_Whitespace
+     (Token : Token_Reference;
+      Going : Direction)
+      return Token_Reference
+   is
+      Result : Token_Reference := Token;
+
+   begin
+      --  Do nothing if Result <=> Token is a No_Token
+
+      while Result /= No_Token loop
+         case Going is
+            when Forward => Result := Next (Result);
+            when Backward => Result := Previous (Result);
+         end case;
+
+         exit when Kind (Data (Result)) /= Ada_Whitespace;
+      end loop;
+
+      if Result /= No_Token
+         and then Kind (Data (Result)) /= Ada_Whitespace
+      then
+         --  No whitespace relative to Token
+         return Result;
+
+      else
+         return No_Token;
+      end if;
+   end Next_Non_Whitespace;
+
    ---------------
    -- Tool_List --
    ---------------
