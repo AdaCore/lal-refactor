@@ -16,9 +16,9 @@ with Laltools.Common;    use Laltools.Common;
 
 with LAL_Refactor.Tools; use LAL_Refactor.Tools;
 
-package body LAL_Refactor.Extract_Expression is
+package body LAL_Refactor.Extract_Variable is
 
-   Tool_Name : constant String := "Extract Expression";
+   Tool_Name : constant String := "Extract Variable";
 
    Spaces    : constant String (1 .. 80) := (others => ' ');
 
@@ -33,11 +33,11 @@ package body LAL_Refactor.Extract_Expression is
       Filter : access function (Node : Ada_Node'Class) return Boolean)
       return Ada_Node;
 
-   -------------------------------------
-   -- Is_Extract_Expression_Available --
-   -------------------------------------
+   -----------------------------------
+   -- Is_Extract_Variable_Available --
+   -----------------------------------
 
-   function Is_Extract_Expression_Available
+   function Is_Extract_Variable_Available
      (Unit               : Analysis_Unit;
       Section_To_Extract : in out Source_Location_Range)
       return Boolean
@@ -104,13 +104,13 @@ package body LAL_Refactor.Extract_Expression is
             LAL_Refactor.Is_Refactoring_Tool_Available_Default_Error_Message
               (Tool_Name));
          return False;
-   end Is_Extract_Expression_Available;
+   end Is_Extract_Variable_Available;
 
-   ---------------------------------------
-   -- Default_Extracted_Expression_Name --
-   ---------------------------------------
+   -------------------------------------
+   -- Default_Extracted_Variable_Name --
+   -------------------------------------
 
-   function Default_Extracted_Expression_Name
+   function Default_Extracted_Variable_Name
      (Unit     : Analysis_Unit;
       Location : Source_Location)
       return Unbounded_String
@@ -169,17 +169,17 @@ package body LAL_Refactor.Extract_Expression is
       end loop;
 
       return Aux_Target_Name;
-   end Default_Extracted_Expression_Name;
+   end Default_Extracted_Variable_Name;
 
-   ---------------------------------
-   -- Create_Expression_Extractor --
-   ---------------------------------
+   -------------------------------
+   -- Create_Variable_Extractor --
+   -------------------------------
 
-   function Create_Expression_Extractor
+   function Create_Variable_Extractor
      (Unit               : Analysis_Unit;
       Section_To_Extract : Source_Location_Range;
       Variable_Name      : Unbounded_String)
-      return Expression_Extractor
+      return Variable_Extractor
    is
       Start_Token : constant Token_Reference :=
         Unit.Lookup_Token
@@ -197,21 +197,21 @@ package body LAL_Refactor.Extract_Expression is
       End_Node    : constant Ada_Node := Lookup (Unit, End_Token, Backward);
 
    begin
-      return Expression_Extractor'
+      return Variable_Extractor'
         (Unit,
          Find
            (Find_First_Common_Parent
                 (Start_Node, End_Node, With_Self => True),
             Is_Expr'Access),
          Variable_Name);
-   end Create_Expression_Extractor;
+   end Create_Variable_Extractor;
 
    --------------
    -- Refactor --
    --------------
 
    function Refactor
-     (Self           : Expression_Extractor;
+     (Self           : Variable_Extractor;
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
    is
@@ -675,4 +675,4 @@ package body LAL_Refactor.Extract_Expression is
       end if;
    end Find;
 
-end LAL_Refactor.Extract_Expression;
+end LAL_Refactor.Extract_Variable;

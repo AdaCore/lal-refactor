@@ -29,13 +29,13 @@ with LAL_Refactor.File_Edits;
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
 with LAL_Refactor; use LAL_Refactor;
-with LAL_Refactor.Extract_Expression;
-use LAL_Refactor.Extract_Expression;
+with LAL_Refactor.Extract_Variable;
+use LAL_Refactor.Extract_Variable;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
 
---  This procedure defines the Extract Expression Tool.
+--  This procedure defines the Extract Variable Tool.
 
 --  Usage:
 --  extract_expression -P <project> -S <source> -SL <start-line> -EL <end-line>
@@ -49,23 +49,23 @@ with Libadalang.Helpers; use Libadalang.Helpers;
 --  -EC, --end-column      Column of the last statement to extract
 --  -N,  --name            Name of the extracted subprogram
 
-procedure Extract_Expression is
+procedure Extract_Variable is
 
-   procedure Extract_Expression_App_Setup
+   procedure Extract_Variable_App_Setup
      (Context : App_Context;
       Jobs    : App_Job_Context_Array);
    --  This procedure is called right after command line options are parsed,
    --  the project is loaded (if present) and the list of files to process
    --  is computed.
 
-   package Extract_Expression_App is new Libadalang.Helpers.App
-     (Name             => "Extract_Expression",
-      Description      => "Extract Expression",
-      App_setup        => Extract_Expression_App_Setup);
+   package Extract_Variable_App is new Libadalang.Helpers.App
+     (Name             => "Extract_Variable",
+      Description      => "Extract Variable",
+      App_setup        => Extract_Variable_App_Setup);
 
    package Args is
       package Source is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-S",
          Long        => "--source",
          Help        => "Source code file of the statements to extract",
@@ -75,7 +75,7 @@ procedure Extract_Expression is
          Enabled     => True);
 
       package Start_Line is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-SL",
          Long        => "--start-line",
          Help        => "Line of the first statement to extract",
@@ -85,7 +85,7 @@ procedure Extract_Expression is
          Enabled     => True);
 
       package End_Line is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-EL",
          Long        => "--end-line",
          Help        => "Line of the last statement to extract",
@@ -95,7 +95,7 @@ procedure Extract_Expression is
          Enabled     => True);
 
       package Start_Column is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-SC",
          Long        => "--start-column",
          Help        => "Column of the first statement to extract",
@@ -105,7 +105,7 @@ procedure Extract_Expression is
          Enabled     => True);
 
       package End_Column is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-EC",
          Long        => "--end-column",
          Help        => "Column of the last statement to extract",
@@ -115,7 +115,7 @@ procedure Extract_Expression is
          Enabled     => True);
 
       package Name is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Extract_Expression_App.Args.Parser,
+        (Parser      => Extract_Variable_App.Args.Parser,
          Short       => "-N",
          Long        => "--name",
          Help        => "Name of the extracted expression",
@@ -125,11 +125,11 @@ procedure Extract_Expression is
          Enabled     => True);
    end Args;
 
-   ----------------------------------
-   -- Extract_Expression_App_Setup --
-   ----------------------------------
+   --------------------------------
+   -- Extract_Variable_App_Setup --
+   --------------------------------
 
-   procedure Extract_Expression_App_Setup
+   procedure Extract_Variable_App_Setup
      (Context : App_Context;
       Jobs    : App_Job_Context_Array)
    is
@@ -147,17 +147,17 @@ procedure Extract_Expression is
       Edits : Refactoring_Edits;
 
    begin
-      if Is_Extract_Expression_Available (Unit, Section_To_Extract) then
+      if Is_Extract_Variable_Available (Unit, Section_To_Extract) then
          declare
             Variable_Name : constant Unbounded_String :=
               (if Args.Name.Get = "" then
-                  Default_Extracted_Expression_Name
+                  Default_Extracted_Variable_Name
                  (Unit,
                   (Section_To_Extract.Start_Line,
                    Section_To_Extract.Start_Column))
                else Args.Name.Get);
          begin
-            Edits := Create_Expression_Extractor
+            Edits := Create_Variable_Extractor
               (Unit,
                Section_To_Extract,
                Variable_Name).Refactor (null);
@@ -165,8 +165,8 @@ procedure Extract_Expression is
             LAL_Refactor.File_Edits.Apply_Edits (Edits.Text_Edits);
          end;
       end if;
-   end Extract_Expression_App_Setup;
+   end Extract_Variable_App_Setup;
 
 begin
-   Extract_Expression_App.Run;
-end Extract_Expression;
+   Extract_Variable_App.Run;
+end Extract_Variable;

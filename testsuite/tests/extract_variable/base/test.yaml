@@ -1,0 +1,5 @@
+title: expression_that_can_be_extracted_to_variable
+
+description: extract_variable tool test
+
+driver: shell_script

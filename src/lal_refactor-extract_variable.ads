@@ -4,19 +4,19 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  This package contains refactoring tools that allow extracting statements
---  and expressions into new subprograms
+--  This package contains refactoring tools that allow extracting expressions
+--  into new variables
 
-package LAL_Refactor.Extract_Expression is
+package LAL_Refactor.Extract_Variable is
 
-   function Is_Extract_Expression_Available
+   function Is_Extract_Variable_Available
      (Unit               : Analysis_Unit;
       Section_To_Extract : in out Source_Location_Range)
       return Boolean;
    --  Checks if Section_To_Extract is an expression that can be extracted into
    --  a variable.
 
-   function Default_Extracted_Expression_Name
+   function Default_Extracted_Variable_Name
      (Unit     : Analysis_Unit;
       Location : Source_Location)
       return Unbounded_String;
@@ -26,29 +26,29 @@ package LAL_Refactor.Extract_Expression is
    --  collisions in the declarative part where the variable will be
    --  created.
 
-   type Expression_Extractor is new Refactoring_Tool with private;
+   type Variable_Extractor is new Refactoring_Tool with private;
 
-   function Create_Expression_Extractor
+   function Create_Variable_Extractor
      (Unit               : Analysis_Unit;
       Section_To_Extract : Source_Location_Range;
       Variable_Name      : Unbounded_String)
-      return Expression_Extractor;
-   --  Expression_Extractor constructor.
+      return Variable_Extractor;
+   --  Variable_Extractor constructor.
    --  The section to extract needs to be validated by
-   --  Is_Extract_Expression_Available.
+   --  Is_Extract_Variable_Available.
    --  If the inputs are not valid, the Refactor might succeed but generate
    --  invalid code, or a Constrained_Error might be raised to to invalid
    --  node conversions.
 
    overriding
    function Refactor
-     (Self           : Expression_Extractor;
+     (Self           : Variable_Extractor;
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits;
 
 private
 
-   type Expression_Extractor is new Refactoring_Tool with
+   type Variable_Extractor is new Refactoring_Tool with
       record
          Unit : Analysis_Unit;
          Node : Ada_Node;
@@ -60,4 +60,4 @@ private
 
    subtype String_Vector is String_Vectors.Vector;
 
-end LAL_Refactor.Extract_Expression;
+end LAL_Refactor.Extract_Variable;
