@@ -1,0 +1,1230 @@
+--  -SL 9 -SC 9 -EL 9 -EC 35
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+
+   Extracted : constant Interfaces.C.long := 1 + Interfaces.C.SCHAR_MAX;
+
+begin
+   L := Extracted + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 14 -SC 9 -EL 14 -EC 41
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+
+   Extracted : Interfaces.C.long;
+
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   Extracted := 2 + (Interfaces.C.SCHAR_MAX + 2);
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := Extracted + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 22 -SC 24 -EL 22 -EC 29
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Extracted : constant Integer := 2 + 3;
+
+      Val : Integer := Extracted + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 25 -SC 24 -EL 25 -EC 29
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+
+      Extracted : constant <Insert Type> := 2 + 3;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := Extracted + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 25 -SC 26 -EL 25 -EC 31
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 37 -SC 17 -EL 37 -EC 53
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+
+      Extracted : constant <Insert Type> :=
+        (Upper - Lower) * Integer (Button_Y);
+
+   begin
+      Value :=
+        Lower + Extracted / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 50 -SC 20 -EL 50 -EC 25
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+      Extracted : <Insert Type>;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         
+         Extracted := 2 + 3;
+
+         Result := Extracted + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 58 -SC 16 -EL 58 -EC 21
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 58 -SC 12 -EL 58 -EC 17
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : constant Integer := 1 + 2;
+
+   begin
+      X := Extracted + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 58 -SC 12 -EL 58 -EC 21
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : constant Integer := 1 + 2 + 3;
+
+   begin
+      X := Extracted;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 59 -SC 16 -EL 59 -EC 23
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : Integer;
+
+   begin
+      X := 1 + 2 + 3;
+
+      Extracted := 2 + 3;
+
+      X := 1 + Extracted;
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 59 -SC 17 -EL 59 -EC 22
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : Integer;
+
+   begin
+      X := 1 + 2 + 3;
+
+      Extracted := 2 + 3;
+
+      X := 1 + (Extracted);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 60 -SC 16 -EL 60 -EC 21
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 60 -SC 12 -EL 60 -EC 17
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : Integer;
+
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+
+      Extracted := 3 * 4;
+
+      X := Extracted + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 61 -SC 16 -EL 61 -EC 23
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : Integer;
+
+   begin
+      X := 1 + 2 + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+
+      Extracted := 4 + 1;
+
+      X := 3 * Extracted;
+   end;
+
+end Main;
+--  -SL 58 -SC 11 -EL 58 -EC 17
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : constant Integer := 1 + 2;
+
+   begin
+      X := Extracted + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 58 -SC 12 -EL 58 -EC 18
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : constant Integer := 1 + 2;
+
+   begin
+      X := Extracted + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;
+--  -SL 58 -SC 11 -EL 58 -EC 18
+
+with Interfaces.C; use Interfaces.C;
+with Ada.Characters.Latin_1;
+
+procedure Main is
+   L   : Interfaces.C.long;
+   Var : String (1 .. 3);
+begin
+   L := 1 + Interfaces.C.SCHAR_MAX + 2;
+
+   --  Select expression in the `2 .. )` to check:
+   --    declare variable in the end of the declarative part
+   --    assignment to the new variable before this assignment
+   L := 2 + (Interfaces.C.SCHAR_MAX + 2) + 3;
+
+   --  Select `2 + 3` to check:
+   --    do not duplicate empty lines when declaring new variable
+   declare
+
+      Res : Integer := 1;
+
+      Val : Integer := 2 + 3 + 4;
+      
+      --  `2 + 3` Check that veriable has no type when it can't be resolved by lal
+      Val1 : Ineger := 2 + 3 + 4;
+
+      --  Also check that for selection `+ 3 +` action is not allowed
+
+      --  Select (Upper .. _Y) to check:
+      --    we have proper expression and don't lose ()
+      Lower    : Integer := 1;
+      Upper    : Integer := 3;
+      Button_Y : Float := 1.5;
+      H        : Float := 1.5;
+   begin
+      Value :=
+        Lower + (Upper - Lower) * Integer (Button_Y) / Integer (H);
+   end;
+
+   -- Select '2 + 3' to check that we place assignment after `else`
+   declare
+      Prefix_Lenght : Integer := 10;
+      One           : Integer := 5;
+      Result        : Inreger := 1;
+
+   begin
+      if Prefix_Lenght < 78 then
+         Result := 2 + Result;
+      else
+         Result := 2 + 3 + Result;
+      end if;
+   end;
+   
+   declare
+      --  Cases from the presentation
+      X : Integer;
+
+      Extracted : constant Integer := 1 + 2;
+
+   begin
+      X := Extracted + 3;
+      X := 1 + (2 + 3);
+      X := 3 * 4 + 1;
+      X := 3 * (4 + 1);
+   end;
+
+end Main;

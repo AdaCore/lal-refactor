@@ -6,6 +6,8 @@
 
 --  Package with the definition of all tools
 
+with Libadalang.Common; use Libadalang.Common;
+
 package LAL_Refactor.Tools is
 
    type Tool is (Array_Aggregates);
@@ -27,6 +29,42 @@ package LAL_Refactor.Tools is
    function Find_First_Tool_Index return Natural;
    --  Find the index of the first Tool in the arguments passed to the
    --  command line.
+
+   type Direction  is (Forward, Backward);
+   type Token_Kinds is
+     array (Positive range <>) of Token_Kind;
+
+   function Lookup
+     (Unit  : Analysis_Unit;
+      Token : in out Token_Reference;
+      Going : Direction;
+      Skip  : Token_Kinds)
+      return Ada_Node;
+   --  Finds the next Ada_Node relative to Token. Going controls the lookup
+   --  direction. If Token already belongs to an Ada_Node, that node is
+   --  returned. Returns No_Ada_Node if no node is found or if
+   --  Token = No_Token.
+
+   function Lookup
+     (Unit  : Analysis_Unit;
+      Token : Token_Reference;
+      Going : Direction)
+      return Ada_Node;
+
+   function Next_Non_Whitespace
+     (Token : Token_Reference;
+      Going : Direction)
+      return Token_Reference;
+   --  Finds the next non white Token_Reference relative to Token. Going
+   --  controls the lookup direction. Returns No_Token if no whitespace
+   --  if found or if Token = No_Token.
+
+   function Find
+     (Token : Token_Reference;
+      Kind  : Token_Kind;
+      Going : Direction)
+      return Token_Reference;
+   --  Finds the position of the Token. Returns No_Token if not found.
 
    Parse_Tool_Exception : exception;
 

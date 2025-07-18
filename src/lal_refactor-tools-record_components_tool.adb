@@ -19,7 +19,6 @@ with Ada.Containers.Hashed_Sets;
 package body LAL_Refactor.Tools.Record_Components_Tool is
    package LALCO renames Libadalang.Common;
    package Text renames Langkit_Support.Text;
-   use type LALCO.Ada_Node_Kind_Type;
 
    type Ref_Status is (Read, Write);
    --  The status of Reference which is Read of Write.
