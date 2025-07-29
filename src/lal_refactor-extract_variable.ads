@@ -55,9 +55,4 @@ private
          Name : Unbounded_String;
       end record;
 
-   package String_Vectors is new
-     Ada.Containers.Indefinite_Vectors (Natural, String);
-
-   subtype String_Vector is String_Vectors.Vector;
-
 end LAL_Refactor.Extract_Variable;

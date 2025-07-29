@@ -1,0 +1,28 @@
+with Ada.Text_IO;
+
+--  Sort `when Variable_Address | AA` to `when AA | Variable_Address`
+--  Sort all `when`s alphabetically
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Variable_Address | AA =>
+         null;
+
+      when others =>
+         null;
+   end case;
+end Main;

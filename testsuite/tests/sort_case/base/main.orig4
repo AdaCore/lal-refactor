@@ -1,0 +1,22 @@
+with Ada.Text_IO;
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Variable_Address .. AA | Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when others =>
+         null;
+   end case;
+end Main;
