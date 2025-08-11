@@ -10,6 +10,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO; use Ada.Text_IO;
+with Laltools.Common;
 
 package body LAL_Refactor is
 
@@ -188,6 +189,42 @@ package body LAL_Refactor is
       Print (E.File_Deletions);
       Print (E.File_Renames);
    end Print;
+
+   ------------------
+   -- Replace_Node --
+   ------------------
+
+   procedure Replace_Node
+     (Edits : in out Text_Edit_Map;
+      Node  : Ada_Node'Class;
+      Text  : Unbounded_String;
+      Expand : Boolean  := False) is
+   begin
+      if Node.Is_Null then
+         return;
+      end if;
+
+      Safe_Insert
+        (Edits,
+         Node.Unit.Get_Filename,
+         (Location =>
+              (if Expand
+               then Laltools.Common.Expand_SLOC_Range (Node)
+               else Node.Sloc_Range),
+          Text     => Text));
+   end Replace_Node;
+
+   -----------------
+   -- Remove_Node --
+   -----------------
+
+   procedure Remove_Node
+     (Edits : in out Text_Edit_Map;
+      Node  : Ada_Node'Class;
+      Expand : Boolean  := False) is
+   begin
+      Replace_Node (Edits, Node, Null_Unbounded_String, Expand);
+   end Remove_Node;
 
    -----------------
    -- Safe_Insert --
