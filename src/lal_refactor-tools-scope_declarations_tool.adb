@@ -371,11 +371,7 @@ package body LAL_Refactor.Tools.Scope_Declarations_Tool is
             end;
 
             if Name_Count = Modify_Count then
-               Text_Edit.Location := Obj.Sloc_Range;
-               Text_Edit.Text := Null_Unbounded_String;
-               ReFac.Safe_Insert (Edit_Texts,
-                                  Obj.Unit.Get_Filename,
-                                  Text_Edit);
+               Remove_Node (Edit_Texts, Obj);
             else
                Delete_Names_in_List;
                Is_Empty := False;
@@ -419,15 +415,7 @@ package body LAL_Refactor.Tools.Scope_Declarations_Tool is
             Has_Decl := True;
          end loop;
          if Is_Empty and Has_Decl then
-            declare
-               Text_Delete : ReFac.Text_Edit;
-            begin
-               Text_Delete.Text := Null_Unbounded_String;
-               Text_Delete.Location := Decl_Part.Sloc_Range;
-               ReFac.Safe_Insert (Edit_Map_Of_Decl_Part,
-                                  Decl_Part.Unit.Get_Filename,
-                                  Text_Delete);
-            end;
+            Remove_Node (Edit_Map_Of_Decl_Part, Decl_Part);
             Removable_Decl_Part.Insert (Decl_Part, Edit_Map_Of_Decl_Part);
          end if;
       end Generate_Edit;

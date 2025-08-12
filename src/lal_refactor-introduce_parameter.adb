@@ -85,13 +85,7 @@ package body LAL_Refactor.Introduce_Parameter is
          Target =>
            Declaration_Pull_Upper.Refactor (Analysis_Units).Text_Edits);
 
-      Safe_Insert
-        (Edits     => Text_Edits,
-         File_Name => Self.Object_Decl.Unit.Get_Filename,
-         Edit      =>
-           Text_Edit'
-             (Location => Expand_SLOC_Range (Self.Object_Decl),
-              Text     => Null_Unbounded_String));
+      Remove_Node (Text_Edits, Self.Object_Decl, Expand => True);
 
       return
         Refactoring_Edits'
