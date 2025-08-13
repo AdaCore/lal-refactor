@@ -1,0 +1,19 @@
+--  main:4:46-4:59 Usage of "To_Be_Deleted" that is not safe to delete.
+--  -L 2 -R 14
+procedure Main is
+
+   Ref : access procedure (Value : Float) := To_Be_Deleted'Access;
+   --  A "not-a-call" reference to the procedure --------^
+
+
+   procedure Another is
+   begin
+      null;  --  We replace this call with null;
+   end Another;
+begin
+
+   --  ^ We delete this call
+
+
+   return;
+end Main;
