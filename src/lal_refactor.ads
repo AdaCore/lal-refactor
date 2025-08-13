@@ -102,6 +102,23 @@ package LAL_Refactor is
    --  Otherwise, checks if Edits.Element (File_Name) already contains Edit and
    --  if not, inserts it.
 
+   procedure Replace_Node
+     (Edits  : in out Text_Edit_Map;
+      Node   : Ada_Node'Class;
+      Text   : Unbounded_String;
+      Expand : Boolean  := False);
+   --  Create a Text_Edit to replace given node with Text and pass it to
+   --  Safe_Insert. If Expand=True then also remove leading and trailing
+   --  whitespaces, and empty lines immediately after.
+
+   procedure Remove_Node
+     (Edits  : in out Text_Edit_Map;
+      Node   : Ada_Node'Class;
+      Expand : Boolean  := False);
+   --  Create a Text_Edit to remove given node and pass it to Safe_Insert.
+   --  If Expand=True then also remove leading and trailing whitespaces, and
+   --  empty lines immediately after.
+
    package Unbounded_String_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (Element_Type => Unbounded_String,
       "<"          => "<",

@@ -449,11 +449,7 @@ package body LAL_Refactor.Tools.Relocate_Decls_Tool is
             end;
 
             if Name_Count = Modify_Count then
-               Text_Edit.Location := Obj.Sloc_Range;
-               Text_Edit.Text := Null_Unbounded_String;
-               ReFac.Safe_Insert (Edit_Texts,
-                                  Obj.Unit.Get_Filename,
-                                  Text_Edit);
+               Remove_Node (Edit_Texts, Obj);
             else
                Delete_Names_in_List;
             end if;
@@ -494,9 +490,7 @@ package body LAL_Refactor.Tools.Relocate_Decls_Tool is
          Location    : Source_Location_Range :=
                        Last_Decl_For_Name (Name).Sloc_Range;
       begin
-         Text_Edit.Location := Name.P_Basic_Decl.Sloc_Range;
-         Text_Edit.Text := Null_Unbounded_String;
-         ReFac.Safe_Insert (Edit_Texts, Name.Unit.Get_Filename, Text_Edit);
+         Remove_Node (Edit_Texts, Name.P_Basic_Decl);
          Text_To_Add := Text_To_Add & Text.Image (Name.P_Basic_Decl.Text);
          Text_To_Add := Text_To_Add & Ada.Characters.Latin_1.LF;
          Text_Edit.Text := Text_To_Add;

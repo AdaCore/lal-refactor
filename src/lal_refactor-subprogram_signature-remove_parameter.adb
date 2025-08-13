@@ -219,12 +219,7 @@ package body LAL_Refactor.Subprogram_Signature.Remove_Parameter is
       begin
          if Is_Subprogram (Relative_Subp) then
             for Relative_Subp_Part of Relative_Subp.P_All_Parts loop
-               Safe_Insert
-                 (Edits     => Edits,
-                  File_Name => Relative_Subp_Part.Unit.Get_Filename,
-                  Edit      => Text_Edit'
-                    (Location => Params_SLOC (Relative_Subp_Part),
-                     Text     => Null_Unbounded_String));
+               Remove_Node (Edits, Get_Subp_Params (Relative_Subp_Part));
             end loop;
          end if;
       end Decl_Callback;
