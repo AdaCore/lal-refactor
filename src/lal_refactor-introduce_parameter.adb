@@ -10,14 +10,15 @@ with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Strings.Hash;
 
-with Laltools.Common; use Laltools.Common;
+with Laltools.Common;      use Laltools.Common;
 
 with Langkit_Support.Text; use Langkit_Support.Text;
 
-with Libadalang.Common; use Libadalang.Common;
+with Libadalang.Common;    use Libadalang.Common;
 
 with LAL_Refactor.Pull_Up_Declaration;
 with LAL_Refactor.Subprogram_Signature;
+with LAL_Refactor.Tools;   use LAL_Refactor.Tools;
 
 package body LAL_Refactor.Introduce_Parameter is
 
@@ -32,6 +33,9 @@ package body LAL_Refactor.Introduce_Parameter is
    --  parameters that already exist in Subp_Spec and Base_Name.
    --  If Base_Name is already used by one of the parameters,
    --  then "_$" appended with $ as the next available number.
+
+   function Is_Params (Node : Ada_Node'Class) return Boolean is
+     (not Node.Is_Null and then Node.Kind in Ada_Params);
 
    -------------------------
    -- Introduce_Parameter --
@@ -577,6 +581,40 @@ package body LAL_Refactor.Introduce_Parameter is
       --  allowed to have default expressions, therefore, there cannot be
       --  write references of Object_Definition other thant he first.
 
+      function Is_Parameter_Already
+        (Node : Ada_Node)
+         return Boolean;
+      --  Returns True if name is a name of a parameter
+
+      --------------------------
+      -- Is_Parameter_Already --
+      --------------------------
+
+      function Is_Parameter_Already
+        (Node : Ada_Node)
+         return Boolean
+      is
+         Name_Node  : Name;
+         Definition : Defining_Name;
+         Dummy      : Ref_Result_Kind;
+      begin
+         --  Name of the variable
+         Name_Node := Laltools.Common.Get_Node_As_Name (Node);
+         if Name_Node.Is_Null then
+            return False;
+         end if;
+
+         --  Definition of the variable
+         Definition := Laltools.Common.Resolve_Name (Name_Node, null, Dummy);
+         if Definition.Is_Null then
+            return False;
+         end if;
+
+         --  Is the definition a part of the method's parameters?
+         return not Find_Parent
+           (Definition.As_Ada_Node, Is_Params'Access).Is_Null;
+      end Is_Parameter_Already;
+
       --------------------------------------
       -- Is_Valid_Object_Decl_For_Pull_Up --
       --------------------------------------
@@ -614,7 +652,9 @@ package body LAL_Refactor.Introduce_Parameter is
       end Is_Valid_Object_Decl_For_Pull_Up;
 
    begin
-      if Enclosing_Parent.Is_Null then
+      if Enclosing_Parent.Is_Null
+        or else Is_Parameter_Already (Enclosing_Parent)
+      then
          return False;
       else
          return
