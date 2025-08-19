@@ -42,3 +42,18 @@ procedure Main is
 begin
    null;
 end Main;
+--  (main5.orig) -L 3 -R 20
+procedure Main is
+   protected P is
+
+   private
+      State : Boolean;
+   end P;
+
+   protected body P is
+
+   end P;
+
+begin
+   null;
+end Main;
