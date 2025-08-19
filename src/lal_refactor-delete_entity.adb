@@ -98,7 +98,22 @@ package body LAL_Refactor.Delete_Entity is
             begin
                if Is_Inside_Parts (Ref, Parts) then
                   null;  --  Do no analisys inside declaration parts
-               elsif Is_Safe_To_Delete (Declaration, Ref) then
+               elsif not Is_Safe_To_Delete (Declaration, Ref) then
+                  Result.Diagnostics.Append
+                    (Diagnostics.Create (Ref.As_Base_Id));
+
+               elsif Ref.Parent.Kind = Ada_Pragma_Argument_Assoc then
+                  --  Remove pragma node with a reference
+                  declare
+                     Pragma_Node : constant Ada_Node :=
+                       Ref.Parent.Parent.Parent;
+                  begin
+                     pragma Assert (Pragma_Node.Kind = Ada_Pragma_Node);
+
+                     Remove_Node
+                       (Result.Text_Edits, Pragma_Node, Expand => True);
+                  end;
+               else
                   Stmt := Find_Parent (Ref, Is_Statement'Access);
                   List := Stmt.Parent.As_Ada_Node_List;
 
@@ -115,10 +130,6 @@ package body LAL_Refactor.Delete_Entity is
                         Stmt,
                         To_Unbounded_String ("null;"));
                   end if;
-
-               else
-                  Result.Diagnostics.Append
-                    (Diagnostics.Create (Ref.As_Base_Id));
                end if;
             end;
          end loop;
@@ -195,6 +206,11 @@ package body LAL_Refactor.Delete_Entity is
      (Declaration : Basic_Decl;
       Referencce  : Base_Id'Class) return Boolean is
    begin
+      if Referencce.Parent.Kind = Ada_Pragma_Argument_Assoc then
+         --  Any pragma with the reference is safe to delete
+         return True;
+      end if;
+
       case Declaration.Kind is
          when Ada_Entry_Decl
             | Ada_Subp_Decl
