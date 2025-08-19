@@ -23,3 +23,16 @@ procedure Main is
 begin
    null;
 end Main;
+--  (main3.orig) -L 9 -R 14
+procedure Main is
+   procedure Proc (Value : Float) is
+   begin
+      if Value > 0.0 then
+         Proc (Value - 1.0);
+      end if;
+   end Proc;
+
+
+begin
+   null;
+end Main;

@@ -179,8 +179,8 @@ package body LAL_Refactor.Delete_Entity is
               when Ada_Subp_Decl =>
                 Declaration.As_Classic_Subp_Decl.F_Subp_Spec.F_Subp_Kind
                   in Ada_Subp_Kind_Procedure,
-              when Ada_Subp_Body =>
-                Declaration.As_Subp_Body.F_Subp_Spec.F_Subp_Kind
+              when Ada_Subp_Body | Ada_Subp_Renaming_Decl =>
+                Declaration.As_Base_Subp_Body.F_Subp_Spec.F_Subp_Kind
                   in Ada_Subp_Kind_Procedure,
               when others => False);
    end Is_Delete_Entity_Available;
@@ -194,7 +194,7 @@ package body LAL_Refactor.Delete_Entity is
       Referencce  : Base_Id'Class) return Boolean is
    begin
       case Declaration.Kind is
-         when Ada_Subp_Decl | Ada_Subp_Body =>
+         when Ada_Subp_Decl | Ada_Subp_Body | Ada_Subp_Renaming_Decl =>
             --  It's safe to delete procedure calls
             return Referencce.P_Is_Call;
          when others =>
