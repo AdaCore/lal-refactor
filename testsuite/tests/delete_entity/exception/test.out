@@ -1,0 +1,30 @@
+--  (main.orig) -L 2 -R 14
+procedure Main is
+
+begin
+   begin
+      null;
+   exception
+      when Constraint_Error =>
+         raise;
+   end;
+
+   begin
+      null;
+   exception
+      when Constraint_Error =>
+         raise;
+   end;
+
+   begin
+      null;
+   exception
+      when others =>
+         raise;
+   end;
+
+   begin
+      null;
+
+   end;
+end Main;
