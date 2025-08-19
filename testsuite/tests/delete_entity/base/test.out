@@ -1,5 +1,5 @@
 --  main:4:46-4:59 Usage of "To_Be_Deleted" that is not safe to delete.
---  -L 2 -R 14
+--  (main.orig) -L 2 -R 14
 procedure Main is
 
    Ref : access procedure (Value : Float) := To_Be_Deleted'Access;
@@ -16,4 +16,10 @@ begin
 
 
    return;
+end Main;
+--  (main2.orig) -L 2 -R 14
+procedure Main is
+
+begin
+   null;
 end Main;
