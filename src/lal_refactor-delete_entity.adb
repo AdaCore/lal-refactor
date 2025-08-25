@@ -33,6 +33,14 @@ package body LAL_Refactor.Delete_Entity is
    function Is_Block_Statement (Stmt_List : Ada_Node_List) return Boolean is
      (Stmt_List.Parent.Parent.Kind in Libadalang.Common.Ada_Block_Stmt);
 
+   function Is_Single_Result_Procedure_Call
+     (Arg : Base_Id'Class) return Boolean;
+   --  Check if Arg is an argument to a procedure call with a single out/in-out
+   --  parameter.
+
+   function All_Parts (Node : Defining_Name) return Basic_Decl_Array is
+     [for Name of Node.P_All_Parts => Name.P_Basic_Decl];
+
    package Diagnostics is
 
       type Diagnostic is new Refactoring_Diagnostic with record
@@ -77,7 +85,7 @@ package body LAL_Refactor.Delete_Entity is
         (Result : in out Refactoring_Edits;
          Ref    : Base_Id'Class);
 
-      procedure Remove_Call_Statement
+      procedure Remove_Statement
         (Result : in out Refactoring_Edits;
          Ref    : Base_Id'Class);
 
@@ -92,11 +100,11 @@ package body LAL_Refactor.Delete_Entity is
       function Is_Statement (Node : Ada_Node'Class) return Boolean is
         (not Node.Is_Null and then Node.Kind in Libadalang.Common.Ada_Stmt);
 
-      ---------------------------
-      -- Remove_Call_Statement --
-      ---------------------------
+      ----------------------
+      -- Remove_Statement --
+      ----------------------
 
-      procedure Remove_Call_Statement
+      procedure Remove_Statement
         (Result : in out Refactoring_Edits;
          Ref    : Base_Id'Class)
       is
@@ -116,7 +124,7 @@ package body LAL_Refactor.Delete_Entity is
                Stmt,
                To_Unbounded_String ("null;"));
          end if;
-      end Remove_Call_Statement;
+      end Remove_Statement;
 
       ------------------------------
       -- Remove_Exception_Handler --
@@ -181,24 +189,23 @@ package body LAL_Refactor.Delete_Entity is
            (Result.Text_Edits, Pragma_Node, Expand => True);
       end Remove_Pragma;
 
-      Declaration : constant Basic_Decl :=
-        Self.Definition.P_Basic_Decl;
+      Parts : constant Basic_Decl_Array := All_Parts (Self.Definition);
 
-      Parts       : constant Basic_Decl_Array :=
-        Declaration.P_All_Parts;
-
-      Refs        : constant Ref_Result_Array :=
+      Refs  : constant Ref_Result_Array :=
         Self.Definition.P_Find_All_References
           (Units              => Analysis_Units.all,
            Follow_Renamings   => False,
            Imprecise_Fallback => False);
+
+      Declaration : constant Basic_Decl :=
+        Self.Definition.P_Basic_Decl;
 
    begin
       return Result : Refactoring_Edits do
          --  Delete all references
          for Item of Refs when Kind (Item) = Precise loop
             declare
-               Ref  : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+               Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
             begin
                if Is_Inside_Parts (Ref, Parts) then
                   null;  --  Do no analisys inside declaration parts
@@ -216,7 +223,7 @@ package body LAL_Refactor.Delete_Entity is
                   Remove_Exception_Handler (Result, Ref);
 
                else
-                  Remove_Call_Statement (Result, Ref);
+                  Remove_Statement (Result, Ref);
                end if;
             end;
          end loop;
@@ -224,7 +231,7 @@ package body LAL_Refactor.Delete_Entity is
          --  Delete all definitions
          for Name of Self.Definition.P_All_Parts loop
             --  Check if we have a declaration with multiple defining names
-            if Name.P_Basic_Decl.Kind in Ada_Exception_Decl
+            if Name.P_Basic_Decl.Kind in Ada_Exception_Decl | Ada_Object_Decl
               and then not Is_Single_Item_List
                 (Name.Parent.As_Defining_Name_List)
             then
@@ -295,6 +302,7 @@ package body LAL_Refactor.Delete_Entity is
               when Ada_Entry_Decl => True,
               when Ada_Null_Subp_Decl => True,
               when Ada_Exception_Decl => True,
+              when Ada_Object_Decl => True,
               when others => False);
    end Is_Delete_Entity_Available;
 
@@ -322,10 +330,69 @@ package body LAL_Refactor.Delete_Entity is
          when Ada_Exception_Decl =>
             --  It's safe to delete corresponding handlers
             return Referencce.Parent.Parent.Kind = Ada_Exception_Handler;
+         when Ada_Object_Decl =>
+            declare
+               Parent : constant Ada_Node := Referencce.Parent;
+            begin
+               --  It's safe to delete assignment statements if ref is LHS or
+               --  a call to procedure that has a single out/in-out parameter,
+               --  like `Float_IO.Get (Input, To_Be_Deleted_Var);`
+               return
+                 (Parent.Kind = Ada_Assign_Stmt
+                    and then Parent.As_Assign_Stmt.F_Dest = Referencce)
+                 or else Is_Single_Result_Procedure_Call (Referencce);
+            end;
          when others =>
             return False;
       end case;
    end Is_Safe_To_Delete;
+
+   -------------------------------------
+   -- Is_Single_Result_Procedure_Call --
+   -------------------------------------
+
+   function Is_Single_Result_Procedure_Call
+     (Arg : Base_Id'Class) return Boolean
+   is
+      function Is_Call_Statement (Node : Ada_Node'Class) return Boolean is
+        (Node.Kind in Ada_Call_Stmt);
+
+      Node  : constant Ada_Node := Find_Parent (Arg, Is_Call_Statement'Access);
+      Count : Natural := 0;
+   begin
+      if Node.Is_Null
+        or else Node.As_Call_Stmt.F_Call.Is_Null
+        or else not Node.As_Call_Stmt.F_Call.P_Is_Call
+      then
+         return False;
+      end if;
+
+      for Item of Node.As_Call_Stmt.F_Call.P_Call_Params loop
+         declare
+            Param : constant Param_Spec :=
+              (if Item.Param.P_Basic_Decl.Kind = Ada_Param_Spec
+               then Item.Param.P_Basic_Decl.As_Param_Spec
+               else No_Param_Spec);
+         begin
+            if Item.Actual = Arg then
+               Count := Count + 1;
+
+               if Param.F_Mode not in Libadalang.Common.Ada_Mode_Out
+                   | Libadalang.Common.Ada_Mode_In_Out
+                 or else not Is_Single_Item_List (Param.F_Ids)
+               then
+                  return False;
+               end if;
+            elsif Param.F_Mode in Libadalang.Common.Ada_Mode_Out
+              | Libadalang.Common.Ada_Mode_In_Out
+            then
+               return False;
+            end if;
+         end;
+      end loop;
+
+      return Count = 1;
+   end Is_Single_Result_Procedure_Call;
 
    ---------------------------
    -- Create_Entity_Deleter --
