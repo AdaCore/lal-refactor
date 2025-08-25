@@ -27,6 +27,9 @@ package body LAL_Refactor.Delete_Entity is
    function Is_Single_Item_List (List : Ada_Node_List'Class) return Boolean is
      (not List.Ada_Node_List_Has_Element (2));
 
+   function Is_Single_Item_List (List : Defining_Name_List) return Boolean is
+     (not List.Defining_Name_List_Has_Element (2));
+
    function Is_Block_Statement (Stmt_List : Ada_Node_List) return Boolean is
      (Stmt_List.Parent.Parent.Kind in Libadalang.Common.Ada_Block_Stmt);
 
@@ -192,6 +195,7 @@ package body LAL_Refactor.Delete_Entity is
 
    begin
       return Result : Refactoring_Edits do
+         --  Delete all references
          for Item of Refs when Kind (Item) = Precise loop
             declare
                Ref  : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
@@ -217,8 +221,20 @@ package body LAL_Refactor.Delete_Entity is
             end;
          end loop;
 
-         for Part of Parts loop
-            Remove_Node (Result.Text_Edits, Part, Expand => True);
+         --  Delete all definitions
+         for Name of Self.Definition.P_All_Parts loop
+            --  Check if we have a declaration with multiple defining names
+            if Name.P_Basic_Decl.Kind in Ada_Exception_Decl
+              and then not Is_Single_Item_List
+                (Name.Parent.As_Defining_Name_List)
+            then
+               --  Remove defining name from the list
+               Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+            else
+               --  Remove whole declaration
+               Remove_Node
+                 (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+            end if;
          end loop;
       end return;
    end Refactor;
