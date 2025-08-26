@@ -1,0 +1,5 @@
+title: delete_exception
+
+description: delete_enity tool test (exception declaration)
+
+driver: shell_script

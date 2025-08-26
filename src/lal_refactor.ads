@@ -16,6 +16,7 @@ with GNATCOLL.Traces;
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
+with Libadalang.Common;
 
 package LAL_Refactor is
 
@@ -118,6 +119,14 @@ package LAL_Refactor is
    --  Create a Text_Edit to remove given node and pass it to Safe_Insert.
    --  If Expand=True then also remove leading and trailing whitespaces, and
    --  empty lines immediately after.
+
+   procedure Remove_Node_And_Delimiter
+     (Edits : in out Text_Edit_Map;
+      Node  : Ada_Node'Class)
+     with Pre => Node.Parent.Kind in Libadalang.Common.Ada_Ada_List and then
+       not (Node.Next_Sibling.Is_Null and Node.Previous_Sibling.Is_Null);
+   --  Create a Text_Edit to remove given node and pass it to Safe_Insert.
+   --  Node should be a child of AdaNodeList that has more than one element.
 
    package Unbounded_String_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (Element_Type => Unbounded_String,

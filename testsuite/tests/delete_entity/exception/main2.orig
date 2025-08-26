@@ -1,0 +1,34 @@
+procedure Main is
+   To_Be_Deleted, E2 : exception;
+
+begin
+   begin
+      null;
+   exception
+      when To_Be_Deleted | Constraint_Error =>
+         raise;
+   end;
+
+   begin
+      null;
+   exception
+      when Constraint_Error | To_Be_Deleted =>
+         raise;
+   end;
+
+   begin
+      null;
+   exception
+      when To_Be_Deleted =>
+         raise;
+      when others =>
+         raise;
+   end;
+
+   begin
+      null;
+   exception
+      when To_Be_Deleted =>
+         raise;
+   end;
+end Main;
