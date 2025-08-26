@@ -21,7 +21,7 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Safe_To_Delete
      (Declaration : Basic_Decl;
-      Referencce  : Base_Id'Class) return Boolean;
+      Referencce  : Name) return Boolean;
    --  Check if it is safe to delete given Reference of the Declaration
 
    function Is_Single_Item_List (List : Ada_Node_List'Class) return Boolean is
@@ -33,10 +33,12 @@ package body LAL_Refactor.Delete_Entity is
    function Is_Block_Statement (Stmt_List : Ada_Node_List) return Boolean is
      (Stmt_List.Parent.Parent.Kind in Libadalang.Common.Ada_Block_Stmt);
 
-   function Is_Single_Result_Procedure_Call
-     (Arg : Base_Id'Class) return Boolean;
+   function Is_Single_Result_Procedure_Call (Arg : Name) return Boolean;
    --  Check if Arg is an argument to a procedure call with a single out/in-out
    --  parameter.
+
+   function To_Selected_Name (Ref : Base_Id'Class) return Name;
+   --  Return selected_name for given identifier, like A.B.C for C
 
    function All_Parts (Node : Defining_Name) return Basic_Decl_Array is
      [for Name of Node.P_All_Parts => Name.P_Basic_Decl];
@@ -79,15 +81,15 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Remove_Pragma
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class);
+         Ref    : Name);
 
       procedure Remove_Exception_Handler
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class);
+         Ref    : Name);
 
       procedure Remove_Statement
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class);
+         Ref    : Name);
 
       function Is_Inside_Parts
         (Ref   : Base_Id'Class;
@@ -106,7 +108,7 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Remove_Statement
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class)
+         Ref    : Name)
       is
          Stmt : constant Ada_Node := Find_Parent (Ref, Is_Statement'Access);
          List : constant Ada_Node_List := Stmt.Parent.As_Ada_Node_List;
@@ -132,7 +134,7 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Remove_Exception_Handler
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class)
+         Ref    : Name)
       is
          Handler : constant Ada_Node := Ref.Parent.Parent;
       begin
@@ -178,7 +180,7 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Remove_Pragma
         (Result : in out Refactoring_Edits;
-         Ref    : Base_Id'Class)
+         Ref    : Name)
       is
          Pragma_Node : constant Ada_Node :=
            Ref.Parent.Parent.Parent;
@@ -206,24 +208,27 @@ package body LAL_Refactor.Delete_Entity is
          for Item of Refs when Kind (Item) = Precise loop
             declare
                Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+
+               Name : constant Libadalang.Analysis.Name :=
+                 To_Selected_Name (Ref);
             begin
                if Is_Inside_Parts (Ref, Parts) then
                   null;  --  Do no analisys inside declaration parts
 
-               elsif not Is_Safe_To_Delete (Declaration, Ref) then
+               elsif not Is_Safe_To_Delete (Declaration, Name) then
                   Result.Diagnostics.Append
                     (Diagnostics.Create (Ref.As_Base_Id));
 
-               elsif Ref.Parent.Kind = Ada_Pragma_Argument_Assoc then
-                  Remove_Pragma (Result, Ref);
+               elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
+                  Remove_Pragma (Result, Name);
 
                elsif Declaration.Kind = Ada_Exception_Decl
-                 and then Ref.Parent.Parent.Kind = Ada_Exception_Handler
+                 and then Name.Parent.Parent.Kind = Ada_Exception_Handler
                then
-                  Remove_Exception_Handler (Result, Ref);
+                  Remove_Exception_Handler (Result, Name);
 
                else
-                  Remove_Statement (Result, Ref);
+                  Remove_Statement (Result, Name);
                end if;
             end;
          end loop;
@@ -312,7 +317,7 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Safe_To_Delete
      (Declaration : Basic_Decl;
-      Referencce  : Base_Id'Class) return Boolean is
+      Referencce  : Name) return Boolean is
    begin
       if Referencce.Parent.Kind = Ada_Pragma_Argument_Assoc then
          --  Any pragma with the reference is safe to delete
@@ -351,9 +356,7 @@ package body LAL_Refactor.Delete_Entity is
    -- Is_Single_Result_Procedure_Call --
    -------------------------------------
 
-   function Is_Single_Result_Procedure_Call
-     (Arg : Base_Id'Class) return Boolean
-   is
+   function Is_Single_Result_Procedure_Call (Arg : Name) return Boolean is
       function Is_Call_Statement (Node : Ada_Node'Class) return Boolean is
         (Node.Kind in Ada_Call_Stmt);
 
@@ -393,6 +396,23 @@ package body LAL_Refactor.Delete_Entity is
 
       return Count = 1;
    end Is_Single_Result_Procedure_Call;
+
+   ----------------------
+   -- To_Selected_Name --
+   ----------------------
+
+   function To_Selected_Name (Ref : Base_Id'Class) return Name is
+      Result : Name := Ref.As_Name;
+   begin
+      if not Result.Parent.Is_Null
+        and then Result.Parent.Kind = Ada_Dotted_Name
+        and then Result.Parent.As_Dotted_Name.F_Suffix = Ref
+      then
+         Result := Result.Parent.As_Name;
+      end if;
+
+      return Result;
+   end To_Selected_Name;
 
    ---------------------------
    -- Create_Entity_Deleter --
