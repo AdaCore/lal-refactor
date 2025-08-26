@@ -1,0 +1,11 @@
+procedure Main is
+   procedure To_Be_Deleted (Value : Float) is
+   begin
+      if Value > 0.0 then
+         To_Be_Deleted (Value - 1.0);
+      end if;
+   end To_Be_Deleted;
+
+begin
+   To_Be_Deleted (9.0);
+end Main;
