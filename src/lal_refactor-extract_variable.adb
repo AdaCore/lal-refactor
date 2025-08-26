@@ -28,11 +28,6 @@ package body LAL_Refactor.Extract_Variable is
    function Is_Stmt_List (Node : Ada_Node'Class) return Boolean is
      (not Node.Is_Null and then Node.Kind in Ada_Stmt_List_Range);
 
-   function Find
-     (Node   : Ada_Node;
-      Filter : access function (Node : Ada_Node'Class) return Boolean)
-      return Ada_Node;
-
    -----------------------------------
    -- Is_Extract_Variable_Available --
    -----------------------------------
@@ -72,7 +67,7 @@ package body LAL_Refactor.Extract_Variable is
          return False;
       end if;
 
-      Aux := Find
+      Aux := Find_Parent
         (Find_First_Common_Parent
            (Start_Node, End_Node, With_Self => True),
          Is_Expr'Access);
@@ -199,7 +194,7 @@ package body LAL_Refactor.Extract_Variable is
    begin
       return Variable_Extractor'
         (Unit,
-         Find
+         Find_Parent
            (Find_First_Common_Parent
                 (Start_Node, End_Node, With_Self => True),
             Is_Expr'Access),
@@ -476,14 +471,14 @@ package body LAL_Refactor.Extract_Variable is
       procedure Find_Assignment_Place_In_Code
       is
          Self_Stmt_List      : constant Ada_Node :=
-           Find (Self.Node, Is_Stmt_List'Access);
+           Find_Parent (Self.Node, Is_Stmt_List'Access);
 
          Semicolon_Stmt_List : Ada_Node;
       begin
          --  Line/column points to the previous semicolon
          Insert_Location := (Line, Line, Column, Column);
 
-         Semicolon_Stmt_List := Find
+         Semicolon_Stmt_List := Find_Parent
            (Lookup
               (Self.Unit,
                Self.Unit.Lookup_Token
@@ -638,41 +633,5 @@ package body LAL_Refactor.Extract_Variable is
 
          return No_Refactoring_Edits;
    end Refactor;
-
-   ---------------
-   -- Find_Expr --
-   ---------------
-
-   function Find
-     (Node   : Ada_Node;
-      Filter : access function (Node : Ada_Node'Class) return Boolean)
-      return Ada_Node
-   is
-      Aux : Ada_Node := No_Ada_Node;
-
-      procedure Is_Callback (Parent : Ada_Node; Stop : in out Boolean);
-      --  When Parent matches a filter, stops the search and sets Aux to Parent
-
-      -----------------
-      -- Is_Callback --
-      -----------------
-
-      procedure Is_Callback (Parent : Ada_Node; Stop : in out Boolean) is
-      begin
-         Stop := True;
-         Aux  := Parent;
-      end Is_Callback;
-
-   begin
-      if not Node.Is_Null
-        and then not Filter (Node)
-      then
-         Find_Matching_Parents (Node, Filter, Is_Callback'Access);
-         return Aux;
-
-      else
-         return Node;
-      end if;
-   end Find;
 
 end LAL_Refactor.Extract_Variable;

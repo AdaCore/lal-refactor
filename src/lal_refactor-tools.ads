@@ -66,6 +66,13 @@ package LAL_Refactor.Tools is
       return Token_Reference;
    --  Finds the position of the Token. Returns No_Token if not found.
 
+   function Find_Parent
+     (Node   : Ada_Node;
+      Filter : access function (Node : Ada_Node'Class) return Boolean)
+      return Ada_Node;
+   --  Goes over Node's parents until the parent is not null and Filter
+   --  returns True and return this parent.
+
    Parse_Tool_Exception : exception;
 
 end LAL_Refactor.Tools;

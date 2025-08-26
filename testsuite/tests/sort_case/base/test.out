@@ -1,0 +1,192 @@
+
+--  orig1 -PL 13 -PC 14
+with Ada.Text_IO;
+
+--  Sort `when Variable_Address | AA` to `when AA | Variable_Address`
+--  Sort all `when`s alphabetically
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when AA | Variable_Address =>
+         null;
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when others =>
+         null;
+   end case;
+end Main;
+
+--  orig2 -PL 12 -PC 13
+with Ada.Text_IO;
+
+-- Sort identifiers `when Hover | Endian` to `when Endian | Hover` only
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when AA =>
+         null;
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian | Hover =>
+         Ada.Text_IO.Put_Line ("Endian/Hover");
+
+      when others =>
+         null;
+   end case;
+end Main;
+
+--  orig3 -PL 12 -PC 16
+with Ada.Text_IO;
+
+--  Sort only `when`s; `others` should be the last
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when AA | Variable_Address =>
+         null;
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when others =>
+         null;
+   end case;
+end Main;
+
+--  orig1 -PL 13 -PC 14 declare
+with Ada.Text_IO;
+
+--  Sort `when Variable_Address | AA` to `when AA | Variable_Address`
+--  Sort all `when`s alphabetically
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Variable_Address | AA =>
+         null;
+
+      when others =>
+         null;
+   end case;
+end Main;
+
+--  orig3 -PL 12 -PC 14 declare
+with Ada.Text_IO;
+
+--  Sort only `when`s; `others` should be the last
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when Command =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when Variable_Address | AA =>
+         null;
+
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+   end case;
+end Main;
+
+--  orig4 -PL 12 -PC 16 declare
+with Ada.Text_IO;
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when Command | Variable_Address .. AA =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when others =>
+         null;
+   end case;
+end Main;
+
+--  orig5 -PL 12 -PC 15 declare
+with Ada.Text_IO;
+
+procedure Main is
+   type Kind_Type is
+     (Hover, Command, Endian, Variable_Address, Set_TTY, AA);
+
+   Kind : Kind_Type := Hover;
+begin
+   case Kind is
+      when Hover =>
+         Ada.Text_IO.Put_Line ("Hover");
+
+      when Command | Variable_Address .. AA =>
+         Ada.Text_IO.Put_Line ("Command");
+
+      when Endian =>
+         Ada.Text_IO.Put_Line ("Endian");
+
+      when others =>
+         null;
+   end case;
+end Main;

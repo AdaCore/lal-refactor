@@ -9,6 +9,8 @@ with Ada.Command_Line;
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Strings.Hash;
 
+with Laltools.Common;
+
 package body LAL_Refactor.Tools is
 
    -------------
@@ -122,6 +124,43 @@ package body LAL_Refactor.Tools is
 
       return Aux_Token;
    end Find;
+
+   -----------------
+   -- Find_Parent --
+   -----------------
+
+   function Find_Parent
+     (Node   : Ada_Node;
+      Filter : access function (Node : Ada_Node'Class) return Boolean)
+      return Ada_Node
+   is
+      Aux : Ada_Node := No_Ada_Node;
+
+      procedure Is_Callback (Parent : Ada_Node; Stop : in out Boolean);
+      --  When Parent matches a filter, stops the search and sets Aux to Parent
+
+      -----------------
+      -- Is_Callback --
+      -----------------
+
+      procedure Is_Callback (Parent : Ada_Node; Stop : in out Boolean) is
+      begin
+         Stop := True;
+         Aux  := Parent;
+      end Is_Callback;
+
+   begin
+      if not Node.Is_Null
+        and then not Filter (Node)
+      then
+         Laltools.Common.Find_Matching_Parents
+           (Node, Filter, Is_Callback'Access);
+         return Aux;
+
+      else
+         return Node;
+      end if;
+   end Find_Parent;
 
    -------------------------
    -- Next_Non_Whitespace --
