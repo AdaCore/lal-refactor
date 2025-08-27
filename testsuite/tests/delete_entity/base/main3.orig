@@ -1,0 +1,13 @@
+procedure Main is
+   procedure Proc (Value : Float) is
+   begin
+      if Value > 0.0 then
+         Proc (Value - 1.0);
+      end if;
+   end Proc;
+
+   procedure To_Be_Deleted (Value : Float)
+     renames Proc;
+begin
+   To_Be_Deleted (9.0);
+end Main;

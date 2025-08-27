@@ -17,6 +17,7 @@ project LAL_Refactor_Test_Drivers is
       "change_parameter_mode.adb",
       "change_parameters_default_value.adb",
       "change_parameters_type.adb",
+      "delete_entity.adb",
       "extract_subprogram.adb",
       "extract_variable.adb",
       "introduce_parameter.adb",
@@ -25,6 +26,7 @@ project LAL_Refactor_Test_Drivers is
       "remove_parameter.adb",
       "replace_type.adb",
       "safe_rename.adb",
+      "sort_case.adb",
       "sort_dependencies.adb",
       "suppress_separate.adb");
 

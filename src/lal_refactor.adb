@@ -226,6 +226,35 @@ package body LAL_Refactor is
       Replace_Node (Edits, Node, Null_Unbounded_String, Expand);
    end Remove_Node;
 
+   -------------------------------
+   -- Remove_Node_And_Delimiter --
+   -------------------------------
+
+   procedure Remove_Node_And_Delimiter
+     (Edits : in out Text_Edit_Map;
+      Node  : Ada_Node'Class)
+   is
+      SLOC : Source_Location_Range;
+      Next : constant Ada_Node := Node.Next_Sibling;
+      Prev : constant Ada_Node := Node.Previous_Sibling;
+   begin
+      if Next.Is_Null then
+         SLOC := Make_Range
+           (End_Sloc (Prev.Sloc_Range),
+            End_Sloc (Node.Sloc_Range));
+      else
+         SLOC := Make_Range
+           (Start_Sloc (Node.Sloc_Range),
+            Start_Sloc (Next.Sloc_Range));
+      end if;
+
+      Safe_Insert
+        (Edits,
+         Node.Unit.Get_Filename,
+         (Location => SLOC,
+          Text     => Null_Unbounded_String));
+   end Remove_Node_And_Delimiter;
+
    -----------------
    -- Safe_Insert --
    -----------------

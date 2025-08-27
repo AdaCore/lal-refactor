@@ -1,0 +1,17 @@
+procedure Main is
+   protected P is
+      entry To_Be_Deleted (Value : Float);
+   private
+      State : Boolean;
+   end P;
+
+   protected body P is
+      entry To_Be_Deleted (Value : Float) when State is
+      begin
+         State := Value > 0.0;
+      end;
+   end P;
+
+begin
+   P.To_Be_Deleted (9.0);
+end Main;
