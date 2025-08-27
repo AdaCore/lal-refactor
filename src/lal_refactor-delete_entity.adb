@@ -21,7 +21,7 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Safe_To_Delete
      (Declaration : Basic_Decl;
-      Referencce  : Name) return Boolean;
+      Reference  : Name) return Boolean;
    --  Check if it is safe to delete given Reference of the Declaration
 
    function Is_Single_Item_List (List : Ada_Node_List'Class) return Boolean is
@@ -29,6 +29,21 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Single_Item_List (List : Defining_Name_List) return Boolean is
      (not List.Defining_Name_List_Has_Element (2));
+
+   function Is_Single_Item_List
+     (List : Case_Stmt_Alternative_List) return Boolean is
+       (not List.Case_Stmt_Alternative_List_Has_Element (2));
+
+   function Is_Single_Item_List
+     (List : Case_Expr_Alternative_List) return Boolean is
+       (not List.Case_Expr_Alternative_List_Has_Element (2));
+
+   function Is_Single_Item_List
+     (List : Basic_Assoc_List'Class) return Boolean is
+       (not List.Basic_Assoc_List_Has_Element (2));
+
+   function Is_Single_Item_List (List : Variant_List) return Boolean is
+     (not List.Variant_List_Has_Element (2));
 
    function Is_Block_Statement (Stmt_List : Ada_Node_List) return Boolean is
      (Stmt_List.Parent.Parent.Kind in Libadalang.Common.Ada_Block_Stmt);
@@ -79,11 +94,32 @@ package body LAL_Refactor.Delete_Entity is
    is
       use all type Libadalang.Common.Ref_Result_Kind;
 
+      procedure Remove_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name)
+           with Pre => Ref.Parent.Kind = Ada_Alternatives_List;
+
       procedure Remove_Pragma
         (Result : in out Refactoring_Edits;
          Ref    : Name);
 
       procedure Remove_Exception_Handler
+        (Result : in out Refactoring_Edits;
+         Ref    : Name);
+
+      procedure Remove_Case_Stmt_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name);
+
+      procedure Remove_Case_Expr_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name);
+
+      procedure Remove_Aggregate_Assoc
+        (Result : in out Refactoring_Edits;
+         Ref    : Name);
+
+      procedure Remove_Variant
         (Result : in out Refactoring_Edits;
          Ref    : Name);
 
@@ -101,6 +137,128 @@ package body LAL_Refactor.Delete_Entity is
 
       function Is_Statement (Node : Ada_Node'Class) return Boolean is
         (not Node.Is_Null and then Node.Kind in Libadalang.Common.Ada_Stmt);
+
+      ----------------------------
+      -- Remove_Aggregate_Assoc --
+      ----------------------------
+
+      procedure Remove_Aggregate_Assoc
+        (Result : in out Refactoring_Edits;
+         Ref    : Name)
+      is
+         Assoc : constant Ada_Node := Ref.Parent.Parent;
+      begin
+         --  TBD: Check array type is unconstrained?
+         pragma Assert
+           (not Is_Single_Item_List (Assoc.Parent.As_Assoc_List));
+
+         Remove_Node_And_Delimiter (Result.Text_Edits, Assoc);
+      end Remove_Aggregate_Assoc;
+
+      ------------------------
+      -- Remove_Alternative --
+      ------------------------
+
+      procedure Remove_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name) is
+      begin
+         if not Is_Single_Item_List
+           (Ref.Parent.As_Alternatives_List)
+         then
+            Remove_Node_And_Delimiter (Result.Text_Edits, Ref);
+         elsif Ref.Parent.Parent.Kind = Ada_Exception_Handler then
+            Remove_Exception_Handler (Result, Ref);
+         elsif Ref.Parent.Parent.Kind = Ada_Case_Stmt_Alternative then
+            Remove_Case_Stmt_Alternative (Result, Ref);
+         elsif Ref.Parent.Parent.Kind = Ada_Case_Expr_Alternative then
+            Remove_Case_Expr_Alternative (Result, Ref);
+         elsif Ref.Parent.Parent.Kind = Ada_Aggregate_Assoc then
+            Remove_Aggregate_Assoc (Result, Ref);
+         elsif Ref.Parent.Parent.Kind = Ada_Variant then
+            Remove_Variant (Result, Ref);
+         else
+            raise Program_Error;
+         end if;
+      end Remove_Alternative;
+
+      ----------------------------------
+      -- Remove_Case_Expr_Alternative --
+      ----------------------------------
+
+      procedure Remove_Case_Expr_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name)
+      is
+         Alternative : constant Ada_Node := Ref.Parent.Parent;
+      begin
+         pragma Assert
+           (not Is_Single_Item_List
+              (Alternative.Parent.As_Case_Expr_Alternative_List));
+
+         Remove_Node_And_Delimiter (Result.Text_Edits, Alternative);
+      end Remove_Case_Expr_Alternative;
+
+      ----------------------------------
+      -- Remove_Case_Stmt_Alternative --
+      ----------------------------------
+
+      procedure Remove_Case_Stmt_Alternative
+        (Result : in out Refactoring_Edits;
+         Ref    : Name)
+      is
+         Alternative : constant Ada_Node := Ref.Parent.Parent;
+      begin
+         if Is_Single_Item_List
+           (Alternative.Parent.As_Case_Stmt_Alternative_List)
+         then
+            Remove_Statement (Result, Ref);
+         else
+            Remove_Node_And_Delimiter (Result.Text_Edits, Alternative);
+         end if;
+      end Remove_Case_Stmt_Alternative;
+
+      ------------------------------
+      -- Remove_Exception_Handler --
+      ------------------------------
+
+      procedure Remove_Exception_Handler
+        (Result : in out Refactoring_Edits;
+         Ref    : Name)
+      is
+         Handler : constant Ada_Node := Ref.Parent.Parent;
+      begin
+         if Is_Single_Item_List (Handler.Parent.As_Ada_Node_List) then
+            declare
+               Token : constant Libadalang.Common.Token_Reference :=
+                 Libadalang.Common.Previous
+                   (Handler.Parent.Token_Start,
+                    Exclude_Trivia => True);
+               --  `exception` token
+
+               Data  : constant Libadalang.Common.Token_Data_Type :=
+                 Libadalang.Common.Data (Token);
+
+               SLOC  : Source_Location_Range;
+            begin
+               SLOC := Make_Range
+                 (Start_Sloc (Libadalang.Common.Sloc_Range (Data)),
+                  End_Sloc (Handler.Parent.Sloc_Range));
+
+               SLOC := Laltools.Common.Expand_SLOC_Range (Ref.Unit, SLOC);
+
+               Safe_Insert
+                 (Result.Text_Edits,
+                  Ref.Unit.Get_Filename,
+                  (Location => SLOC,
+                   Text     => Null_Unbounded_String));
+            end;
+
+         else
+            Remove_Node_And_Delimiter (Result.Text_Edits, Handler);
+
+         end if;
+      end Remove_Exception_Handler;
 
       ----------------------
       -- Remove_Statement --
@@ -128,51 +286,32 @@ package body LAL_Refactor.Delete_Entity is
          end if;
       end Remove_Statement;
 
-      ------------------------------
-      -- Remove_Exception_Handler --
-      ------------------------------
+      --------------------
+      -- Remove_Variant --
+      --------------------
 
-      procedure Remove_Exception_Handler
+      procedure Remove_Variant
         (Result : in out Refactoring_Edits;
          Ref    : Name)
       is
-         Handler : constant Ada_Node := Ref.Parent.Parent;
+         Variant : constant Ada_Node := Ref.Parent.Parent;
       begin
-         if not Is_Single_Item_List
-           (Ref.Parent.As_Alternatives_List)
+         if not Is_Single_Item_List (Variant.Parent.As_Variant_List) then
+            Remove_Node_And_Delimiter (Result.Text_Edits, Variant);
+         elsif Is_Single_Item_List
+           (Variant.Parent.Parent.Parent.As_Component_List.F_Components)
          then
-            Remove_Node_And_Delimiter (Result.Text_Edits, Ref);
-
-         elsif not Is_Single_Item_List (Handler.Parent.As_Ada_Node_List) then
-            Remove_Node_And_Delimiter (Result.Text_Edits, Handler);
-
+            Replace_Node
+              (Result.Text_Edits,
+               Variant.Parent.Parent,
+               To_Unbounded_String ("null;"));
          else
-            declare
-               Token : constant Libadalang.Common.Token_Reference :=
-                 Libadalang.Common.Previous
-                   (Handler.Parent.Token_Start,
-                    Exclude_Trivia => True);
-               --  `exception` token
-
-               Data  : constant Libadalang.Common.Token_Data_Type :=
-                 Libadalang.Common.Data (Token);
-
-               SLOC  : Source_Location_Range;
-            begin
-               SLOC := Make_Range
-                 (Start_Sloc (Libadalang.Common.Sloc_Range (Data)),
-                  End_Sloc (Handler.Parent.Sloc_Range));
-
-               SLOC := Laltools.Common.Expand_SLOC_Range (Ref.Unit, SLOC);
-
-               Safe_Insert
-                 (Result.Text_Edits,
-                  Ref.Unit.Get_Filename,
-                  (Location => SLOC,
-                   Text     => Null_Unbounded_String));
-            end;
+            Remove_Node
+              (Result.Text_Edits,
+               Variant.Parent.Parent,
+               Expand => True);
          end if;
-      end Remove_Exception_Handler;
+      end Remove_Variant;
 
       -------------------
       -- Remove_Pragma --
@@ -222,10 +361,8 @@ package body LAL_Refactor.Delete_Entity is
                elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
                   Remove_Pragma (Result, Name);
 
-               elsif Declaration.Kind = Ada_Exception_Decl
-                 and then Name.Parent.Parent.Kind = Ada_Exception_Handler
-               then
-                  Remove_Exception_Handler (Result, Name);
+               elsif Name.Parent.Kind = Ada_Alternatives_List then
+                  Remove_Alternative (Result, Name);
 
                else
                   Remove_Statement (Result, Name);
@@ -317,11 +454,33 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Safe_To_Delete
      (Declaration : Basic_Decl;
-      Referencce  : Name) return Boolean is
+      Reference   : Name) return Boolean is
    begin
-      if Referencce.Parent.Kind = Ada_Pragma_Argument_Assoc then
+      if Reference.Parent.Kind = Ada_Pragma_Argument_Assoc then
          --  Any pragma with the reference is safe to delete
          return True;
+      end if;
+
+      if Reference.Parent.Kind = Ada_Alternatives_List
+        and then Is_Single_Item_List (Reference.Parent.As_Alternatives_List)
+      then
+         --  We can't delete the last (single-item) alternative in next cases:
+         case Reference.Parent.Parent.Kind is
+            when Ada_Case_Expr_Alternative =>
+               if Is_Single_Item_List
+                 (Reference.Parent.Parent.Parent.As_Case_Expr_Alternative_List)
+               then
+                  return False;
+               end if;
+            when Ada_Aggregate_Assoc =>
+               if Is_Single_Item_List
+                 (Reference.Parent.Parent.Parent.As_Assoc_List)
+               then
+                  return False;
+               end if;
+            when others =>
+               null;
+         end case;
       end if;
 
       case Declaration.Kind is
@@ -331,21 +490,23 @@ package body LAL_Refactor.Delete_Entity is
             | Ada_Subp_Renaming_Decl
             | Ada_Null_Subp_Decl =>
             --  It's safe to delete procedure/entry calls
-            return Referencce.P_Is_Call;
+            return Reference.P_Is_Call;
          when Ada_Exception_Decl =>
             --  It's safe to delete corresponding handlers
-            return Referencce.Parent.Parent.Kind = Ada_Exception_Handler;
+            return Reference.Parent.Parent.Kind = Ada_Exception_Handler;
          when Ada_Object_Decl =>
             declare
-               Parent : constant Ada_Node := Referencce.Parent;
+               Parent : constant Ada_Node := Reference.Parent;
             begin
                --  It's safe to delete assignment statements if ref is LHS or
                --  a call to procedure that has a single out/in-out parameter,
                --  like `Float_IO.Get (Input, To_Be_Deleted_Var);`
+               --  or part of Alternatives_List
                return
                  (Parent.Kind = Ada_Assign_Stmt
-                    and then Parent.As_Assign_Stmt.F_Dest = Referencce)
-                 or else Is_Single_Result_Procedure_Call (Referencce);
+                    and then Parent.As_Assign_Stmt.F_Dest = Reference)
+                 or else Is_Single_Result_Procedure_Call (Reference)
+                 or else Parent.Kind = Ada_Alternatives_List;
             end;
          when others =>
             return False;

@@ -25,3 +25,23 @@ begin
    Ada.Integer_Text_IO.Put (X);
 
 end;
+--  (main3.orig) -L 2 -R 4
+procedure Main is
+
+   Arr : constant array (Positive range <>) of Float :=
+     (2 => 2.0);
+
+   Y : Integer := 1;
+begin
+   case Y is
+     when others =>
+        null;
+   end case;
+
+   if (case Y is
+       when 5 => True,
+       when others => False)
+   then
+         null;
+   end if;
+end;
