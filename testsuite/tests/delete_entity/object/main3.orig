@@ -1,0 +1,22 @@
+procedure Main is
+   X : constant Integer := 1;
+
+   Arr : constant array (Positive range <>) of Float :=
+     (X => 1.0, 2 => 2.0);
+
+   Y : Integer := 1;
+begin
+   case Y is
+     when X =>
+        return;
+     when others =>
+        null;
+   end case;
+
+   if (case Y is
+       when X | 5 => True,
+       when others => False)
+   then
+         null;
+   end if;
+end;
