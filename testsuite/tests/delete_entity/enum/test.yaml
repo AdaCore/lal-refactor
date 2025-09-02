@@ -1,0 +1,5 @@
+title: delete_enum
+
+description: delete_enity tool test (enumeration literal)
+
+driver: shell_script

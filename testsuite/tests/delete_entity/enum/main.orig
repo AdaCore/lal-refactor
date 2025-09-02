@@ -1,0 +1,13 @@
+procedure Main is
+   type Enum is (A, B, C);
+
+   Map : array (B .. C) of Integer :=
+     (B => 2,
+      C => 3);
+
+   subtype S1 is Enum range A .. B;
+   subtype S2 is Enum range B .. C;
+   subtype S3 is Enum range B .. B;
+begin
+   null;
+end;

@@ -45,6 +45,9 @@ package body LAL_Refactor.Delete_Entity is
    function Is_Single_Item_List (List : Variant_List) return Boolean is
      (not List.Variant_List_Has_Element (2));
 
+   function Is_Single_Item_List (List : Enum_Literal_Decl_List) return Boolean
+     is (not List.Enum_Literal_Decl_List_Has_Element (2));
+
    function Is_Block_Statement (Stmt_List : Ada_Node_List) return Boolean is
      (Stmt_List.Parent.Parent.Kind in Libadalang.Common.Ada_Block_Stmt);
 
@@ -57,6 +60,12 @@ package body LAL_Refactor.Delete_Entity is
 
    function All_Parts (Node : Defining_Name) return Basic_Decl_Array is
      [for Name of Node.P_All_Parts => Name.P_Basic_Decl];
+
+   function Find_Next_Decl (Id : Name'Class) return Ada_Node is
+     (Id.P_Referenced_Decl.Next_Sibling);
+
+   function Find_Prev_Decl (Id : Name'Class) return Ada_Node is
+     (Id.P_Referenced_Decl.Previous_Sibling);
 
    package Diagnostics is
 
@@ -127,6 +136,13 @@ package body LAL_Refactor.Delete_Entity is
         (Result : in out Refactoring_Edits;
          Ref    : Name);
 
+      procedure Change_Bin_Op
+        (Result : in out Refactoring_Edits;
+         Id     : Base_Id'Class;
+         Ref    : Name);
+      --  Replace `To_Be_Deleted .. XXX` or `XXX .. To_Be_Deleted` range by
+      --  substituting `To_Be_Deleted` with next/prev enumeration literal.
+
       function Is_Inside_Parts
         (Ref   : Base_Id'Class;
          Parts : Basic_Decl_Array) return Boolean is
@@ -137,6 +153,25 @@ package body LAL_Refactor.Delete_Entity is
 
       function Is_Statement (Node : Ada_Node'Class) return Boolean is
         (not Node.Is_Null and then Node.Kind in Libadalang.Common.Ada_Stmt);
+
+      -------------------
+      -- Change_Bin_Op --
+      -------------------
+
+      procedure Change_Bin_Op
+        (Result : in out Refactoring_Edits;
+         Id     : Base_Id'Class;
+         Ref    : Name)
+      is
+         Op   : constant Bin_Op := Ref.Parent.As_Bin_Op;
+         Text : constant Unbounded_String :=
+           To_Unbounded_String
+             (Langkit_Support.Text.To_UTF8
+               (if Op.F_Left = Ref then Find_Next_Decl (Id).Text
+                else Find_Prev_Decl (Id).Text));
+      begin
+         Replace_Node (Result.Text_Edits, Id, Text);
+      end Change_Bin_Op;
 
       ----------------------------
       -- Remove_Aggregate_Assoc --
@@ -364,6 +399,9 @@ package body LAL_Refactor.Delete_Entity is
                elsif Name.Parent.Kind = Ada_Alternatives_List then
                   Remove_Alternative (Result, Name);
 
+               elsif Name.Parent.Kind = Ada_Bin_Op then
+                  Change_Bin_Op (Result, Ref, Name);
+
                else
                   Remove_Statement (Result, Name);
                end if;
@@ -379,6 +417,9 @@ package body LAL_Refactor.Delete_Entity is
             then
                --  Remove defining name from the list
                Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+            elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
+               --  Remove enumeration literal from the list
+               Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
             else
                --  Remove whole declaration
                Remove_Node
@@ -445,6 +486,9 @@ package body LAL_Refactor.Delete_Entity is
               when Ada_Null_Subp_Decl => True,
               when Ada_Exception_Decl => True,
               when Ada_Object_Decl => True,
+              when Ada_Enum_Literal_Decl =>
+                 not Is_Single_Item_List
+                   (Declaration.Parent.As_Enum_Literal_Decl_List),
               when others => False);
    end Is_Delete_Entity_Available;
 
@@ -484,6 +528,7 @@ package body LAL_Refactor.Delete_Entity is
       end if;
 
       case Declaration.Kind is
+
          when Ada_Entry_Decl
             | Ada_Subp_Decl
             | Ada_Subp_Body
@@ -491,9 +536,11 @@ package body LAL_Refactor.Delete_Entity is
             | Ada_Null_Subp_Decl =>
             --  It's safe to delete procedure/entry calls
             return Reference.P_Is_Call;
+
          when Ada_Exception_Decl =>
             --  It's safe to delete corresponding handlers
             return Reference.Parent.Parent.Kind = Ada_Exception_Handler;
+
          when Ada_Object_Decl =>
             declare
                Parent : constant Ada_Node := Reference.Parent;
@@ -507,6 +554,20 @@ package body LAL_Refactor.Delete_Entity is
                     and then Parent.As_Assign_Stmt.F_Dest = Reference)
                  or else Is_Single_Result_Procedure_Call (Reference)
                  or else Parent.Kind = Ada_Alternatives_List;
+            end;
+
+         when Ada_Enum_Literal_Decl =>
+            declare
+               Parent : constant Ada_Node := Reference.Parent;
+            begin
+               --  It's safe to delete part of Alternatives_List or
+               --  change a range (like `Do_Te_Deleted .. Other_Enum`).
+               return Parent.Kind = Ada_Alternatives_List or else
+                 (Parent.Kind = Ada_Bin_Op and then
+                  Parent.As_Bin_Op.F_Op = Ada_Op_Double_Dot and then
+                    (if Parent.As_Bin_Op.F_Left = Reference
+                     then not Find_Next_Decl (Reference).Is_Null
+                     else not Find_Prev_Decl (Reference).Is_Null));
             end;
          when others =>
             return False;
