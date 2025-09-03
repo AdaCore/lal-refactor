@@ -1,0 +1,12 @@
+with Ada.Integer_Text_IO;
+
+procedure Main is
+   Y, X : Integer;
+
+   procedure Get (Value : out Integer) is null;
+
+begin
+   Ada.Integer_Text_IO.Get (Main.X);
+   Ada.Integer_Text_IO.Put (X);
+   Get (Value => X);
+end;
