@@ -38,6 +38,9 @@ package body LAL_Refactor.Delete_Entity is
      (List : Case_Expr_Alternative_List) return Boolean is
        (not List.Case_Expr_Alternative_List_Has_Element (2));
 
+   function Is_Single_Item_List (List : Expr_List'Class) return Boolean is
+       (not List.Expr_List_Has_Element (2));
+
    function Is_Single_Item_List
      (List : Basic_Assoc_List'Class) return Boolean is
        (not List.Basic_Assoc_List_Has_Element (2));
@@ -54,6 +57,19 @@ package body LAL_Refactor.Delete_Entity is
    function Is_Single_Result_Procedure_Call (Arg : Name) return Boolean;
    --  Check if Arg is an argument to a procedure call with a single out/in-out
    --  parameter.
+
+   function Is_Function (Declaration : Basic_Decl) return Boolean is
+     (case Declaration.Kind is
+      when Ada_Subp_Decl =>
+             Declaration.As_Classic_Subp_Decl.F_Subp_Spec.F_Subp_Kind
+               in Ada_Subp_Kind_Function,
+      when Libadalang.Common.Ada_Base_Subp_Body =>
+             Declaration.As_Base_Subp_Body.F_Subp_Spec.F_Subp_Kind
+               in Ada_Subp_Kind_Function,
+      when Ada_Generic_Subp_Instantiation =>
+             Declaration.As_Generic_Subp_Instantiation.F_Kind
+               in Ada_Subp_Kind_Function,
+      when others => False);
 
    function To_Selected_Name (Ref : Base_Id'Class) return Name;
    --  Return selected_name for given identifier, like A.B.C for C
@@ -428,6 +444,13 @@ package body LAL_Refactor.Delete_Entity is
                elsif Name.Parent.Kind = Ada_Alternatives_List then
                   Remove_Alternative (Result, Name);
 
+               elsif Name.Parent.Kind = Ada_Expr_Alternatives_List then
+                  pragma Assert
+                    (not Is_Single_Item_List
+                       (Name.Parent.As_Expr_Alternatives_List));
+
+                  Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+
                elsif Name.Parent.Kind = Ada_Bin_Op then
                   Change_Bin_Op (Result, Ref, Name);
 
@@ -519,17 +542,10 @@ package body LAL_Refactor.Delete_Entity is
       return not Declaration.Is_Null
         and then
           (case Declaration.Kind is
-              when Ada_Subp_Decl =>
-                Declaration.As_Classic_Subp_Decl.F_Subp_Spec.F_Subp_Kind
-                  in Ada_Subp_Kind_Procedure,
-              when Ada_Subp_Body | Ada_Subp_Renaming_Decl =>
-                Declaration.As_Base_Subp_Body.F_Subp_Spec.F_Subp_Kind
-                  in Ada_Subp_Kind_Procedure,
-              when Ada_Generic_Subp_Instantiation =>
-                Declaration.As_Generic_Subp_Instantiation.F_Kind
-                  in Ada_Subp_Kind_Procedure,
+              when Ada_Subp_Decl => True,
+              when Libadalang.Common.Ada_Base_Subp_Body => True,
+              when Ada_Generic_Subp_Instantiation => True,
               when Ada_Entry_Decl => True,
-              when Ada_Null_Subp_Decl => True,
               when Ada_Exception_Decl => True,
               when Ada_Object_Decl => True,
               when Ada_Enum_Literal_Decl =>
@@ -572,18 +588,48 @@ package body LAL_Refactor.Delete_Entity is
             when others =>
                null;
          end case;
+      elsif Reference.Parent.Kind = Ada_Expr_Alternatives_List
+        and then Is_Single_Item_List
+          (Reference.Parent.As_Expr_Alternatives_List)
+      then
+         return False;
       end if;
 
       case Declaration.Kind is
 
          when Ada_Entry_Decl
             | Ada_Subp_Decl
-            | Ada_Subp_Body
-            | Ada_Subp_Renaming_Decl
-            | Ada_Generic_Subp_Instantiation
-            | Ada_Null_Subp_Decl =>
+            | Libadalang.Common.Ada_Base_Subp_Body
+            | Ada_Generic_Subp_Instantiation =>
+
             --  It's safe to delete procedure/entry calls
-            return Reference.P_Is_Call;
+            if Reference.P_Is_Call and not Is_Function (Declaration) then
+               return True;
+            end if;
+
+         when others =>
+            null;
+      end case;
+
+      case Declaration.Kind is
+
+         when Ada_Entry_Decl
+            | Ada_Subp_Decl
+            | Libadalang.Common.Ada_Base_Subp_Body
+            | Ada_Generic_Subp_Instantiation =>
+
+            --  It's safe to delete a call to function that is part of
+            --  Alternatives_List
+            if Reference.P_Is_Call and Is_Function (Declaration) then
+               declare
+                  Parent : constant Ada_Node := Reference.Parent;
+               begin
+                  return Parent.Kind in
+                    Ada_Alternatives_List | Ada_Expr_Alternatives_List;
+               end;
+            else
+               return False;
+            end if;
 
          when Ada_Exception_Decl =>
             --  It's safe to delete corresponding handlers
@@ -601,7 +647,8 @@ package body LAL_Refactor.Delete_Entity is
                  (Parent.Kind = Ada_Assign_Stmt
                     and then Parent.As_Assign_Stmt.F_Dest = Reference)
                  or else Is_Single_Result_Procedure_Call (Reference)
-                 or else Parent.Kind = Ada_Alternatives_List
+                 or else Parent.Kind in
+                   Ada_Alternatives_List | Ada_Expr_Alternatives_List
                  or else Parent.Kind = Ada_Component_Clause;
             end;
 

@@ -77,3 +77,13 @@ procedure Main is
 begin
    null;
 end Main;
+--  (main8.orig) -L 3 -R 14
+procedure Main is
+
+
+   X : Integer := 0;
+begin
+   if X in 1 | 2 then
+      null;
+   end if;
+end Main;

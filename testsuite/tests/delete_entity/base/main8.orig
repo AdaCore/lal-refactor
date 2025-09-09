@@ -1,0 +1,10 @@
+procedure Main is
+
+   function To_Be_Deleted return Integer is (99);
+
+   X : Integer := 0;
+begin
+   if X in 1 | 2 | To_Be_Deleted then
+      null;
+   end if;
+end Main;
