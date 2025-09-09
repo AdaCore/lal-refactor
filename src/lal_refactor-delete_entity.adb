@@ -12,6 +12,12 @@ package body LAL_Refactor.Delete_Entity is
 
    use all type Libadalang.Common.Ada_Node_Kind_Type;
 
+   procedure Remove_Declaration
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits);
+   --  Remove a single declaration
+
    function Find_Parent
      (Node      : Ada_Node'Class;
       Predicate : not null access
@@ -119,6 +125,31 @@ package body LAL_Refactor.Delete_Entity is
      (Self           : Entity_Remover;
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
+   is
+      Units : constant Analysis_Unit_Array := Analysis_Units.all;
+
+      Declaration : constant Basic_Decl :=
+        Self.Definition.P_Basic_Decl;
+   begin
+      return Result : Refactoring_Edits do
+         Remove_Declaration (Self.Definition, Units, Result);
+
+         --  For a subprogram if it doesn't override any subprogram (except
+         --  it-self?) delete every overriding subprogram:
+         if Declaration.P_Is_Subprogram
+           and then Declaration.P_Base_Subp_Declarations'Length <= 1
+         then
+            for Over of Declaration.P_Find_All_Overrides (Units) loop
+               Remove_Declaration (Over.P_Defining_Name, Units, Result);
+            end loop;
+         end if;
+      end return;
+   end Refactor;
+
+   procedure Remove_Declaration
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits)
    is
       use all type Libadalang.Common.Ref_Result_Kind;
 
@@ -410,19 +441,19 @@ package body LAL_Refactor.Delete_Entity is
            (Result.Text_Edits, Pragma_Node, Expand => True);
       end Remove_Pragma;
 
-      Parts : constant Basic_Decl_Array := All_Parts (Self.Definition);
+      Parts : constant Basic_Decl_Array := All_Parts (Definition);
 
       Refs  : constant Ref_Result_Array :=
-        Self.Definition.P_Find_All_References
-          (Units              => Analysis_Units.all,
+        Definition.P_Find_All_References
+          (Units              => Units,
            Follow_Renamings   => False,
            Imprecise_Fallback => False);
 
       Declaration : constant Basic_Decl :=
-        Self.Definition.P_Basic_Decl;
+        Definition.P_Basic_Decl;
 
    begin
-      return Result : Refactoring_Edits do
+      begin
          --  Delete all references
          for Item of Refs when Kind (Item) = Precise loop
             declare
@@ -464,7 +495,7 @@ package body LAL_Refactor.Delete_Entity is
          end loop;
 
          --  Delete all definitions
-         for Name of Self.Definition.P_All_Parts loop
+         for Name of Definition.P_All_Parts loop
             --  Check if we have a declaration with multiple defining names
             if Name.P_Basic_Decl.Kind in
                 Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
@@ -492,8 +523,8 @@ package body LAL_Refactor.Delete_Entity is
                  (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
             end if;
          end loop;
-      end return;
-   end Refactor;
+      end;
+   end Remove_Declaration;
 
    -----------------
    -- Find_Parent --
