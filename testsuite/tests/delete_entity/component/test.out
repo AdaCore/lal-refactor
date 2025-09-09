@@ -1,0 +1,43 @@
+--  (main.orig) -L 2 -R 26
+procedure Main is
+   type Rec is record A, C : Integer; end record;
+
+   for Rec use record
+      A at 0 range 0 .. 31;
+      C at 8 range 0 .. 31;
+   end record;
+   
+   V : Rec :=
+     (A => 1,
+      C => 3);
+
+begin
+   null;
+end Main;
+--  (main2.orig) -L 2 -R 23
+procedure Main is
+   type Rec is record null; end record;
+
+
+   V : Rec := (null record);
+
+begin
+   null;
+end Main;
+--  (main3.orig) -L 3 -R 7
+procedure Main is
+   type Rec is record
+
+      B : Integer;
+   end record;
+
+   for Rec use record
+      B at 4 range 0 .. 31;
+   end record;
+   
+   V : Rec :=
+     (B => 2);
+
+begin
+   null;
+end Main;
