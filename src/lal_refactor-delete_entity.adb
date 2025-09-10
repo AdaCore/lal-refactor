@@ -519,7 +519,9 @@ package body LAL_Refactor.Delete_Entity is
          end if;
       end loop;
 
+      --  Delete references to nested defining names
       case Declaration.Kind is
+
          when Ada_Single_Protected_Decl =>
             for Item of Declaration.As_Single_Protected_Decl
               .F_Definition.F_Public_Part.F_Decls
@@ -528,6 +530,16 @@ package body LAL_Refactor.Delete_Entity is
                Remove_All_References
                  (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
             end loop;
+
+         when Ada_Single_Task_Decl =>
+            for Item of Declaration.As_Single_Task_Decl.F_Task_Type
+              .F_Definition.F_Public_Part.F_Decls
+            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
+            loop
+               Remove_All_References
+                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
+            end loop;
+
          when others =>
             null;
       end case;
@@ -604,6 +616,7 @@ package body LAL_Refactor.Delete_Entity is
                    (Declaration.Parent.As_Enum_Literal_Decl_List),
               when Ada_Component_Decl => True,
               when Ada_Single_Protected_Decl => True,
+              when Ada_Single_Task_Decl => True,
               when others => False);
    end Is_Delete_Entity_Available;
 

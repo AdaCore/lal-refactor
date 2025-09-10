@@ -87,7 +87,14 @@ begin
       null;
    end if;
 end Main;
---  (main8.orig) -L 2 -R 14
+--  (main9.orig) -L 2 -R 14
+procedure Main is
+
+
+begin
+   null;
+end Main;
+--  (main_10.orig) -L 2 -R 14
 procedure Main is
 
 
