@@ -80,9 +80,6 @@ package body LAL_Refactor.Delete_Entity is
    function To_Selected_Name (Ref : Base_Id'Class) return Name;
    --  Return selected_name for given identifier, like A.B.C for C
 
-   function All_Parts (Node : Defining_Name) return Basic_Decl_Array is
-     [for Name of Node.P_All_Parts => Name.P_Basic_Decl];
-
    function Find_Next_Decl (Id : Name'Class) return Ada_Node is
      (Id.P_Referenced_Decl.Next_Sibling);
 
@@ -197,14 +194,6 @@ package body LAL_Refactor.Delete_Entity is
          Ref    : Name);
       --  Replace `To_Be_Deleted .. XXX` or `XXX .. To_Be_Deleted` range by
       --  substituting `To_Be_Deleted` with next/prev enumeration literal.
-
-      function Is_Inside_Parts
-        (Ref   : Base_Id'Class;
-         Parts : Basic_Decl_Array) return Boolean is
-        (for some Parent of Ref.Parents =>
-           (for some Part of Parts =>
-                 Part = Parent));
-      --  Check if Ref is located inside one of Parts.
 
       function Is_Statement (Node : Ada_Node'Class) return Boolean is
         (not Node.Is_Null and then Node.Kind in Libadalang.Common.Ada_Stmt);
@@ -441,8 +430,6 @@ package body LAL_Refactor.Delete_Entity is
            (Result.Text_Edits, Pragma_Node, Expand => True);
       end Remove_Pragma;
 
-      Parts : constant Basic_Decl_Array := All_Parts (Definition);
-
       Refs  : constant Ref_Result_Array :=
         Definition.P_Find_All_References
           (Units              => Units,
@@ -453,77 +440,75 @@ package body LAL_Refactor.Delete_Entity is
         Definition.P_Basic_Decl;
 
    begin
-      begin
-         --  Delete all references
-         for Item of Refs when Kind (Item) = Precise loop
-            declare
-               Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+      --  Delete all definitions
+      for Name of Definition.P_All_Parts loop
+         --  Check if we have a declaration with multiple defining names
+         if Name.P_Basic_Decl.Kind in
+           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+           and then not Is_Single_Item_List
+             (Name.Parent.As_Defining_Name_List)
+         then
+            --  Remove defining name from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+         elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
+            --  Remove enumeration literal from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
+         elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
+           and then Is_Single_Item_List
+             (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
+         then
+            --  Replace the last component declaration with `null;`
+            Replace_Node
+              (Result.Text_Edits,
+               Name.P_Basic_Decl,
+               Null_Statement,
+               Expand => True);
+         else
+            --  Remove whole declaration
+            Remove_Node
+              (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+         end if;
+      end loop;
 
-               Name : constant Libadalang.Analysis.Name :=
-                 To_Selected_Name (Ref);
-            begin
-               if Is_Inside_Parts (Ref, Parts) then
-                  null;  --  Do no analisys inside declaration parts
+      --  Delete all references
+      for Item of Refs when Kind (Item) = Precise loop
+         declare
+            Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
 
-               elsif not Is_Safe_To_Delete (Declaration, Name) then
-                  Result.Diagnostics.Append
-                    (Diagnostics.Create (Ref.As_Base_Id));
+            Name : constant Libadalang.Analysis.Name :=
+              To_Selected_Name (Ref);
+         begin
+            if Contains (Result.Text_Edits, Ref) then
+               null;  --  Do no analisys inside deleted parts
 
-               elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
-                  Remove_Pragma (Result, Name);
+            elsif not Is_Safe_To_Delete (Declaration, Name) then
+               Result.Diagnostics.Append
+                 (Diagnostics.Create (Ref.As_Base_Id));
 
-               elsif Name.Parent.Kind = Ada_Alternatives_List then
-                  Remove_Alternative (Result, Name);
+            elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
+               Remove_Pragma (Result, Name);
 
-               elsif Name.Parent.Kind = Ada_Expr_Alternatives_List then
-                  pragma Assert
-                    (not Is_Single_Item_List
-                       (Name.Parent.As_Expr_Alternatives_List));
+            elsif Name.Parent.Kind = Ada_Alternatives_List then
+               Remove_Alternative (Result, Name);
 
-                  Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+            elsif Name.Parent.Kind = Ada_Expr_Alternatives_List then
+               pragma Assert
+                 (not Is_Single_Item_List
+                    (Name.Parent.As_Expr_Alternatives_List));
 
-               elsif Name.Parent.Kind = Ada_Bin_Op then
-                  Change_Bin_Op (Result, Ref, Name);
-
-               elsif Name.Parent.Kind = Ada_Component_Clause then
-                  Remove_Component_Clause (Result, Name);
-
-               else
-                  Remove_Statement (Result, Name);
-               end if;
-            end;
-         end loop;
-
-         --  Delete all definitions
-         for Name of Definition.P_All_Parts loop
-            --  Check if we have a declaration with multiple defining names
-            if Name.P_Basic_Decl.Kind in
-                Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
-              and then not Is_Single_Item_List
-                (Name.Parent.As_Defining_Name_List)
-            then
-               --  Remove defining name from the list
                Remove_Node_And_Delimiter (Result.Text_Edits, Name);
-            elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
-               --  Remove enumeration literal from the list
-               Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
-            elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
-              and then Is_Single_Item_List
-                (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
-            then
-               --  Replace the last component declaration with `null;`
-               Replace_Node
-                 (Result.Text_Edits,
-                  Name.P_Basic_Decl,
-                  Null_Statement,
-                  Expand => True);
+
+            elsif Name.Parent.Kind = Ada_Bin_Op then
+               Change_Bin_Op (Result, Ref, Name);
+
+            elsif Name.Parent.Kind = Ada_Component_Clause then
+               Remove_Component_Clause (Result, Name);
+
             else
-               --  Remove whole declaration
-               Remove_Node
-                 (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+               Remove_Statement (Result, Name);
             end if;
-         end loop;
-      end;
+         end;
+      end loop;
    end Remove_Declaration;
 
    -----------------
