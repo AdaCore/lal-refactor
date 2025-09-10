@@ -18,6 +18,12 @@ package body LAL_Refactor.Delete_Entity is
       Result     : in out Refactoring_Edits);
    --  Remove a single declaration
 
+   procedure Remove_All_References
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits);
+   --  Remove all references to the single declaration
+
    function Find_Parent
      (Node      : Ada_Node'Class;
       Predicate : not null access
@@ -124,26 +130,17 @@ package body LAL_Refactor.Delete_Entity is
       return Refactoring_Edits
    is
       Units : constant Analysis_Unit_Array := Analysis_Units.all;
-
-      Declaration : constant Basic_Decl :=
-        Self.Definition.P_Basic_Decl;
    begin
       return Result : Refactoring_Edits do
          Remove_Declaration (Self.Definition, Units, Result);
-
-         --  For a subprogram if it doesn't override any subprogram (except
-         --  it-self?) delete every overriding subprogram:
-         if Declaration.P_Is_Subprogram
-           and then Declaration.P_Base_Subp_Declarations'Length <= 1
-         then
-            for Over of Declaration.P_Find_All_Overrides (Units) loop
-               Remove_Declaration (Over.P_Defining_Name, Units, Result);
-            end loop;
-         end if;
       end return;
    end Refactor;
 
-   procedure Remove_Declaration
+   ---------------------------
+   -- Remove_All_References --
+   ---------------------------
+
+   procedure Remove_All_References
      (Definition : Defining_Name;
       Units      : Analysis_Unit_Array;
       Result     : in out Refactoring_Edits)
@@ -430,47 +427,15 @@ package body LAL_Refactor.Delete_Entity is
            (Result.Text_Edits, Pragma_Node, Expand => True);
       end Remove_Pragma;
 
+      Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
+
       Refs  : constant Ref_Result_Array :=
         Definition.P_Find_All_References
           (Units              => Units,
            Follow_Renamings   => False,
            Imprecise_Fallback => False);
 
-      Declaration : constant Basic_Decl :=
-        Definition.P_Basic_Decl;
-
    begin
-      --  Delete all definitions
-      for Name of Definition.P_All_Parts loop
-         --  Check if we have a declaration with multiple defining names
-         if Name.P_Basic_Decl.Kind in
-           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
-           and then not Is_Single_Item_List
-             (Name.Parent.As_Defining_Name_List)
-         then
-            --  Remove defining name from the list
-            Remove_Node_And_Delimiter (Result.Text_Edits, Name);
-         elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
-            --  Remove enumeration literal from the list
-            Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
-         elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
-           and then Is_Single_Item_List
-             (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
-         then
-            --  Replace the last component declaration with `null;`
-            Replace_Node
-              (Result.Text_Edits,
-               Name.P_Basic_Decl,
-               Null_Statement,
-               Expand => True);
-         else
-            --  Remove whole declaration
-            Remove_Node
-              (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
-         end if;
-      end loop;
-
-      --  Delete all references
       for Item of Refs when Kind (Item) = Precise loop
          declare
             Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
@@ -509,6 +474,76 @@ package body LAL_Refactor.Delete_Entity is
             end if;
          end;
       end loop;
+   end Remove_All_References;
+
+   ------------------------
+   -- Remove_Declaration --
+   ------------------------
+
+   procedure Remove_Declaration
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits)
+   is
+
+      Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
+
+   begin
+      --  Delete all definition parts
+      for Name of Definition.P_All_Parts loop
+         --  Check if we have a declaration with multiple defining names
+         if Name.P_Basic_Decl.Kind in
+           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+           and then not Is_Single_Item_List
+             (Name.Parent.As_Defining_Name_List)
+         then
+            --  Remove defining name from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+         elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
+            --  Remove enumeration literal from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
+         elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
+           and then Is_Single_Item_List
+             (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
+         then
+            --  Replace the last component declaration with `null;`
+            Replace_Node
+              (Result.Text_Edits,
+               Name.P_Basic_Decl,
+               Null_Statement,
+               Expand => True);
+         else
+            --  Remove whole declaration
+            Remove_Node
+              (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+         end if;
+      end loop;
+
+      case Declaration.Kind is
+         when Ada_Single_Protected_Decl =>
+            for Item of Declaration.As_Single_Protected_Decl
+              .F_Definition.F_Public_Part.F_Decls
+            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
+            loop
+               Remove_All_References
+                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
+            end loop;
+         when others =>
+            null;
+      end case;
+
+      --  Delete all references to the Definition
+      Remove_All_References (Definition, Units, Result);
+
+      --  For a subprogram if it doesn't override any subprogram (except
+      --  it-self?) delete every overriding subprogram:
+      if Declaration.P_Is_Subprogram
+        and then Declaration.P_Base_Subp_Declarations'Length <= 1
+      then
+         for Over of Declaration.P_Find_All_Overrides (Units) loop
+            Remove_Declaration (Over.P_Defining_Name, Units, Result);
+         end loop;
+      end if;
    end Remove_Declaration;
 
    -----------------
@@ -568,6 +603,7 @@ package body LAL_Refactor.Delete_Entity is
                  not Is_Single_Item_List
                    (Declaration.Parent.As_Enum_Literal_Decl_List),
               when Ada_Component_Decl => True,
+              when Ada_Single_Protected_Decl => True,
               when others => False);
    end Is_Delete_Entity_Available;
 

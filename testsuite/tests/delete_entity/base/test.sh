@@ -37,3 +37,8 @@ cp ./main8.orig ./main.adb
 delete_entity -P default.gpr -S main.adb -L 3 -R 14
 echo "--  (main8.orig) -L 3 -R 14"
 cat ./main.adb
+
+cp ./main9.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 2 -R 14
+echo "--  (main8.orig) -L 2 -R 14"
+cat ./main.adb

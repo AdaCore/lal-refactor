@@ -1,0 +1,17 @@
+procedure Main is
+   protected To_Be_Deleted is
+      procedure Hold;
+   private
+      Ready : Boolean := False;
+   end To_Be_Deleted;
+
+   protected body To_Be_Deleted is
+      procedure Hold is
+      begin
+         Ready := False;
+      end Hold;
+   end To_Be_Deleted;
+
+begin
+   To_Be_Deleted.Hold;
+end Main;
