@@ -1,0 +1,17 @@
+procedure Main is
+   type Rec is record A, B, C : Integer; end record;
+
+   for Rec use record
+      A at 0 range 0 .. 31;
+      B at 4 range 0 .. 31;
+      C at 8 range 0 .. 31;
+   end record;
+   
+   V : Rec :=
+     (A => 1,
+      B => 2,
+      C => 3);
+
+begin
+   V.B := 1;
+end Main;

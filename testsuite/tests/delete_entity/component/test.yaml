@@ -1,0 +1,5 @@
+title: delete_component
+
+description: delete_enity tool test (component declaration)
+
+driver: shell_script
