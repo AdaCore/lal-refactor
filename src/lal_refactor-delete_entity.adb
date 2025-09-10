@@ -516,6 +516,15 @@ package body LAL_Refactor.Delete_Entity is
             --  Remove whole declaration
             Remove_Node
               (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+
+            --  Delete file if required. Name is top level and compilation
+            --  unit isn't enclosed with Compilation_Unit_List
+            if Name.P_Top_Level_Decl (Name.Unit) = Name.P_Basic_Decl
+              and then Name.P_Enclosing_Compilation_Unit.Parent.Is_Null
+            then
+               Result.File_Deletions.Insert
+                 (To_Unbounded_String (Name.Unit.Get_Filename));
+            end if;
          end if;
       end loop;
 
