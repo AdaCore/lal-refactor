@@ -94,6 +94,12 @@ package LAL_Refactor is
          return Boolean;
    --  Returns True if `Edits` already contains `Edit` for `File_Name`
 
+   function Contains
+     (Edits : LAL_Refactor.Text_Edit_Map;
+      Node  : Ada_Node'Class)
+         return Boolean;
+   --  Returns True if some edit from Edits encloses Node's location
+
    procedure Safe_Insert
      (Edits     : in out Text_Edit_Map;
       File_Name : File_Name_Type;

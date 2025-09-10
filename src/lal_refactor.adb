@@ -55,6 +55,54 @@ package body LAL_Refactor is
          return Boolean
    is (Edits.Contains (File_Name) and then Edits (File_Name).Contains (Edit));
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Edits : LAL_Refactor.Text_Edit_Map;
+      Node  : Ada_Node'Class)
+         return Boolean
+   is
+      function Found (Cursor : Text_Edit_Ordered_Sets.Cursor) return Boolean is
+        (Text_Edit_Ordered_Sets.Has_Element (Cursor)
+          and then Compare
+           (Text_Edit_Ordered_Sets.Element (Cursor).Location,
+            Start_Sloc (Node.Sloc_Range)) = Inside
+          and then Compare
+           (Text_Edit_Ordered_Sets.Element (Cursor).Location,
+            End_Sloc (Node.Sloc_Range)) = Inside);
+      --  If both start/end Sloc are inside Cursor.Location
+
+      File_Name : constant LAL_Refactor.File_Name_Type :=
+        Node.Unit.Get_Filename;
+
+      Key       : constant Text_Edit :=
+        (Make_Range
+           (Start_Sloc (Node.Sloc_Range),
+            Start_Sloc (Node.Sloc_Range)),
+         Null_Unbounded_String);
+
+      Cursor : Text_Edit_Ordered_Sets.Cursor;
+   begin
+      if Edits.Contains (File_Name) then
+         Cursor := Edits (File_Name).Floor (Key);  --  Last edit before Key
+
+         if Found (Cursor) then
+            return True;
+         end if;
+
+         Text_Edit_Ordered_Sets.Next (Cursor);
+         --  Next edit could start at node's start sloc, let's check it also
+
+         if Found (Cursor) then
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end Contains;
+
    -----------
    -- Image --
    -----------
