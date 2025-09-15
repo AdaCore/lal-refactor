@@ -12,6 +12,18 @@ package body LAL_Refactor.Delete_Entity is
 
    use all type Libadalang.Common.Ada_Node_Kind_Type;
 
+   procedure Remove_Declaration
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits);
+   --  Remove a single declaration
+
+   procedure Remove_All_References
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits);
+   --  Remove all references to the single declaration
+
    function Find_Parent
      (Node      : Ada_Node'Class;
       Predicate : not null access
@@ -38,6 +50,9 @@ package body LAL_Refactor.Delete_Entity is
      (List : Case_Expr_Alternative_List) return Boolean is
        (not List.Case_Expr_Alternative_List_Has_Element (2));
 
+   function Is_Single_Item_List (List : Expr_List'Class) return Boolean is
+       (not List.Expr_List_Has_Element (2));
+
    function Is_Single_Item_List
      (List : Basic_Assoc_List'Class) return Boolean is
        (not List.Basic_Assoc_List_Has_Element (2));
@@ -55,11 +70,21 @@ package body LAL_Refactor.Delete_Entity is
    --  Check if Arg is an argument to a procedure call with a single out/in-out
    --  parameter.
 
+   function Is_Function (Declaration : Basic_Decl) return Boolean is
+     (case Declaration.Kind is
+      when Ada_Subp_Decl =>
+             Declaration.As_Classic_Subp_Decl.F_Subp_Spec.F_Subp_Kind
+               in Ada_Subp_Kind_Function,
+      when Libadalang.Common.Ada_Base_Subp_Body =>
+             Declaration.As_Base_Subp_Body.F_Subp_Spec.F_Subp_Kind
+               in Ada_Subp_Kind_Function,
+      when Ada_Generic_Subp_Instantiation =>
+             Declaration.As_Generic_Subp_Instantiation.F_Kind
+               in Ada_Subp_Kind_Function,
+      when others => False);
+
    function To_Selected_Name (Ref : Base_Id'Class) return Name;
    --  Return selected_name for given identifier, like A.B.C for C
-
-   function All_Parts (Node : Defining_Name) return Basic_Decl_Array is
-     [for Name of Node.P_All_Parts => Name.P_Basic_Decl];
 
    function Find_Next_Decl (Id : Name'Class) return Ada_Node is
      (Id.P_Referenced_Decl.Next_Sibling);
@@ -103,6 +128,22 @@ package body LAL_Refactor.Delete_Entity is
      (Self           : Entity_Remover;
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
+   is
+      Units : constant Analysis_Unit_Array := Analysis_Units.all;
+   begin
+      return Result : Refactoring_Edits do
+         Remove_Declaration (Self.Definition, Units, Result);
+      end return;
+   end Refactor;
+
+   ---------------------------
+   -- Remove_All_References --
+   ---------------------------
+
+   procedure Remove_All_References
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits)
    is
       use all type Libadalang.Common.Ref_Result_Kind;
 
@@ -150,14 +191,6 @@ package body LAL_Refactor.Delete_Entity is
          Ref    : Name);
       --  Replace `To_Be_Deleted .. XXX` or `XXX .. To_Be_Deleted` range by
       --  substituting `To_Be_Deleted` with next/prev enumeration literal.
-
-      function Is_Inside_Parts
-        (Ref   : Base_Id'Class;
-         Parts : Basic_Decl_Array) return Boolean is
-        (for some Parent of Ref.Parents =>
-           (for some Part of Parts =>
-                 Part = Parent));
-      --  Check if Ref is located inside one of Parts.
 
       function Is_Statement (Node : Ada_Node'Class) return Boolean is
         (not Node.Is_Null and then Node.Kind in Libadalang.Common.Ada_Stmt);
@@ -394,83 +427,145 @@ package body LAL_Refactor.Delete_Entity is
            (Result.Text_Edits, Pragma_Node, Expand => True);
       end Remove_Pragma;
 
-      Parts : constant Basic_Decl_Array := All_Parts (Self.Definition);
+      Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
       Refs  : constant Ref_Result_Array :=
-        Self.Definition.P_Find_All_References
-          (Units              => Analysis_Units.all,
+        Definition.P_Find_All_References
+          (Units              => Units,
            Follow_Renamings   => False,
            Imprecise_Fallback => False);
 
-      Declaration : constant Basic_Decl :=
-        Self.Definition.P_Basic_Decl;
+   begin
+      for Item of Refs when Kind (Item) = Precise loop
+         declare
+            Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+
+            Name : constant Libadalang.Analysis.Name :=
+              To_Selected_Name (Ref);
+         begin
+            if Contains (Result.Text_Edits, Ref) then
+               null;  --  Do no analisys inside deleted parts
+
+            elsif not Is_Safe_To_Delete (Declaration, Name) then
+               Result.Diagnostics.Append
+                 (Diagnostics.Create (Ref.As_Base_Id));
+
+            elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
+               Remove_Pragma (Result, Name);
+
+            elsif Name.Parent.Kind = Ada_Alternatives_List then
+               Remove_Alternative (Result, Name);
+
+            elsif Name.Parent.Kind = Ada_Expr_Alternatives_List then
+               pragma Assert
+                 (not Is_Single_Item_List
+                    (Name.Parent.As_Expr_Alternatives_List));
+
+               Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+
+            elsif Name.Parent.Kind = Ada_Bin_Op then
+               Change_Bin_Op (Result, Ref, Name);
+
+            elsif Name.Parent.Kind = Ada_Component_Clause then
+               Remove_Component_Clause (Result, Name);
+
+            else
+               Remove_Statement (Result, Name);
+            end if;
+         end;
+      end loop;
+   end Remove_All_References;
+
+   ------------------------
+   -- Remove_Declaration --
+   ------------------------
+
+   procedure Remove_Declaration
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits)
+   is
+
+      Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
    begin
-      return Result : Refactoring_Edits do
-         --  Delete all references
-         for Item of Refs when Kind (Item) = Precise loop
-            declare
-               Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+      --  Delete all definition parts
+      for Name of Definition.P_All_Parts loop
+         --  Check if we have a declaration with multiple defining names
+         if Name.P_Basic_Decl.Kind in
+           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+           and then not Is_Single_Item_List
+             (Name.Parent.As_Defining_Name_List)
+         then
+            --  Remove defining name from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name);
+         elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
+            --  Remove enumeration literal from the list
+            Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
+         elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
+           and then Is_Single_Item_List
+             (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
+         then
+            --  Replace the last component declaration with `null;`
+            Replace_Node
+              (Result.Text_Edits,
+               Name.P_Basic_Decl,
+               Null_Statement,
+               Expand => True);
+         else
+            --  Remove whole declaration
+            Remove_Node
+              (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
 
-               Name : constant Libadalang.Analysis.Name :=
-                 To_Selected_Name (Ref);
-            begin
-               if Is_Inside_Parts (Ref, Parts) then
-                  null;  --  Do no analisys inside declaration parts
-
-               elsif not Is_Safe_To_Delete (Declaration, Name) then
-                  Result.Diagnostics.Append
-                    (Diagnostics.Create (Ref.As_Base_Id));
-
-               elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
-                  Remove_Pragma (Result, Name);
-
-               elsif Name.Parent.Kind = Ada_Alternatives_List then
-                  Remove_Alternative (Result, Name);
-
-               elsif Name.Parent.Kind = Ada_Bin_Op then
-                  Change_Bin_Op (Result, Ref, Name);
-
-               elsif Name.Parent.Kind = Ada_Component_Clause then
-                  Remove_Component_Clause (Result, Name);
-
-               else
-                  Remove_Statement (Result, Name);
-               end if;
-            end;
-         end loop;
-
-         --  Delete all definitions
-         for Name of Self.Definition.P_All_Parts loop
-            --  Check if we have a declaration with multiple defining names
-            if Name.P_Basic_Decl.Kind in
-                Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
-              and then not Is_Single_Item_List
-                (Name.Parent.As_Defining_Name_List)
+            --  Delete file if required. Name is top level and compilation
+            --  unit isn't enclosed with Compilation_Unit_List
+            if Name.P_Top_Level_Decl (Name.Unit) = Name.P_Basic_Decl
+              and then Name.P_Enclosing_Compilation_Unit.Parent.Is_Null
             then
-               --  Remove defining name from the list
-               Remove_Node_And_Delimiter (Result.Text_Edits, Name);
-            elsif Name.P_Basic_Decl.Kind in Ada_Enum_Literal_Decl then
-               --  Remove enumeration literal from the list
-               Remove_Node_And_Delimiter (Result.Text_Edits, Name.Parent);
-            elsif Name.P_Basic_Decl.Kind in Ada_Component_Decl
-              and then Is_Single_Item_List
-                (Name.P_Basic_Decl.Parent.As_Ada_Node_List)
-            then
-               --  Replace the last component declaration with `null;`
-               Replace_Node
-                 (Result.Text_Edits,
-                  Name.P_Basic_Decl,
-                  Null_Statement,
-                  Expand => True);
-            else
-               --  Remove whole declaration
-               Remove_Node
-                 (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+               Result.File_Deletions.Insert
+                 (To_Unbounded_String (Name.Unit.Get_Filename));
             end if;
+         end if;
+      end loop;
+
+      --  Delete references to nested defining names
+      case Declaration.Kind is
+
+         when Ada_Single_Protected_Decl =>
+            for Item of Declaration.As_Single_Protected_Decl
+              .F_Definition.F_Public_Part.F_Decls
+            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
+            loop
+               Remove_All_References
+                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
+            end loop;
+
+         when Ada_Single_Task_Decl =>
+            for Item of Declaration.As_Single_Task_Decl.F_Task_Type
+              .F_Definition.F_Public_Part.F_Decls
+            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
+            loop
+               Remove_All_References
+                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
+            end loop;
+
+         when others =>
+            null;
+      end case;
+
+      --  Delete all references to the Definition
+      Remove_All_References (Definition, Units, Result);
+
+      --  For a subprogram if it doesn't override any subprogram (except
+      --  it-self?) delete every overriding subprogram:
+      if Declaration.P_Is_Subprogram
+        and then Declaration.P_Base_Subp_Declarations'Length <= 1
+      then
+         for Over of Declaration.P_Find_All_Overrides (Units) loop
+            Remove_Declaration (Over.P_Defining_Name, Units, Result);
          end loop;
-      end return;
-   end Refactor;
+      end if;
+   end Remove_Declaration;
 
    -----------------
    -- Find_Parent --
@@ -519,20 +614,18 @@ package body LAL_Refactor.Delete_Entity is
       return not Declaration.Is_Null
         and then
           (case Declaration.Kind is
-              when Ada_Subp_Decl =>
-                Declaration.As_Classic_Subp_Decl.F_Subp_Spec.F_Subp_Kind
-                  in Ada_Subp_Kind_Procedure,
-              when Ada_Subp_Body | Ada_Subp_Renaming_Decl =>
-                Declaration.As_Base_Subp_Body.F_Subp_Spec.F_Subp_Kind
-                  in Ada_Subp_Kind_Procedure,
+              when Ada_Subp_Decl => True,
+              when Libadalang.Common.Ada_Base_Subp_Body => True,
+              when Ada_Generic_Subp_Instantiation => True,
               when Ada_Entry_Decl => True,
-              when Ada_Null_Subp_Decl => True,
               when Ada_Exception_Decl => True,
               when Ada_Object_Decl => True,
               when Ada_Enum_Literal_Decl =>
                  not Is_Single_Item_List
                    (Declaration.Parent.As_Enum_Literal_Decl_List),
               when Ada_Component_Decl => True,
+              when Ada_Single_Protected_Decl => True,
+              when Ada_Single_Task_Decl => True,
               when others => False);
    end Is_Delete_Entity_Available;
 
@@ -569,17 +662,48 @@ package body LAL_Refactor.Delete_Entity is
             when others =>
                null;
          end case;
+      elsif Reference.Parent.Kind = Ada_Expr_Alternatives_List
+        and then Is_Single_Item_List
+          (Reference.Parent.As_Expr_Alternatives_List)
+      then
+         return False;
       end if;
 
       case Declaration.Kind is
 
          when Ada_Entry_Decl
             | Ada_Subp_Decl
-            | Ada_Subp_Body
-            | Ada_Subp_Renaming_Decl
-            | Ada_Null_Subp_Decl =>
+            | Libadalang.Common.Ada_Base_Subp_Body
+            | Ada_Generic_Subp_Instantiation =>
+
             --  It's safe to delete procedure/entry calls
-            return Reference.P_Is_Call;
+            if Reference.P_Is_Call and not Is_Function (Declaration) then
+               return True;
+            end if;
+
+         when others =>
+            null;
+      end case;
+
+      case Declaration.Kind is
+
+         when Ada_Entry_Decl
+            | Ada_Subp_Decl
+            | Libadalang.Common.Ada_Base_Subp_Body
+            | Ada_Generic_Subp_Instantiation =>
+
+            --  It's safe to delete a call to function that is part of
+            --  Alternatives_List
+            if Reference.P_Is_Call and Is_Function (Declaration) then
+               declare
+                  Parent : constant Ada_Node := Reference.Parent;
+               begin
+                  return Parent.Kind in
+                    Ada_Alternatives_List | Ada_Expr_Alternatives_List;
+               end;
+            else
+               return False;
+            end if;
 
          when Ada_Exception_Decl =>
             --  It's safe to delete corresponding handlers
@@ -597,7 +721,8 @@ package body LAL_Refactor.Delete_Entity is
                  (Parent.Kind = Ada_Assign_Stmt
                     and then Parent.As_Assign_Stmt.F_Dest = Reference)
                  or else Is_Single_Result_Procedure_Call (Reference)
-                 or else Parent.Kind = Ada_Alternatives_List
+                 or else Parent.Kind in
+                   Ada_Alternatives_List | Ada_Expr_Alternatives_List
                  or else Parent.Kind = Ada_Component_Clause;
             end;
 

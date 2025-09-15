@@ -1,0 +1,15 @@
+procedure Main is
+   task To_Be_Deleted is
+      entry Wait;
+   end To_Be_Deleted;
+
+   task body To_Be_Deleted is
+   begin
+      loop
+         accept Wait;
+      end loop;
+   end To_Be_Deleted;
+
+begin
+   To_Be_Deleted.Wait;
+end Main;

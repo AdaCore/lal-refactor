@@ -1,0 +1,5 @@
+title: delete_inherited
+
+description: delete_enity tool test (on inherited decleration)
+
+driver: shell_script

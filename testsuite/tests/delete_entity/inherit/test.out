@@ -1,0 +1,61 @@
+--  (main.orig) -L 4 -R 17
+procedure Main is
+   package Root_Pkg is
+      type Root is tagged null record;
+
+   end Root_Pkg;
+
+   package Child_Pkg is
+      type Child is new Root_Pkg.Root with null record;
+
+   end Child_Pkg;
+
+   package body Child_Pkg is
+
+   end Child_Pkg;
+
+   package Grand_Child_Pkg is
+      type Child is new Child_Pkg.Child with null record;
+
+   end Grand_Child_Pkg;
+
+   package body Grand_Child_Pkg is
+
+   end Grand_Child_Pkg;
+
+   Object : Grand_Child_Pkg.Child;
+begin
+   null;
+end Main;
+--  (main.orig) -L 9 -R 28
+procedure Main is
+   package Root_Pkg is
+      type Root is tagged null record;
+      procedure To_Be_Deleted (Self : Root) is null;
+   end Root_Pkg;
+
+   package Child_Pkg is
+      type Child is new Root_Pkg.Root with null record;
+
+   end Child_Pkg;
+
+   package body Child_Pkg is
+
+   end Child_Pkg;
+
+   package Grand_Child_Pkg is
+      type Child is new Child_Pkg.Child with null record;
+      overriding procedure To_Be_Deleted (Self : Child);
+   end Grand_Child_Pkg;
+
+   package body Grand_Child_Pkg is
+      overriding procedure To_Be_Deleted (Self : Child) is
+      begin
+         return;
+      end To_Be_Deleted;
+   end Grand_Child_Pkg;
+
+   Object : Grand_Child_Pkg.Child;
+begin
+   Object.To_Be_Deleted;
+end Main;
