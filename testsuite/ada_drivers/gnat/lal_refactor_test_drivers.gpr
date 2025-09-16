@@ -28,7 +28,8 @@ project LAL_Refactor_Test_Drivers is
       "safe_rename.adb",
       "sort_case.adb",
       "sort_dependencies.adb",
-      "suppress_separate.adb");
+      "suppress_separate.adb",
+      "swap_if_not.adb");
 
    for Main use Tools_Mains;
 

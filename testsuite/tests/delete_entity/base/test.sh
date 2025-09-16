@@ -28,3 +28,22 @@ delete_entity -P default.gpr -S main.adb -L 2 -R 14
 echo "--  (main6.orig) -L 2 -R 14"
 cat ./main.adb
 
+cp ./main7.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 8 -R 14
+echo "--  (main7.orig) -L 8 -R 14"
+cat ./main.adb
+
+cp ./main8.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 3 -R 14
+echo "--  (main8.orig) -L 3 -R 14"
+cat ./main.adb
+
+cp ./main9.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 2 -R 14
+echo "--  (main9.orig) -L 2 -R 14"
+cat ./main.adb
+
+cp ./main_10.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 2 -R 14
+echo "--  (main_10.orig) -L 2 -R 14"
+cat ./main.adb

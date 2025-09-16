@@ -65,3 +65,39 @@ procedure Main is
 begin
    null;
 end Main;
+--  (main7.orig) -L 8 -R 14
+procedure Main is
+
+   generic
+   procedure Gen;
+
+   procedure Gen is null;
+
+
+begin
+   null;
+end Main;
+--  (main8.orig) -L 3 -R 14
+procedure Main is
+
+
+   X : Integer := 0;
+begin
+   if X in 1 | 2 then
+      null;
+   end if;
+end Main;
+--  (main9.orig) -L 2 -R 14
+procedure Main is
+
+
+begin
+   null;
+end Main;
+--  (main_10.orig) -L 2 -R 14
+procedure Main is
+
+
+begin
+   null;
+end Main;

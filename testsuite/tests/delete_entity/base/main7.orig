@@ -1,0 +1,11 @@
+procedure Main is
+
+   generic
+   procedure Gen;
+
+   procedure Gen is null;
+
+   procedure To_Be_Deleted is new Gen;
+begin
+   To_Be_Deleted;
+end Main;
