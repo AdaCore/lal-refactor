@@ -12,11 +12,21 @@ package body LAL_Refactor.Delete_Entity is
 
    use all type Libadalang.Common.Ada_Node_Kind_Type;
 
+   package Node_Sets renames Laltools.Common.Node_Sets;
+
+   procedure Fill_Diagnostics
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits;
+      Filter     : in out Node_Sets.Set);
+   --  Fill out the diagnostic for all remaining references to defining names
+   --  related to the definition. Use filter to skip already processed names.
+
    procedure Remove_Declaration
      (Definition : Defining_Name;
       Units      : Analysis_Unit_Array;
       Result     : in out Refactoring_Edits);
-   --  Remove a single declaration
+   --  Remove a single declaration.
 
    procedure Remove_All_References
      (Definition : Defining_Name;
@@ -129,10 +139,12 @@ package body LAL_Refactor.Delete_Entity is
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
    is
-      Units : constant Analysis_Unit_Array := Analysis_Units.all;
+      Units  : constant Analysis_Unit_Array := Analysis_Units.all;
+      Filter : Node_Sets.Set;
    begin
       return Result : Refactoring_Edits do
          Remove_Declaration (Self.Definition, Units, Result);
+         Fill_Diagnostics (Self.Definition, Units, Result, Filter);
       end return;
    end Refactor;
 
@@ -429,7 +441,7 @@ package body LAL_Refactor.Delete_Entity is
 
       Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
-      Refs  : constant Ref_Result_Array :=
+      Refs : constant Ref_Result_Array :=
         Definition.P_Find_All_References
           (Units              => Units,
            Follow_Renamings   => False,
@@ -447,8 +459,7 @@ package body LAL_Refactor.Delete_Entity is
                null;  --  Do no analisys inside deleted parts
 
             elsif not Is_Safe_To_Delete (Declaration, Name) then
-               Result.Diagnostics.Append
-                 (Diagnostics.Create (Ref.As_Base_Id));
+               null;  --  Do nothing, fill Diagnostics latter
 
             elsif Name.Parent.Kind = Ada_Pragma_Argument_Assoc then
                Remove_Pragma (Result, Name);
@@ -485,6 +496,23 @@ package body LAL_Refactor.Delete_Entity is
       Units      : Analysis_Unit_Array;
       Result     : in out Refactoring_Edits)
    is
+
+      function Each_Child
+        (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status;
+
+      ----------------
+      -- Each_Child --
+      ----------------
+
+      function Each_Child
+        (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status is
+      begin
+         if Node.Kind = Ada_Defining_Name then
+            Remove_All_References (Node.As_Defining_Name, Units, Result);
+         end if;
+
+         return Libadalang.Common.Into;
+      end Each_Child;
 
       Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
@@ -528,34 +556,6 @@ package body LAL_Refactor.Delete_Entity is
          end if;
       end loop;
 
-      --  Delete references to nested defining names
-      case Declaration.Kind is
-
-         when Ada_Single_Protected_Decl =>
-            for Item of Declaration.As_Single_Protected_Decl
-              .F_Definition.F_Public_Part.F_Decls
-            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
-            loop
-               Remove_All_References
-                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
-            end loop;
-
-         when Ada_Single_Task_Decl =>
-            for Item of Declaration.As_Single_Task_Decl.F_Task_Type
-              .F_Definition.F_Public_Part.F_Decls
-            when Item.Kind in Libadalang.Common.Ada_Basic_Decl
-            loop
-               Remove_All_References
-                 (Item.As_Basic_Decl.P_Defining_Name, Units, Result);
-            end loop;
-
-         when others =>
-            null;
-      end case;
-
-      --  Delete all references to the Definition
-      Remove_All_References (Definition, Units, Result);
-
       --  For a subprogram if it doesn't override any subprogram (except
       --  it-self?) delete every overriding subprogram:
       if Declaration.P_Is_Subprogram
@@ -565,7 +565,117 @@ package body LAL_Refactor.Delete_Entity is
             Remove_Declaration (Over.P_Defining_Name, Units, Result);
          end loop;
       end if;
+
+      --  Delete references to nested defining names or just name itself
+      for Name of Definition.P_All_Parts loop
+         --  Check if we have a declaration with multiple defining names
+         if Name.P_Basic_Decl.Kind in
+           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+           and then not Is_Single_Item_List
+             (Name.Parent.As_Defining_Name_List)
+         then
+            --  Delete all references to the Definition
+            Remove_All_References (Name, Units, Result);
+         else
+            --  Delete references to nested defining names
+            Traverse (Name.P_Basic_Decl, Each_Child'Access);
+         end if;
+      end loop;
    end Remove_Declaration;
+
+   ----------------------
+   -- Fill_Diagnostics --
+   ----------------------
+
+   procedure Fill_Diagnostics
+     (Definition : Defining_Name;
+      Units      : Analysis_Unit_Array;
+      Result     : in out Refactoring_Edits;
+      Filter     : in out Node_Sets.Set)
+   is
+      function Each_Child
+        (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status;
+
+      procedure Find_References (Name : Defining_Name);
+
+      ----------------
+      -- Each_Child --
+      ----------------
+
+      function Each_Child
+        (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status is
+      begin
+         if Node.Kind = Ada_Defining_Name then
+            Find_References (Node.As_Defining_Name);
+         end if;
+
+         return Libadalang.Common.Into;
+      end Each_Child;
+
+      ---------------------
+      -- Find_References --
+      ---------------------
+
+      procedure Find_References (Name : Defining_Name) is
+         use all type Libadalang.Common.Ref_Result_Kind;
+
+         Refs : constant Ref_Result_Array :=
+           Name.P_Find_All_References
+             (Units              => Units,
+              Follow_Renamings   => False,
+              Imprecise_Fallback => False);
+
+      begin
+         for Item of Refs when Kind (Item) = Precise loop
+            declare
+               Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+
+            begin
+               if Contains (Result.Text_Edits, Ref) then
+                  null;  --  Do no analisys inside deleted parts
+
+               elsif Filter.Contains (Ref.As_Ada_Node) then
+                  null;  --  Do nothing on already processed refs
+
+               else
+                  --  Fill Diagnostics (only once)
+                  Filter.Insert (Ref.As_Ada_Node);
+
+                  Result.Diagnostics.Append
+                    (Diagnostics.Create (Ref.As_Base_Id));
+               end if;
+            end;
+         end loop;
+      end Find_References;
+
+      Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
+
+   begin
+      --  For a subprogram if it doesn't override any subprogram (except
+      --  it-self?) delete every overriding subprogram:
+      if Declaration.P_Is_Subprogram
+        and then Declaration.P_Base_Subp_Declarations'Length <= 1
+      then
+         for Over of Declaration.P_Find_All_Overrides (Units) loop
+            Fill_Diagnostics (Over.P_Defining_Name, Units, Result, Filter);
+         end loop;
+      end if;
+
+      --  Delete references to nested defining names or just name itself
+      for Name of Definition.P_All_Parts loop
+         --  Check if we have a declaration with multiple defining names
+         if Name.P_Basic_Decl.Kind
+            in Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+           and then not Is_Single_Item_List (Name.Parent.As_Defining_Name_List)
+         then
+            --  Delete all references to the Definition
+            Find_References (Name);
+         else
+            --  Delete references to nested defining names
+            Traverse (Name.P_Basic_Decl, Each_Child'Access);
+         end if;
+      end loop;
+   end Fill_Diagnostics;
 
    -----------------
    -- Find_Parent --
@@ -614,19 +724,17 @@ package body LAL_Refactor.Delete_Entity is
       return not Declaration.Is_Null
         and then
           (case Declaration.Kind is
-              when Ada_Subp_Decl => True,
-              when Libadalang.Common.Ada_Base_Subp_Body => True,
-              when Ada_Generic_Subp_Instantiation => True,
-              when Ada_Entry_Decl => True,
-              when Ada_Exception_Decl => True,
-              when Ada_Object_Decl => True,
+              when Ada_Discriminant_Spec => False,
+              when Ada_Entry_Index_Spec => False,
+              when Ada_Exception_Handler => False,
+              when Ada_Extended_Return_Stmt_Object_Decl => False,
+              when Ada_For_Loop_Var_Decl => False,
+              when Ada_Param_Spec => False,
+              when Libadalang.Common.Ada_Generic_Formal => False,
               when Ada_Enum_Literal_Decl =>
                  not Is_Single_Item_List
                    (Declaration.Parent.As_Enum_Literal_Decl_List),
-              when Ada_Component_Decl => True,
-              when Ada_Single_Protected_Decl => True,
-              when Ada_Single_Task_Decl => True,
-              when others => False);
+              when others => True);
    end Is_Delete_Entity_Available;
 
    -----------------------

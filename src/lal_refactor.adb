@@ -64,6 +64,10 @@ package body LAL_Refactor is
       Node  : Ada_Node'Class)
          return Boolean
    is
+      function Inclusive_End_Sloc
+         (Sloc : Source_Location_Range) return Source_Location
+           is ((Line => Sloc.End_Line, Column => Sloc.End_Column - 1));
+
       function Found (Cursor : Text_Edit_Ordered_Sets.Cursor) return Boolean is
         (Text_Edit_Ordered_Sets.Has_Element (Cursor)
           and then Compare
@@ -71,7 +75,7 @@ package body LAL_Refactor is
             Start_Sloc (Node.Sloc_Range)) = Inside
           and then Compare
            (Text_Edit_Ordered_Sets.Element (Cursor).Location,
-            End_Sloc (Node.Sloc_Range)) = Inside);
+            Inclusive_End_Sloc (Node.Sloc_Range)) = Inside);
       --  If both start/end Sloc are inside Cursor.Location
 
       File_Name : constant LAL_Refactor.File_Name_Type :=

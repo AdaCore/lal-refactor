@@ -1,0 +1,13 @@
+procedure Main is
+   package To_Be_Deleted is
+      type Rec (V : Boolean) is record
+         X : Integer;
+      end record;
+
+      procedure Proc (Input : Rec) is null;
+
+      Object : Rec (True);
+   end To_Be_Deleted;
+begin
+   To_Be_Deleted.Proc (To_Be_Deleted.Object);
+end Main;
