@@ -601,6 +601,9 @@ package body LAL_Refactor.Delete_Entity is
          elsif Declaration.Kind = Ada_Named_Stmt_Decl then
             Remove_Named_Stmt_Decl (Result, Declaration.As_Named_Stmt_Decl);
 
+         elsif Declaration.Kind = Ada_Label_Decl then
+            Remove_Node (Result.Text_Edits, Declaration.Parent, True);
+
          else
             --  Remove whole declaration
             Remove_Node (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
@@ -905,6 +908,9 @@ package body LAL_Refactor.Delete_Entity is
             end;
 
          when Ada_Named_Stmt_Decl =>
+            return True;
+
+         when Ada_Label_Decl =>
             return True;
 
          when others =>

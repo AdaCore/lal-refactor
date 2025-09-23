@@ -148,3 +148,10 @@ begin
       null;
    end loop ;
 end Main;
+--  (main_15.orig) -L 3 -R 6
+procedure Main is
+begin
+
+   null;
+
+end Main;

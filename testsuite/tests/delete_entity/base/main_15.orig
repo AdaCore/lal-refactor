@@ -1,0 +1,6 @@
+procedure Main is
+begin
+   <<To_Be_Deleted>>
+   null;
+   goto To_Be_Deleted;
+end Main;
