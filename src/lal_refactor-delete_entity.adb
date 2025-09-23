@@ -14,6 +14,16 @@ package body LAL_Refactor.Delete_Entity is
 
    package Node_Sets renames Laltools.Common.Node_Sets;
 
+   subtype Multiname_Decl is Libadalang.Common.Ada_Node_Kind_Type
+   with
+     Static_Predicate =>
+       Multiname_Decl
+       in Ada_Exception_Decl
+        | Ada_Object_Decl
+        | Ada_Component_Decl
+        | Ada_Number_Decl
+        | Ada_Discriminant_Spec;
+
    procedure Fill_Diagnostics
      (Definition : Defining_Name;
       Units      : Analysis_Unit_Array;
@@ -48,6 +58,9 @@ package body LAL_Refactor.Delete_Entity is
 
    function Is_Single_Item_List (List : Ada_Node_List'Class) return Boolean is
      (not List.Ada_Node_List_Has_Element (2));
+
+   function Is_Single_Item_List (List : Discriminant_Spec_List) return Boolean
+     is (not List.Discriminant_Spec_List_Has_Element (2));
 
    function Is_Single_Item_List (List : Defining_Name_List) return Boolean is
      (not List.Defining_Name_List_Has_Element (2));
@@ -497,6 +510,10 @@ package body LAL_Refactor.Delete_Entity is
       Result     : in out Refactoring_Edits)
    is
 
+      procedure Remove_Discriminant_Spec
+        (Result : in out Refactoring_Edits;
+         Spec   : Discriminant_Spec);
+
       function Each_Child
         (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status;
 
@@ -514,16 +531,36 @@ package body LAL_Refactor.Delete_Entity is
          return Libadalang.Common.Into;
       end Each_Child;
 
+      ------------------------------
+      -- Remove_Discriminant_Spec --
+      ------------------------------
+
+      procedure Remove_Discriminant_Spec
+        (Result : in out Refactoring_Edits;
+         Spec   : Discriminant_Spec)
+      is
+         List : constant Discriminant_Spec_List :=
+           Spec.Parent.As_Discriminant_Spec_List;
+      begin
+         if Is_Single_Item_List (List) then
+            --  Remove whole discriminant part
+            Remove_Node
+              (Result.Text_Edits,
+               List.Parent,
+               Expand => True);
+         else
+            Remove_Node_And_Delimiter (Result.Text_Edits, Spec);
+         end if;
+      end Remove_Discriminant_Spec;
+
       Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
    begin
       --  Delete all definition parts
       for Name of Definition.P_All_Parts loop
          --  Check if we have a declaration with multiple defining names
-         if Name.P_Basic_Decl.Kind in
-           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
-           and then not Is_Single_Item_List
-             (Name.Parent.As_Defining_Name_List)
+         if Name.P_Basic_Decl.Kind in Multiname_Decl
+           and then not Is_Single_Item_List (Name.Parent.As_Defining_Name_List)
          then
             --  Remove defining name from the list
             Remove_Node_And_Delimiter (Result.Text_Edits, Name);
@@ -540,10 +577,12 @@ package body LAL_Refactor.Delete_Entity is
                Name.P_Basic_Decl,
                Null_Statement,
                Expand => True);
+         elsif Name.P_Basic_Decl.Kind in Ada_Discriminant_Spec then
+            Remove_Discriminant_Spec
+              (Result, Name.P_Basic_Decl.As_Discriminant_Spec);
          else
             --  Remove whole declaration
-            Remove_Node
-              (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
+            Remove_Node (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
 
             --  Delete file if required. Name is top level and compilation
             --  unit isn't enclosed with Compilation_Unit_List
@@ -569,10 +608,8 @@ package body LAL_Refactor.Delete_Entity is
       --  Delete references to nested defining names or just name itself
       for Name of Definition.P_All_Parts loop
          --  Check if we have a declaration with multiple defining names
-         if Name.P_Basic_Decl.Kind in
-           Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
-           and then not Is_Single_Item_List
-             (Name.Parent.As_Defining_Name_List)
+         if Name.P_Basic_Decl.Kind in Multiname_Decl
+           and then not Is_Single_Item_List (Name.Parent.As_Defining_Name_List)
          then
             --  Delete all references to the Definition
             Remove_All_References (Name, Units, Result);
@@ -664,8 +701,7 @@ package body LAL_Refactor.Delete_Entity is
       --  Delete references to nested defining names or just name itself
       for Name of Definition.P_All_Parts loop
          --  Check if we have a declaration with multiple defining names
-         if Name.P_Basic_Decl.Kind
-            in Ada_Exception_Decl | Ada_Object_Decl | Ada_Component_Decl
+         if Name.P_Basic_Decl.Kind in Multiname_Decl
            and then not Is_Single_Item_List (Name.Parent.As_Defining_Name_List)
          then
             --  Delete all references to the Definition
@@ -724,7 +760,6 @@ package body LAL_Refactor.Delete_Entity is
       return not Declaration.Is_Null
         and then
           (case Declaration.Kind is
-              when Ada_Discriminant_Spec => False,
               when Ada_Entry_Index_Spec => False,
               when Ada_Exception_Handler => False,
               when Ada_Extended_Return_Stmt_Object_Decl => False,

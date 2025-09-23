@@ -47,3 +47,23 @@ cp ./main_10.orig ./main.adb
 delete_entity -P default.gpr -S main.adb -L 2 -R 14
 echo "--  (main_10.orig) -L 2 -R 14"
 cat ./main.adb
+
+cp ./main_11.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 2 -R 4
+echo "--  (main_11.orig) -L 2 -R 4"
+cat ./main.adb
+
+cp ./main_11.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 4 -R 7
+echo "--  (main_11.orig) -L 4 -R 7"
+cat ./main.adb
+
+cp ./main_12.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 4 -R 13
+echo "--  (main_12.orig) -L 4 -R 13"
+cat ./main.adb
+
+cp ./main_13.orig ./main.adb
+delete_entity -P default.gpr -S main.adb -L 3 -R 17
+echo "--  (main_13.orig) -L 3 -R 17"
+cat ./main.adb

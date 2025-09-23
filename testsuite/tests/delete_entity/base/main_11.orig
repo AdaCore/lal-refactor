@@ -1,0 +1,8 @@
+procedure Main is
+   To_Be_Deleted : constant := 1;
+
+   A, B : constant := 2;
+
+begin
+   null;
+end Main;
