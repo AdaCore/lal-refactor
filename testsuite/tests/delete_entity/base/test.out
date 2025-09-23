@@ -140,3 +140,11 @@ procedure Main is
 begin
    null;
 end Main;
+--  (main_14.orig) -L 3 -R 4
+procedure Main is
+begin
+   loop
+      exit  when False;
+      null;
+   end loop ;
+end Main;

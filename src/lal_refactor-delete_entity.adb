@@ -493,6 +493,9 @@ package body LAL_Refactor.Delete_Entity is
             elsif Name.Parent.Kind = Ada_Component_Clause then
                Remove_Component_Clause (Result, Name);
 
+            elsif Declaration.Kind = Ada_Named_Stmt_Decl then
+               Remove_Node (Result.Text_Edits, Ref, Expand => True);
+
             else
                Remove_Statement (Result, Name);
             end if;
@@ -511,8 +514,10 @@ package body LAL_Refactor.Delete_Entity is
    is
 
       procedure Remove_Discriminant_Spec
-        (Result : in out Refactoring_Edits;
-         Spec   : Discriminant_Spec);
+        (Result : in out Refactoring_Edits; Spec : Discriminant_Spec);
+
+      procedure Remove_Named_Stmt_Decl
+        (Result : in out Refactoring_Edits; Decl : Named_Stmt_Decl);
 
       function Each_Child
         (Node : Ada_Node'Class) return Libadalang.Common.Visit_Status;
@@ -536,22 +541,33 @@ package body LAL_Refactor.Delete_Entity is
       ------------------------------
 
       procedure Remove_Discriminant_Spec
-        (Result : in out Refactoring_Edits;
-         Spec   : Discriminant_Spec)
+        (Result : in out Refactoring_Edits; Spec : Discriminant_Spec)
       is
          List : constant Discriminant_Spec_List :=
            Spec.Parent.As_Discriminant_Spec_List;
       begin
          if Is_Single_Item_List (List) then
             --  Remove whole discriminant part
-            Remove_Node
-              (Result.Text_Edits,
-               List.Parent,
-               Expand => True);
+            Remove_Node (Result.Text_Edits, List.Parent, Expand => True);
          else
             Remove_Node_And_Delimiter (Result.Text_Edits, Spec);
          end if;
       end Remove_Discriminant_Spec;
+
+      ----------------------------
+      -- Remove_Named_Stmt_Decl --
+      ----------------------------
+
+      procedure Remove_Named_Stmt_Decl
+        (Result : in out Refactoring_Edits; Decl : Named_Stmt_Decl)
+      is
+         Colon : constant Libadalang.Common.Token_Reference :=
+           Libadalang.Common.Next
+             (Decl.Token_End, Exclude_Trivia => True);
+      begin
+         Remove_Node (Result.Text_Edits, Decl, Expand => False);
+         Remove_Token (Result.Text_Edits, Colon, Decl.Unit, Expand => True);
+      end Remove_Named_Stmt_Decl;
 
       Declaration : constant Basic_Decl := Definition.P_Basic_Decl;
 
@@ -577,9 +593,14 @@ package body LAL_Refactor.Delete_Entity is
                Name.P_Basic_Decl,
                Null_Statement,
                Expand => True);
+
          elsif Name.P_Basic_Decl.Kind in Ada_Discriminant_Spec then
             Remove_Discriminant_Spec
               (Result, Name.P_Basic_Decl.As_Discriminant_Spec);
+
+         elsif Declaration.Kind = Ada_Named_Stmt_Decl then
+            Remove_Named_Stmt_Decl (Result, Declaration.As_Named_Stmt_Decl);
+
          else
             --  Remove whole declaration
             Remove_Node (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
@@ -882,6 +903,10 @@ package body LAL_Refactor.Delete_Entity is
                      then not Find_Next_Decl (Reference).Is_Null
                      else not Find_Prev_Decl (Reference).Is_Null));
             end;
+
+         when Ada_Named_Stmt_Decl =>
+            return True;
+
          when others =>
             return False;
       end case;

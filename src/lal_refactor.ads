@@ -126,6 +126,14 @@ package LAL_Refactor is
    --  If Expand=True then also remove leading and trailing whitespaces, and
    --  empty lines immediately after.
 
+   procedure Remove_Token
+     (Edits  : in out Text_Edit_Map;
+      Token  : Libadalang.Common.Token_Reference;
+      Unit   : Analysis_Unit;
+      Expand : Boolean := False);
+   --  Create a Text_Edit to remove given token and pass it to Safe_Insert.
+   --  If Expand=True then also remove leading and trailing whitespaces.
+
    procedure Remove_Node_And_Delimiter
      (Edits : in out Text_Edit_Map;
       Node  : Ada_Node'Class)

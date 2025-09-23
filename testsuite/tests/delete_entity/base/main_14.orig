@@ -1,0 +1,7 @@
+procedure Main is
+begin
+   To_Be_Deleted : loop
+      exit To_Be_Deleted when False;
+      null;
+   end loop To_Be_Deleted;
+end Main;
