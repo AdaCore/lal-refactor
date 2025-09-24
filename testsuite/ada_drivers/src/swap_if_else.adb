@@ -29,13 +29,13 @@ with LAL_Refactor.File_Edits;
 with Langkit_Support.Slocs; use Langkit_Support.Slocs;
 
 with LAL_Refactor; use LAL_Refactor;
-with LAL_Refactor.Swap_If_Not;
-use LAL_Refactor.Swap_If_Not;
+with LAL_Refactor.Swap_If_Else;
+use LAL_Refactor.Swap_If_Else;
 
 with Libadalang.Analysis; use Libadalang.Analysis;
 with Libadalang.Helpers; use Libadalang.Helpers;
 
---  This procedure defines the Swap If Not.
+--  This procedure defines the Swap If/elsif/else.
 
 --  Usage:
 --  swap_if_not -P <project> -S <source> -SL <start-line> -SC <start-column>
@@ -45,23 +45,23 @@ with Libadalang.Helpers; use Libadalang.Helpers;
 --  -SL, --start-line   Line of the first statement to swap
 --  -SC, --start-column Column of the first statement to swap
 
-procedure Swap_If_Not is
+procedure Swap_If_Else is
 
-   procedure Swap_If_Not_App_Setup
+   procedure Swap_If_Else_App_Setup
      (Context : App_Context;
       Jobs    : App_Job_Context_Array);
    --  This procedure is called right after command line options are parsed,
    --  the project is loaded (if present) and the list of files to process
    --  is computed.
 
-   package Swap_If_Not_App is new Libadalang.Helpers.App
-     (Name           => "Swap_If_Not",
-      Description    => "Swap If Not",
-      App_setup      => Swap_If_Not_App_Setup);
+   package Swap_If_Else_App is new Libadalang.Helpers.App
+     (Name           => "Swap_If_Else",
+      Description    => "Swap If Else",
+      App_setup      => Swap_If_Else_App_Setup);
 
    package Args is
       package Source is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Swap_If_Not_App.Args.Parser,
+        (Parser      => Swap_If_Else_App.Args.Parser,
          Short       => "-S",
          Long        => "--source",
          Help        => "Source code file of the statements to swap",
@@ -71,7 +71,7 @@ procedure Swap_If_Not is
          Enabled     => True);
 
       package Start_Line is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Swap_If_Not_App.Args.Parser,
+        (Parser      => Swap_If_Else_App.Args.Parser,
          Short       => "-SL",
          Long        => "--start-line",
          Help        => "Line of the first statement to swap",
@@ -81,7 +81,7 @@ procedure Swap_If_Not is
          Enabled     => True);
 
       package Start_Column is new GNATCOLL.Opt_Parse.Parse_Option
-        (Parser      => Swap_If_Not_App.Args.Parser,
+        (Parser      => Swap_If_Else_App.Args.Parser,
          Short       => "-SC",
          Long        => "--start-column",
          Help        => "Column of the first statement to swap",
@@ -91,11 +91,11 @@ procedure Swap_If_Not is
          Enabled     => True);
    end Args;
 
-   ---------------------------
-   -- Swap_If_Not_App_Setup --
-   ---------------------------
+   ----------------------------
+   -- Swap_If_Else_App_Setup --
+   ----------------------------
 
-   procedure Swap_If_Not_App_Setup
+   procedure Swap_If_Else_App_Setup
      (Context : App_Context;
       Jobs    : App_Job_Context_Array)
    is
@@ -104,7 +104,7 @@ procedure Swap_If_Not is
       Source_File        : constant String := To_String (Args.Source.Get);
       Unit               : constant Analysis_Unit :=
         Jobs (1).Analysis_Ctx.Get_From_File (Source_File);
-      Location           : Source_Location :=
+      Location           : constant Source_Location :=
         (Line_Number (Args.Start_Line.Get),
          Column_Number (Args.Start_Column.Get));
 
@@ -116,8 +116,8 @@ procedure Swap_If_Not is
 
          LAL_Refactor.File_Edits.Apply_Edits (Edits.Text_Edits);
       end if;
-   end Swap_If_Not_App_Setup;
+   end Swap_If_Else_App_Setup;
 
 begin
-   Swap_If_Not_App.Run;
-end Swap_If_Not;
+   Swap_If_Else_App.Run;
+end Swap_If_Else;
