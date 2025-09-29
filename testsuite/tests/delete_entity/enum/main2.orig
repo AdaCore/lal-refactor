@@ -1,0 +1,11 @@
+procedure Main is
+   type Enum is (To_Be_Deleted, B, C);
+
+   for Enum use
+     (To_Be_Deleted => 1,
+      B => 2,
+      C => 3);
+
+begin
+   null;
+end;
