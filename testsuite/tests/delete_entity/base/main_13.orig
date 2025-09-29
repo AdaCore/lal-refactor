@@ -1,0 +1,9 @@
+procedure Main is
+   package Pkg is
+      type Rec (To_Be_Deleted : Integer) is private;
+   private
+      type Rec (To_Be_Deleted : Integer) is null record;
+   end Pkg;
+begin
+   null;
+end Main;

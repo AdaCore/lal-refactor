@@ -1,0 +1,5 @@
+title: delete_any
+
+description: delete_enity tool test
+
+driver: shell_script
