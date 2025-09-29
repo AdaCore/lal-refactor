@@ -1,0 +1,116 @@
+--  -SL 4 -SC 5
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp2 : Integer;
+   Tmp3 : Integer := 1 + 1;
+begin
+   if (2 + 2) / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   Tmp3 := Tmp3 + 2;
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;
+--  -SL 5 -SC 6
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp  : Integer := 2 + 2;
+   Tmp2 : Integer;
+   Tmp3 : Integer := 1 + 1;
+begin
+   if Tmp / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   Tmp3 := Tmp3 + 2;
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;
+--  -SL 6 -SC 6
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp  : Integer := 2 + 2;
+   Tmp2 : Integer;
+   Tmp3 : Integer := 1 + 1;
+begin
+   if Tmp / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   Tmp3 := Tmp3 + 2;
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;
+--  main1 -SL 4 -SC 5
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp2, Tmp3 : Integer := 2 + 2;
+begin
+   if (2 + 2) / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;
+--  main1 -SL 4 -SC 11
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp, Tmp3 : Integer := 2 + 2;
+begin
+   if Tmp / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if (2 + 2) / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;
+--  main1 -SL 4 -SC 17
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp, Tmp2 : Integer := 2 + 2;
+begin
+   if Tmp / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if (2 + 2) / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;

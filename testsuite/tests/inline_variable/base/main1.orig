@@ -1,0 +1,17 @@
+with Ada.Text_IO;
+
+procedure Main is
+   Tmp, Tmp2, Tmp3 : Integer := 2 + 2;
+begin
+   if Tmp / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp2 / 2 = 1 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+
+   if Tmp3 / 2 = 2 then
+      Ada.Text_IO.Put_Line ("Yes");
+   end if;
+end Main;

@@ -20,6 +20,7 @@ project LAL_Refactor_Test_Drivers is
       "delete_entity.adb",
       "extract_subprogram.adb",
       "extract_variable.adb",
+      "inline_variable.adb",
       "introduce_parameter.adb",
       "move_parameter.adb",
       "pull_up_declaration.adb",
