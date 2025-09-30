@@ -1,0 +1,5 @@
+title: introduce_parameter
+
+description: test that the action is not proposed for the parameter name
+
+driver: shell_script

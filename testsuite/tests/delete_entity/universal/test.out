@@ -1,0 +1,6 @@
+--  (main.orig) -L 2 -R 12
+procedure Main is
+
+begin
+   null;
+end Main;

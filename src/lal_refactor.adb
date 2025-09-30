@@ -64,6 +64,10 @@ package body LAL_Refactor is
       Node  : Ada_Node'Class)
          return Boolean
    is
+      function Inclusive_End_Sloc
+         (Sloc : Source_Location_Range) return Source_Location
+           is ((Line => Sloc.End_Line, Column => Sloc.End_Column - 1));
+
       function Found (Cursor : Text_Edit_Ordered_Sets.Cursor) return Boolean is
         (Text_Edit_Ordered_Sets.Has_Element (Cursor)
           and then Compare
@@ -71,7 +75,7 @@ package body LAL_Refactor is
             Start_Sloc (Node.Sloc_Range)) = Inside
           and then Compare
            (Text_Edit_Ordered_Sets.Element (Cursor).Location,
-            End_Sloc (Node.Sloc_Range)) = Inside);
+            Inclusive_End_Sloc (Node.Sloc_Range)) = Inside);
       --  If both start/end Sloc are inside Cursor.Location
 
       File_Name : constant LAL_Refactor.File_Name_Type :=
@@ -302,6 +306,43 @@ package body LAL_Refactor is
          (Location => SLOC,
           Text     => Null_Unbounded_String));
    end Remove_Node_And_Delimiter;
+
+   ------------------
+   -- Remove_Token --
+   ------------------
+
+   procedure Remove_Token
+     (Edits  : in out Text_Edit_Map;
+      Token  : Libadalang.Common.Token_Reference;
+      Unit   : Analysis_Unit;
+      Expand : Boolean := False)
+   is
+      use Libadalang.Common;
+
+      function "+" (Self : Token_Reference) return Source_Location_Range is
+        (Sloc_Range (Data (Self)));
+
+      First : Token_Reference := Token;
+      Last  : Token_Reference := Token;
+      SLOC  : Source_Location_Range := +Token;
+   begin
+      if Expand then
+         First := Previous (First, Exclude_Trivia => True);
+         First := Next (First, Exclude_Trivia => False);
+
+         Last := Next (Last, Exclude_Trivia => True);
+         Last := Previous (Last, Exclude_Trivia => False);
+
+         SLOC := Make_Range (Start_Sloc (+First), End_Sloc (+Last));
+      else
+         SLOC := Sloc_Range (Data (Token));
+      end if;
+
+      Safe_Insert
+        (Edits,
+         Unit.Get_Filename,
+         (Location => SLOC, Text => Null_Unbounded_String));
+   end Remove_Token;
 
    -----------------
    -- Safe_Insert --

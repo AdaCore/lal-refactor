@@ -11,3 +11,14 @@ procedure Main is
 begin
    null;
 end;
+--  (main2.orig) -L 2 -R 18
+procedure Main is
+   type Enum is (B, C);
+
+   for Enum use
+     (B => 2,
+      C => 3);
+
+begin
+   null;
+end;
