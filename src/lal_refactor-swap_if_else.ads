@@ -4,14 +4,14 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  This package contains refactoring tools that allow extracting expressions
---  into new variables
+--  This package contains refactoring tools that swaps if/elsif/else conditions
+--   and code statments
 
-package LAL_Refactor.Swap_If_Not is
+package LAL_Refactor.Swap_If_Else is
 
    function Is_Swap_Available
      (Unit     : Analysis_Unit;
-      Location : in out Source_Location)
+      Location : Source_Location)
       return Boolean;
    --  Checks if Location is inside an `if not` statment that also have `else`.
 
@@ -37,8 +37,8 @@ private
 
    type Swaper is new Refactoring_Tool with
       record
-         Unit : Analysis_Unit;
-         Node : Ada_Node;
+         Unit     : Analysis_Unit;
+         Location : Source_Location;
       end record;
 
-end LAL_Refactor.Swap_If_Not;
+end LAL_Refactor.Swap_If_Else;

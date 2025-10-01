@@ -1,0 +1,50 @@
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;

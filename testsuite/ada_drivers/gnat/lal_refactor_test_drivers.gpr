@@ -30,7 +30,7 @@ project LAL_Refactor_Test_Drivers is
       "sort_case.adb",
       "sort_dependencies.adb",
       "suppress_separate.adb",
-      "swap_if_not.adb");
+      "swap_if_else.adb");
 
    for Main use Tools_Mains;
 
