@@ -1,0 +1,690 @@
+--  -SL 11 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not B and then L = 0 then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+   --  Should propose
+   if not B then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if not (B and then L = 0) then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+end Main;
+--  -SL 16 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not B and then L = 0 then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+   --  Should propose
+   if not B then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if not (B and then L = 0) then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+end Main;
+--  -SL 25 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not (not B and then L = 0) then
+      Ada.Text_IO.Put_Line ("B");
+   else
+      Ada.Text_IO.Put_Line ("not B");
+   end if;
+   
+   --  Should propose
+   if not B then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if not (B and then L = 0) then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+end Main;
+--  -SL 25 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not B and then L = 0 then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+   --  Should propose
+   if not B then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if not (B and then L = 0) then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+end Main;
+--  -SL 32 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not B and then L = 0 then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+   --  Should propose
+   if B then
+      Ada.Text_IO.Put_Line ("B");
+   else
+      Ada.Text_IO.Put_Line ("not B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if not (B and then L = 0) then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+end Main;
+--  -SL 39 -SC 8
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   
+   --  Should not propose, no else
+   if not B then
+      null;
+   end if;
+
+   --  Swap if/else
+   if not B then
+      Ada.Text_IO.Put_Line ("B");
+   elsif L = 0 then
+      null;
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+
+   --  Complex statment, should be `not (statment)`
+   if not B and then L = 0 then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+   
+   --  Should propose
+   if not B then
+      Ada.Text_IO.Put_Line ("not B");
+   else
+      Ada.Text_IO.Put_Line ("B");
+   end if;
+
+   --  Should propose, simple NOT on the top level
+   if B and then L = 0 then
+      Ada.Text_IO.Put_Line ("B");
+   else
+      Ada.Text_IO.Put_Line ("not B");
+   end if;
+   
+end Main;
+-- relation_op -SL 10 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;
+-- relation_op -SL 17 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;
+-- relation_op -SL 24 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;
+-- relation_op -SL 31 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;
+-- relation_op -SL 38 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L >= 0 then
+      Ada.Text_IO.Put_Line (">= 0");
+   else
+      Ada.Text_IO.Put_Line ("< 0");
+   end if;
+end Main;
+-- relation_op -SL 45 -SC 10
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   --  Simple Relation_Op statment, should be changed to `/=`
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("= 0");
+   else
+      Ada.Text_IO.Put_Line ("/= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `=`
+   if L /= 0 then
+      Ada.Text_IO.Put_Line ("/= 0");
+   else
+      Ada.Text_IO.Put_Line ("= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<=`
+   if L > 0 then
+      Ada.Text_IO.Put_Line ("> 0");
+   else
+      Ada.Text_IO.Put_Line ("<= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>=`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `>`
+   if L <= 0 then
+      Ada.Text_IO.Put_Line ("<= 0");
+   else
+      Ada.Text_IO.Put_Line ("> 0");
+   end if;
+
+   --  Simple Relation_Op statment, should be changed to `<`
+   if L < 0 then
+      Ada.Text_IO.Put_Line ("< 0");
+   else
+      Ada.Text_IO.Put_Line (">= 0");
+   end if;
+end Main;
+-- elsif -SL 12 -SC 13
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif not (B) then
+      Ada.Text_IO.Put_Line ("else");
+   else
+      Ada.Text_IO.Put_Line ("elsif");
+   end if;
+   
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif1");
+   elsif L > 5 then
+      Ada.Text_IO.Put_Line ("elsif2");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+end Main;
+-- elsif -SL 22 -SC 19
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+   
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif1");
+   elsif L <= 5 then
+      Ada.Text_IO.Put_Line ("else");
+   else
+      Ada.Text_IO.Put_Line ("elsif2");
+   end if;
+end Main;
+-- elsif -SL 18 -SC 14
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+   
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif1");
+   elsif L > 5 then
+      Ada.Text_IO.Put_Line ("elsif2");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+end Main;
+-- elsif -SL 20 -SC 17
+
+with Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
+
+procedure Main is
+   B : Boolean := False;
+   L : Natural := 0;
+begin
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+   
+   if L = 0 then
+      Ada.Text_IO.Put_Line ("if");
+   elsif B then
+      Ada.Text_IO.Put_Line ("elsif1");
+   elsif L > 5 then
+      Ada.Text_IO.Put_Line ("elsif2");
+   else
+      Ada.Text_IO.Put_Line ("else");
+   end if;
+end Main;

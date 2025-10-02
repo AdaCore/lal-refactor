@@ -12,13 +12,13 @@ begin
       null;
    end if;
 
-   --  Should not propose, has elsif
+   --  Swap if/else
    if not B then
-      null;
+      Ada.Text_IO.Put_Line ("B");
    elsif L = 0 then
       null;
    else
-      null;
+      Ada.Text_IO.Put_Line ("else");
    end if;
 
    --  Complex statment, should be `not (statment)`
