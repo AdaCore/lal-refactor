@@ -50,9 +50,11 @@ private
 
    type Variable_Extractor is new Refactoring_Tool with
       record
-         Unit : Analysis_Unit;
-         Node : Ada_Node;
-         Name : Unbounded_String;
+         Unit  : Analysis_Unit;
+         Node  : Ada_Node;
+         Left  : Source_Location;
+         Right : Source_Location;
+         Name  : Unbounded_String;
       end record;
 
 end LAL_Refactor.Extract_Variable;

@@ -3,7 +3,6 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
-
 with Ada.Characters.Latin_1;
 with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Hash_Case_Insensitive;
@@ -54,6 +53,100 @@ package body LAL_Refactor.Extract_Variable is
       End_Node   : Ada_Node := No_Ada_Node;
       Aux        : Ada_Node := No_Ada_Node;
 
+      -----------------------------
+      -- Is_Selection_Valid_Math --
+      -----------------------------
+
+      function Is_Selection_Valid_Math return Boolean;
+      function Is_Selection_Valid_Math return Boolean
+      is
+         Right_Bound : constant Source_Location :=
+           End_Node.Sloc_Range.End_Sloc;
+         Subtree     : Ada_Node := Start_Node;
+         Parent      : Ada_Node;
+         Priority    : Natural := Natural'Last;
+         Tmp         : Natural;
+
+         -- Get_Priority --
+
+         function Get_Priority (Node : Ada_Node) return Natural;
+         --  Returns priority of the operation
+
+         function Get_Priority (Node : Ada_Node) return Natural is
+         begin
+            case Node.As_Bin_Op.F_Op is
+               when Ada_Op_In | Ada_Op_Not_In =>
+                  return 7;
+
+               when Ada_Op_And_Then
+                  | Ada_Op_Or_Else
+                  | Ada_Op_And
+                  | Ada_Op_Or
+                  | Ada_Op_Xor
+                  =>
+                  return 6;
+
+               when Ada_Op_Eq
+                  | Ada_Op_Neq
+                  | Ada_Op_Gt
+                  | Ada_Op_Gte
+                  | Ada_Op_Lt
+                  | Ada_Op_Lte
+                  =>
+                  return 5;
+
+               when Ada_Op_Double_Dot =>
+                  return 4;
+
+               when Ada_Op_Plus | Ada_Op_Minus | Ada_Op_Concat =>
+                  return 3;
+
+               when Ada_Op_Mult | Ada_Op_Div | Ada_Op_Mod | Ada_Op_Rem =>
+                  return 2;
+
+               when Ada_Op_Pow =>
+                  return 1;
+
+               when Ada_Op_Abs | Ada_Op_Not =>
+                  return 0;
+            end case;
+         end Get_Priority;
+
+      begin
+         if Kind (Start_Node) in Ada_Op
+           or else Kind (End_Node) in Ada_Op
+         then
+            --  Do not allow selecting the operator as the start/end point
+            return False;
+         end if;
+
+         while Subtree.Sloc_Range.End_Sloc < Right_Bound
+           and then Is_Expr (Subtree)
+         loop
+            Parent := Subtree.Parent;
+
+            if Kind (Parent) in Ada_Bin_Op then
+               if Start_Node.Sloc_Range.Start_Sloc >
+                 Parent.Sloc_Range.Start_Sloc
+                 or else End_Node.Sloc_Range.End_Sloc <
+                   Parent.Sloc_Range.End_Sloc
+               then
+                  Tmp := Get_Priority (Parent);
+
+                  if Priority < Tmp then
+                     return False;
+                  end if;
+               end if;
+
+               Priority   := Tmp;
+            end if;
+
+            Subtree := Parent;
+         end loop;
+
+         return Subtree.Sloc_Range.End_Sloc = Right_Bound;
+      end Is_Selection_Valid_Math;
+
    begin
       Start_Node := Lookup (Unit, Start_Token, Forward);
 
@@ -78,17 +171,18 @@ package body LAL_Refactor.Extract_Variable is
          return False;
       end if;
 
-      if Aux.Sloc_Range.Start_Sloc /= Start_Node.Sloc_Range.Start_Sloc
-        or else Aux.Sloc_Range.End_Sloc /= End_Node.Sloc_Range.End_Sloc
+      if (Aux.Sloc_Range.Start_Sloc /= Start_Node.Sloc_Range.Start_Sloc
+          or else Aux.Sloc_Range.End_Sloc /= End_Node.Sloc_Range.End_Sloc)
+        and then not Is_Selection_Valid_Math
       then
          return False;
       end if;
 
       Section_To_Extract :=
-        (Start_Line   => Aux.Sloc_Range.Start_Sloc.Line,
-         Start_Column => Aux.Sloc_Range.Start_Sloc.Column,
-         End_Line     => Aux.Sloc_Range.End_Sloc.Line,
-         End_Column   => Aux.Sloc_Range.End_Sloc.Column);
+        (Start_Line   => Start_Node.Sloc_Range.Start_Sloc.Line,
+         Start_Column => Start_Node.Sloc_Range.Start_Sloc.Column,
+         End_Line     => End_Node.Sloc_Range.End_Sloc.Line,
+         End_Column   => End_Node.Sloc_Range.End_Sloc.Column);
 
       return True;
 
@@ -191,13 +285,27 @@ package body LAL_Refactor.Extract_Variable is
       Start_Node  : constant Ada_Node := Lookup (Unit, Start_Token, Forward);
       End_Node    : constant Ada_Node := Lookup (Unit, End_Token, Backward);
 
+      Aux         : Ada_Node;
+      Left        : Source_Location := No_Source_Location;
+      Right       : Source_Location := No_Source_Location;
+
    begin
+      Aux := Find_Parent
+        (Find_First_Common_Parent (Start_Node, End_Node, With_Self => True),
+         Is_Expr'Access);
+
+      if Aux.Sloc_Range.Start_Sloc /= Start_Node.Sloc_Range.Start_Sloc
+        or else Aux.Sloc_Range.End_Sloc /= End_Node.Sloc_Range.End_Sloc
+      then
+         Left  := Start_Node.Sloc_Range.Start_Sloc;
+         Right := End_Node.Sloc_Range.End_Sloc;
+      end if;
+
       return Variable_Extractor'
         (Unit,
-         Find_Parent
-           (Find_First_Common_Parent
-                (Start_Node, End_Node, With_Self => True),
-            Is_Expr'Access),
+         Aux,
+         Left,
+         Right,
          Variable_Name);
    end Create_Variable_Extractor;
 
@@ -212,14 +320,29 @@ package body LAL_Refactor.Extract_Variable is
    is
       use Ada.Characters.Latin_1;
 
-      Start_Line   : constant Line_Number := Self.Node.Sloc_Range.Start_Line;
-      End_Line     : constant Line_Number := Self.Node.Sloc_Range.End_Line;
+      Start_Line   : constant Line_Number :=
+        (if Self.Left /= No_Source_Location
+         then Self.Left.Line
+         else Self.Node.Sloc_Range.Start_Line);
+      End_Line     : constant Line_Number :=
+        (if Self.Right /= No_Source_Location
+         then Self.Right.Line
+         else Self.Node.Sloc_Range.End_Line);
       Start_Column : constant Column_Number :=
-        Self.Node.Sloc_Range.Start_Column;
-      End_Column   : constant Column_Number := Self.Node.Sloc_Range.End_Column;
+        (if Self.Left /= No_Source_Location
+         then Self.Left.Column
+         else Self.Node.Sloc_Range.Start_Column);
+      End_Column   : constant Column_Number :=
+        (if Self.Right /= No_Source_Location
+         then Self.Right.Column
+         else Self.Node.Sloc_Range.End_Column);
 
       Enclosing_Declarative_Part : constant Declarative_Part :=
         Get_Enclosing_Declarative_Part (Self.Node);
+
+      --  Looking for the first semicolon before
+      Aux_Token       : constant Token_Reference :=
+        Find (Self.Node.Token_Start, Ada_Semicolon, Backward);
 
       Expression_Type : Base_Type_Decl;
       Insert_Location : Source_Location_Range;
@@ -229,7 +352,6 @@ package body LAL_Refactor.Extract_Variable is
       Indent_Length   : Natural := 2;
       Line            : Line_Number;
       Column          : Column_Number;
-      Aux_Token       : Token_Reference;
       Prefix          : Unbounded_String;
       After_Semicolon : Boolean := True;
 
@@ -297,36 +419,38 @@ package body LAL_Refactor.Extract_Variable is
          use Langkit_Support.Text;
          use Ada.Strings.Wide_Wide_Fixed;
 
-         Start_Token  : Token_Reference := Self.Node.Token_Start;
-         End_Token    : Token_Reference := Self.Node.Token_End;
+         Start_Token : Token_Reference := Self.Node.Token_Start;
+         End_Token   : Token_Reference := Self.Node.Token_End;
 
-         Result       : Unbounded_String;
+         Result      : Unbounded_String;
 
-         Start_Line   : Line_Number;
-         End_Line     : Line_Number;
-         Start_Column : Column_Number;
-         End_Column   : Column_Number;
+         SL : Line_Number   := Start_Line;
+         EL : Line_Number   := End_Line;
+         SC : Column_Number := Start_Column;
+         EC : Column_Number := End_Column;
 
       begin
-         if Self.Node.Kind = Ada_Paren_Expr then
+         if Self.Left = No_Source_Location
+           and then Self.Node.Kind = Ada_Paren_Expr
+         then
             --  Cut '(' and ')' around the expression
             Start_Token := Next_Non_Whitespace (Start_Token, Forward);
             End_Token   := Next_Non_Whitespace (End_Token, Backward);
+
+            SL := Start_Token.Data.Sloc_Range.Start_Line;
+            EL := End_Token.Data.Sloc_Range.End_Line;
+            SC := Start_Token.Data.Sloc_Range.Start_Column;
+            EC := End_Token.Data.Sloc_Range.End_Column;
          end if;
 
-         Start_Line   := Start_Token.Data.Sloc_Range.Start_Line;
-         End_Line     := End_Token.Data.Sloc_Range.End_Line;
-         Start_Column := Start_Token.Data.Sloc_Range.Start_Column;
-         End_Column   := End_Token.Data.Sloc_Range.End_Column;
-
-         if End_Line - Start_Line + 1 = 1 then
+         if EL - SL + 1 = 1 then
             declare
                Txt   : constant Text_Type :=
-                 Self.Unit.Get_Line (Positive (Start_Line));
+                 Self.Unit.Get_Line (Positive (SL));
                Start : constant Positive := Positive
-                 (Txt'First + Positive (Start_Column) - 1);
+                 (Txt'First + Positive (SC) - 1);
                Last  : constant Positive := Positive
-                 (Txt'First + Positive (End_Column)   - 2);
+                 (Txt'First + Positive (EC)   - 2);
 
                Result : Unbounded_String;
             begin
@@ -344,16 +468,16 @@ package body LAL_Refactor.Extract_Variable is
          else
             declare
                Txt   : constant Text_Type :=
-                 Self.Unit.Get_Line (Positive (Start_Line));
+                 Self.Unit.Get_Line (Positive (SL));
                Start : constant Positive := Positive
-                 (Txt'First + Positive (Start_Column) - 1);
+                 (Txt'First + Positive (SC) - 1);
 
             begin
                Result.Append
                  (LF & Indent & "  " & To_UTF8 (Txt (Start .. Txt'Last)) & LF);
             end;
 
-            for Line_Number in Start_Line + 1 .. End_Line - 1 loop
+            for Line_Number in SL + 1 .. EL - 1 loop
                declare
                   Txt   : constant Text_Type :=
                     Self.Unit.Get_Line (Positive (Line_Number));
@@ -367,10 +491,10 @@ package body LAL_Refactor.Extract_Variable is
 
             declare
                Txt   : constant Text_Type :=
-                 Self.Unit.Get_Line (Positive (End_Line));
+                 Self.Unit.Get_Line (Positive (EL));
                Start : constant Positive := Index_Non_Blank (Txt);
                Last  : constant Positive := Positive
-                 (Txt'First + Positive (End_Column) - 2);
+                 (Txt'First + Positive (EC) - 2);
 
             begin
                Result.Append
@@ -506,9 +630,6 @@ package body LAL_Refactor.Extract_Variable is
       end Find_Assignment_Place_In_Code;
 
    begin
-      --  Looking for the first semicolon before
-      Aux_Token := Find (Self.Node.Token_Start, Ada_Semicolon, Backward);
-
       --  Default place for inserting is after the previous semicolon
       Line     := Aux_Token.Data.Sloc_Range.End_Line;
       Column   := Aux_Token.Data.Sloc_Range.End_Column + 1;
@@ -518,9 +639,8 @@ package body LAL_Refactor.Extract_Variable is
         Self.Node.Sloc_Range.Start_Sloc
       then
          --  Expression is in the declarative part itself
-         if Aux_Token = No_Token
-           or else Aux_Token.Data.Sloc_Range.End_Sloc <=
-             Enclosing_Declarative_Part.Sloc_Range.Start_Sloc
+         if Aux_Token.Data.Sloc_Range.End_Sloc <=
+           Enclosing_Declarative_Part.Sloc_Range.Start_Sloc
          then
             --  Expression is the first in the declarative part,
             --  add right after the declarative part start
@@ -555,12 +675,11 @@ package body LAL_Refactor.Extract_Variable is
               (Source_Location'
                    (Enclosing_Declarative_Part.Sloc_Range.Start_Line + 1, 1)));
 
-         if Aux_Token = No_Token
-           or else Enclosing_Declarative_Part.Sloc_Range.End_Sloc >
-             Aux_Token.Data.Sloc_Range.End_Sloc
-             or else
-               (not Expression_Type.Is_Null
-                and then Expression_Type.P_Is_Array_Type)
+         if Enclosing_Declarative_Part.Sloc_Range.End_Sloc >
+           Aux_Token.Data.Sloc_Range.End_Sloc
+           or else
+             (not Expression_Type.Is_Null
+              and then Expression_Type.P_Is_Array_Type)
          then
             --  The expression is the first in code after the declarative path,
             --  add assigment with the declaration
