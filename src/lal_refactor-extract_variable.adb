@@ -58,6 +58,9 @@ package body LAL_Refactor.Extract_Variable is
       -----------------------------
 
       function Is_Selection_Valid_Math return Boolean;
+      --  Moving up the tree from the start of selection and checking that
+      --  we did not split a half more prioritized math operation.
+
       function Is_Selection_Valid_Math return Boolean
       is
          Right_Bound : constant Source_Location :=
@@ -131,8 +134,14 @@ package body LAL_Refactor.Extract_Variable is
                  or else End_Node.Sloc_Range.End_Sloc <
                    Parent.Sloc_Range.End_Sloc
                then
+                  --  We reached a new operation. Get its priority.
                   Tmp := Get_Priority (Parent);
 
+                  --  It should have the same priority or higher.
+                  --  In this case, for the expression like "3 * `4 + 5`"
+                  --  (whene `...` is selection) we have 3 * 4 as left and
+                  --  X + 5 as right, and left operation is "*" right: "+" with
+                  --  less priority, so extraction is not allowed.
                   if Priority < Tmp then
                      return False;
                   end if;
