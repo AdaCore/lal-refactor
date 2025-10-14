@@ -531,8 +531,11 @@ begin
    declare
       --  Cases from the presentation
       X : Integer;
+
+      Extracted : constant Integer := 2 + 3;
+
    begin
-      X := 1 + 2 + 3;
+      X := 1 + Extracted;
       X := 1 + (2 + 3);
       X := 3 * 4 + 1;
       X := 3 * (4 + 1);
@@ -1227,4 +1230,28 @@ begin
       X := 3 * (4 + 1);
    end;
 
+end Main;
+--  -SL 5 -SC 19 -EL 5 -EC 24
+
+procedure Main is
+   Var : Integer;
+begin
+   Var := 2 + 3 * 4 + 1;
+end Main;
+--  -SL 5 -SC 11 -EL 5 -EC 16
+
+procedure Main is
+   Var : Integer;
+begin
+   Var := 2 + 3 * 4 + 1;
+end Main;
+--  -SL 5 -SC 15 -EL 5 -EC 24
+
+procedure Main is
+   Var : Integer;
+
+   Extracted : constant Integer := 3 * 4 + 1;
+
+begin
+   Var := 2 + Extracted;
 end Main;

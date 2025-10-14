@@ -1,0 +1,6 @@
+
+procedure Main is
+   Var : Integer;
+begin
+   Var := 2 + 3 * 4 + 1;
+end Main;

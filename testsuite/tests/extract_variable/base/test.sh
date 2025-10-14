@@ -87,3 +87,16 @@ cp ./main.orig ./main.adb
 extract_variable -P default.gpr -S main.adb -SL 58 -SC 11 -EL 58 -EC 18
 echo "--  -SL 58 -SC 11 -EL 58 -EC 18"
 cat ./main.adb
+
+cp ./main.orig1 ./main.adb
+extract_variable -P default.gpr -S main.adb -SL 5 -SC 19 -EL 5 -EC 24
+echo "--  -SL 5 -SC 19 -EL 5 -EC 24"
+cat ./main.adb
+
+extract_variable -P default.gpr -S main.adb -SL 5 -SC 11 -EL 5 -EC 16
+echo "--  -SL 5 -SC 11 -EL 5 -EC 16"
+cat ./main.adb
+
+extract_variable -P default.gpr -S main.adb -SL 5 -SC 15 -EL 5 -EC 24
+echo "--  -SL 5 -SC 15 -EL 5 -EC 24"
+cat ./main.adb
