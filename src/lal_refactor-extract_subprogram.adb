@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2022-2023, AdaCore
+--  Copyright (C) 2022-2025, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -1243,56 +1243,40 @@ package body LAL_Refactor.Extract_Subprogram is
             --  -- Some comment about D
             --  return Foo (B, C, D);
 
-            case Self.End_Stmt.Kind is
-               when Ada_Return_Stmt_Range =>
-                  declare
-                     Return_Stmt : constant Text_Type :=
-                       Self.End_Stmt.As_Return_Stmt.Text;
+            declare
+               End_Stmt_Text : constant Text_Type :=
+                 (case Self.End_Stmt.Kind is
+                    when Ada_Return_Stmt_Range =>
+                      Self.End_Stmt.As_Return_Stmt.Text,
 
-                     Aux_Token : Token_Reference := Self.Start_Token;
+                    when Ada_Assign_Stmt_Range =>
+                      "return "
+                      & Self.End_Stmt.As_Assign_Stmt.F_Expr.Text
+                      & ";",
 
-                  begin
-                     loop
-                        if Kind (Data (Aux_Token)) in Ada_Comment then
-                           Extracted_Stmts.Append (To_UTF8 (Text (Aux_Token)));
-                        end if;
+                    --  We only have one stmt to extract so include all
+                    when Ada_If_Stmt_Range | Ada_Case_Stmt_Range    =>
+                       Self.End_Stmt.Text,
 
-                        exit when Aux_Token = Self.End_Token;
-                        Aux_Token := Next (Aux_Token);
-                     end loop;
+                    when others                =>
+                      raise Assertion_Error
+                        with Unexpected_End_Stmt_Kind_Exception_Message);
+               Aux_Token : Token_Reference := Self.Start_Token;
+            begin
+               loop
+                  if Kind (Data (Aux_Token)) in Ada_Comment then
+                     Extracted_Stmts.Append (To_UTF8 (Text (Aux_Token)));
+                  end if;
 
-                     Extracted_Stmts.Append (To_UTF8 (Return_Stmt));
-                  end;
+                  exit when Aux_Token = Self.End_Token;
+                  Aux_Token := Next (Aux_Token);
+               end loop;
 
-               when Ada_Assign_Stmt_Range =>
-                  declare
-                     Return_Stmt : constant Text_Type :=
-                       "return " & Self.End_Stmt.As_Assign_Stmt.F_Expr.Text
-                       & ";";
-
-                     Aux_Token : Token_Reference := Self.Start_Token;
-
-                  begin
-                     loop
-                        if Kind (Data (Aux_Token)) in Ada_Comment then
-                           Extracted_Stmts.Append (To_UTF8 (Text (Aux_Token)));
-                        end if;
-
-                        exit when Aux_Token = Self.End_Token;
-                        Aux_Token := Next (Aux_Token);
-                     end loop;
-
-                     Extracted_Stmts.Append (To_UTF8 (Return_Stmt));
-                  end;
-
-               when others =>
-                  raise Assertion_Error with
-                    Unexpected_End_Stmt_Kind_Exception_Message;
-
-            end case;
+               Extracted_Stmts.Append (To_UTF8 (End_Stmt_Text));
+            end;
 
          else
-            --  Multiple statements accross multiple lines. There might be some
+            --  Multiple statements across multiple lines. There might be some
             --  comments before, in the middle, or after it.
 
             --  Find the Minimum_Indentation, i.e., the indentation
@@ -1498,7 +1482,9 @@ package body LAL_Refactor.Extract_Subprogram is
       function Get_Return_Type return String
         with Pre => not Self.End_Stmt.Is_Null
                     and then Self.End_Stmt.Kind in Ada_Assign_Stmt_Range
-                                                   | Ada_Return_Stmt_Range;
+                                                   | Ada_Return_Stmt_Range
+                                                   | Ada_If_Stmt_Range
+                                                   | Ada_Case_Stmt_Range;
       ---------------------
       -- Get_Return_Type --
       ---------------------
@@ -1507,7 +1493,9 @@ package body LAL_Refactor.Extract_Subprogram is
       is
          subtype Stmt_Kind_Type is Ada_Node_Kind_Type
            with Static_Predicate => Stmt_Kind_Type in Ada_Assign_Stmt_Range
-                                                      | Ada_Return_Stmt_Range;
+                                                      | Ada_Return_Stmt_Range
+                                                      | Ada_If_Stmt_Range
+                                                      | Ada_Case_Stmt_Range;
 
          Stmt_Kind : constant Stmt_Kind_Type := Self.End_Stmt.Kind;
 
@@ -1524,6 +1512,37 @@ package body LAL_Refactor.Extract_Subprogram is
                return To_UTF8 (Self.End_Stmt.P_Parent_Basic_Decl.
                                  As_Base_Subp_Body.F_Subp_Spec.F_Subp_Returns.
                                    Text);
+
+            when Ada_If_Stmt_Range =>
+               return
+                 To_UTF8
+                   (Self
+                      .End_Stmt
+                      .As_If_Stmt
+                      .F_Then_Stmts
+                      .Last_Child
+                      .As_Return_Stmt
+                      .P_Parent_Basic_Decl
+                      .As_Base_Subp_Body
+                      .F_Subp_Spec
+                      .F_Subp_Returns
+                      .Text);
+            when Ada_Case_Stmt_Range =>
+               return
+                 To_UTF8
+                  (Self
+                      .End_Stmt
+                      .As_Case_Stmt
+                      .F_Alternatives
+                      .List_Child (1) -- Know this is non-empty
+                      .F_Stmts
+                      .Last_Child
+                      .As_Return_Stmt
+                      .P_Parent_Basic_Decl
+                      .As_Base_Subp_Body
+                      .F_Subp_Spec
+                      .F_Subp_Returns
+                      .Text);
          end case;
       end Get_Return_Type;
 
@@ -1682,7 +1701,7 @@ package body LAL_Refactor.Extract_Subprogram is
       Destination : constant String :=
         (if Get_Statements_To_Extract
               (Self.Start_Stmt, Self.End_Stmt).Last_Element.Kind
-           in Ada_Return_Stmt_Range
+           in Ada_Return_Stmt_Range | Ada_If_Stmt_Range | Ada_Case_Stmt_Range
          then
             ""
          else
@@ -1771,6 +1790,15 @@ package body LAL_Refactor.Extract_Subprogram is
       procedure Is_Stmt_Callback (Parent : Ada_Node; Stop : in out Boolean);
       --  When Parent is a Stmt, stops the search and sets Aux to Parent
 
+      function Get_Nearest_Stmt (N : Ada_Node) return Stmt;
+      --  Get the nearest parent Stmt node to N (or N itself)
+
+      function Valid_Return_Node (N : Ada_Node) return Boolean;
+      --  True if the given node returns for all conditions
+
+      function No_Extraction_Available return Boolean;
+      --  Report no subprogram extraction available
+
       ----------------------
       -- Is_Stmt_Callback --
       ----------------------
@@ -1781,81 +1809,129 @@ package body LAL_Refactor.Extract_Subprogram is
          Aux := Parent;
       end Is_Stmt_Callback;
 
-   begin
-      if Start_Node.Is_Null or else End_Node.Is_Null then
+      ----------------------
+      -- Get_Nearest_Stmt --
+      ----------------------
+
+      function Get_Nearest_Stmt (N : Ada_Node) return Stmt
+      is
+         T : Stmt := No_Stmt;
+      begin
+         --  To begin: get first available Stmt node
+         --  This may be N, or the nearest parent
+         if N.Kind not in Ada_Stmt then
+            Find_Matching_Parents
+            (N, Is_Stmt'Access, Is_Stmt_Callback'Access);
+
+            if Aux.Is_Null then
+               return No_Stmt;
+            else
+               T := Aux.As_Stmt;
+            end if;
+         else
+            T := N.As_Stmt;
+         end if;
+
+         if T.Kind in Ada_Base_Loop_Stmt
+            and then T.Parent.Kind in Ada_Named_Stmt_Range
+         then
+            T := T.Parent.As_Stmt;
+         end if;
+         return T;
+      end Get_Nearest_Stmt;
+
+      -----------------------
+      -- Valid_Return_Node --
+      -----------------------
+
+      function Valid_Return_Node (N : Ada_Node) return Boolean is
+
+         function Branch_Returns (Stmts : Stmt_List) return Boolean;
+         --  Helper to check conditional branch ends in a return statement
+
+         function If_Stmt_Is_Function (S : If_Stmt) return Boolean;
+         --  If every branch of an IfStmt returns a value, can extract
+
+         function Case_Stmt_Is_Function (S : Case_Stmt) return Boolean;
+         --  If every branch of a CaseStmt returns a value, can extract
+
+         function Branch_Returns (Stmts : Stmt_List) return Boolean
+         is (not Stmts.Is_Null
+             and then Stmts.Last_Child.Kind in Ada_Return_Stmt_Range);
+
+         function If_Stmt_Is_Function (S : If_Stmt) return Boolean
+         is (Branch_Returns (S.F_Then_Stmts)
+             and (not S.F_Else_Part.Is_Null
+                  and then Branch_Returns (S.F_Else_Part.F_Stmts))
+             and (S.F_Alternatives.Is_Null
+                  --  Elsifs exist and all end in returns
+                  or else (for all Elsif_Branch of S.F_Alternatives =>
+                             Branch_Returns (Elsif_Branch.F_Stmts))));
+
+         function Case_Stmt_Is_Function (S : Case_Stmt) return Boolean
+         is (not S.F_Alternatives.Is_Null
+             and then (for all Case_Node of S.F_Alternatives =>
+                         Branch_Returns (Case_Node.F_Stmts)));
+      begin
+         return
+           (not N.Is_Null
+            and then (case N.Kind is
+                        when Ada_If_Stmt   =>
+                          If_Stmt_Is_Function (N.As_If_Stmt),
+                        when Ada_Case_Stmt =>
+                          Case_Stmt_Is_Function (N.As_Case_Stmt),
+                        when others        => False));
+      end Valid_Return_Node;
+
+      -----------------------------
+      -- No_Extraction_Available --
+      -----------------------------
+
+      function No_Extraction_Available return Boolean is
+      begin
          Available_Subprogram_Kinds := [others => False];
          return False;
+      end No_Extraction_Available;
+
+      Returns_Allowed : Boolean := False;
+      --  Used when checking return statements
+
+   begin
+      if Start_Node.Is_Null or else End_Node.Is_Null then
+         return No_Extraction_Available;
       end if;
 
-      if Start_Node.Kind not in Ada_Stmt then
-         Find_Matching_Parents
-           (Start_Node, Is_Stmt'Access, Is_Stmt_Callback'Access);
-
-         if Aux.Is_Null then
-            Available_Subprogram_Kinds := [others => False];
-            return False;
-         end if;
-
-         Start_Stmt := Aux.As_Stmt;
-
-      else
-         Start_Stmt := Start_Node.As_Stmt;
-      end if;
-
-      if Start_Stmt.Kind in Ada_Base_Loop_Stmt
-        and then Start_Stmt.Parent.Kind in Ada_Named_Stmt_Range
-      then
-         Start_Stmt := Start_Stmt.Parent.As_Stmt;
-      end if;
-
+      Start_Stmt := Get_Nearest_Stmt (Start_Node);
       Aux := No_Ada_Node;
 
-      if End_Node.Kind not in Ada_Stmt then
-         Find_Matching_Parents
-           (End_Node, Is_Stmt'Access, Is_Stmt_Callback'Access);
+      End_Stmt := Get_Nearest_Stmt (End_Node);
+      Aux := No_Ada_Node;
 
-         if Aux.Is_Null then
-            Available_Subprogram_Kinds := [others => False];
-            return False;
-         end if;
-
-         End_Stmt := Aux.As_Stmt;
-
-      else
-         End_Stmt := End_Node.As_Stmt;
-      end if;
-
-      if End_Stmt.Kind in Ada_Base_Loop_Stmt
-        and then End_Stmt.Parent.Kind in Ada_Named_Stmt_Range
-      then
-         End_Stmt := End_Stmt.Parent.As_Stmt;
+      if Start_Stmt in No_Stmt or else End_Stmt in No_Stmt then
+         return No_Extraction_Available;
       end if;
 
       if Start_Stmt.Parent /= End_Stmt.Parent then
-         Available_Subprogram_Kinds := [others => False];
-         return False;
+         return No_Extraction_Available;
       end if;
 
-      --  Check for return statements that cannot be extracted.
-      --  A return statement can only be extracted iff it is in a nested
-      --  function body.
-      --  End_Stmt is allowed to be a return statement since we can extract
-      --  a function.
+      --  We may end with a conditional return if all branches return
+      Returns_Allowed := Valid_Return_Node (End_Stmt.As_Ada_Node);
 
       if End_Stmt.Kind not in Ada_Return_Stmt_Range then
          It_Stmt := Start_Stmt;
          loop
-            if It_Stmt.Kind in Ada_Return_Stmt_Range then
+            if It_Stmt.Kind in Ada_Return_Stmt_Range and not Returns_Allowed
+            then
                --  From the if statement before this one, we know that if
                --  It_Stmt = End_Stmt => It_Stmt.Kind not in
                --                          Ada_Return_Stmt_Range.
                --
-               --  If any sibling node in [Start_Stmt, End_Stmt[ is a return
+               --  If any sibling node in [Start_Stmt, End_Stmt] is a return
                --  statement node, we can immediately conclude that we cannot
                --  extract.
 
-               Available_Subprogram_Kinds := [others => False];
-               return False;
+               return No_Extraction_Available;
 
             else
                declare
@@ -1880,10 +1956,15 @@ package body LAL_Refactor.Extract_Subprogram is
                   begin
                      if Node.Is_Null then
                         return Over;
-
-                     elsif Node.Kind in Ada_Return_Stmt_Range then
-                        Found_Forbidden_Return_Stmt := True;
-                        return Stop;
+                     elsif Node.Kind in Ada_Return_Stmt_Range
+                     then
+                        if Returns_Allowed and Node.Next_Sibling.Is_Null
+                        then
+                           return Over;
+                        else
+                           Found_Forbidden_Return_Stmt := True;
+                           return Stop;
+                        end if;
 
                      elsif Node.Kind in Ada_Subp_Body_Range
                        and then Node.As_Subp_Body.F_Subp_Spec.F_Subp_Kind in
@@ -1901,10 +1982,8 @@ package body LAL_Refactor.Extract_Subprogram is
 
                begin
                   It_Stmt.Traverse (Look_Up_Forbidden_Return_Stmts'Access);
-
                   if Found_Forbidden_Return_Stmt then
-                     Available_Subprogram_Kinds := [others => False];
-                     return False;
+                     return No_Extraction_Available;
                   end if;
                end;
             end if;
@@ -1932,8 +2011,7 @@ package body LAL_Refactor.Extract_Subprogram is
             --  node we can immediately conclude that its correspondent
             --  loop statement will not be extracted, therefore, neither does
             --  this exit statement.
-            Available_Subprogram_Kinds := [others => False];
-            return False;
+            return No_Extraction_Available;
 
          else
             declare
@@ -2033,8 +2111,7 @@ package body LAL_Refactor.Extract_Subprogram is
                It_Stmt.Traverse (Look_Up_Forbidden_Exit_Stmts'Access);
 
                if Found_Forbidden_Exit_Stmt then
-                  Available_Subprogram_Kinds := [others => False];
-                  return False;
+                  return No_Extraction_Available;
                end if;
             end;
          end if;
@@ -2054,7 +2131,8 @@ package body LAL_Refactor.Extract_Subprogram is
       end loop;
 
       --  Check what kind of subprograms can be extracted
-      if End_Stmt.Kind in Ada_Return_Stmt_Range then
+      if End_Stmt.Kind in Ada_Return_Stmt_Range or Returns_Allowed
+      then
          Available_Subprogram_Kinds :=
            [Ada_Subp_Kind_Function  => True,
             Ada_Subp_Kind_Procedure => False];

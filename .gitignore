@@ -16,3 +16,4 @@ testsuite/out
 
 # VSCode settings possibly modified by ancr
 .vscode/settings.json
+.vscode/launch.json
