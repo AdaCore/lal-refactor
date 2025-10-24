@@ -177,6 +177,12 @@ procedure Extract_Subprogram is
                end;
             end if;
          end loop;
+      else
+         Ada.Text_IO.Put_Line
+           ("Could not extract subprogram "
+            & Args.Source.Get.To_String
+            & " : "
+            & Args.Name.Get.To_String);
       end if;
 
    end Extract_Subprogram_App_Setup;

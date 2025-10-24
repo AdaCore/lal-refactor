@@ -1,0 +1,30 @@
+Could not extract subprogram my_package.adb : Foo
+Could not extract subprogram my_package.adb : Foo
+Could not extract subprogram my_package.adb : Foo
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+4:1-4:1 
+      function Foo return Boolean;
+
+      function Foo return Boolean is
+      begin
+         return False;
+      end Foo;
+
+
+9:7-9:20 return Foo;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+4:1-4:1 
+      function Foo return Boolean;
+
+      function Foo return Boolean is
+      begin
+         null;
+         return False;
+      end Foo;
+
+
+8:7-9:20 return Foo;
+

@@ -1,0 +1,309 @@
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+7:1-7:1 
+      function Foo_Is_Positive return Boolean;
+
+      function Foo_Is_Positive return Boolean is
+      begin
+         if (I > 0) then
+         return True;
+      elsif I = 0 then
+         return False;
+      else
+         return False;
+      end if;
+      end Foo_Is_Positive;
+
+
+8:7-14:14 return Foo_Is_Positive;
+
+Could not extract subprogram my_package.adb : Fail_No_Extracting_Me
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+19:1-19:1 
+      function Oh_No_I_Have_Been_Extracted return Boolean;
+
+      function Oh_No_I_Have_Been_Extracted return Boolean is
+      begin
+         if (I > 0) then
+            return True;
+         elsif I = 0 then
+            Ada.Text_IO.Put_Line ("zerooooo");
+         else
+            return False;
+         end if;
+         return False;
+      end Oh_No_I_Have_Been_Extracted;
+
+
+20:7-27:20 return Oh_No_I_Have_Been_Extracted;
+
+Extracting as a ADA_SUBP_KIND_PROCEDURE:
+my_package.adb
+32:1-32:1 
+      procedure Foo_Print_Positive;
+
+      procedure Foo_Print_Positive is
+      begin
+         if (I > 0) then
+            Ada.Text_IO.Put_Line ("Positive!");
+         elsif I = 0 then
+            Ada.Text_IO.Put_Line ("Zero");
+         else
+            Ada.Text_IO.Put_Line ("!Negative");
+         end if;
+      end Foo_Print_Positive;
+
+
+33:7-39:14 Foo_Print_Positive;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+46:1-46:1 
+      function Foo_Is_Even return Boolean;
+
+      function Foo_Is_Even return Boolean is
+      begin
+         if (I mod 2 = 0) then
+            B := True;
+         else
+            B := False;
+         end if;
+         return B;
+      end Foo_Is_Even;
+
+
+47:7-52:16 return Foo_Is_Even;
+
+Could not extract subprogram my_package.adb : Fail_Only_Then_Branch
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+57:1-57:1 
+      function Foo_Only_Then_Branch return Boolean;
+
+      function Foo_Only_Then_Branch return Boolean is
+      begin
+         if (I > 0) then
+            return False;
+         end if;
+         return True;
+      end Foo_Only_Then_Branch;
+
+
+58:7-61:19 return Foo_Only_Then_Branch;
+
+Could not extract subprogram my_package.adb : Fail_Is_Zero
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+66:1-66:1 
+      function Foo_Is_Zero return Boolean;
+
+      function Foo_Is_Zero return Boolean is
+      begin
+         if (I > 0) then
+            return False;
+         elsif (I < 0) then
+            return False;
+         end if;
+         return True;
+      end Foo_Is_Zero;
+
+
+67:7-72:19 return Foo_Is_Zero;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+78:1-78:1 
+      function Foo_Print_IfExpr_Asgmt return Integer;
+
+      function Foo_Print_IfExpr_Asgmt return Integer is
+      begin
+         return (if (I > 0)
+         then 10
+         else 42);
+      end Foo_Print_IfExpr_Asgmt;
+
+
+79:7-82:19 S := Foo_Print_IfExpr_Asgmt;
+
+Extracting as a ADA_SUBP_KIND_PROCEDURE:
+my_package.adb
+78:1-78:1 
+      procedure Foo_Print_IfExpr_Asgmt;
+
+      procedure Foo_Print_IfExpr_Asgmt is
+      begin
+         S :=
+            (if (I > 0)
+            then 10
+            else 42);
+      end Foo_Print_IfExpr_Asgmt;
+
+
+79:7-82:19 Foo_Print_IfExpr_Asgmt;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+78:1-78:1 
+      function Foo_Print_IfExpr_Paren return Integer;
+
+      function Foo_Print_IfExpr_Paren return Integer is
+      begin
+         return (if (I > 0)
+         then 10
+         else 42);
+      end Foo_Print_IfExpr_Paren;
+
+
+79:7-82:19 S := Foo_Print_IfExpr_Paren;
+
+Extracting as a ADA_SUBP_KIND_PROCEDURE:
+my_package.adb
+78:1-78:1 
+      procedure Foo_Print_IfExpr_Paren;
+
+      procedure Foo_Print_IfExpr_Paren is
+      begin
+         S :=
+            (if (I > 0)
+            then 10
+            else 42);
+      end Foo_Print_IfExpr_Paren;
+
+
+79:7-82:19 Foo_Print_IfExpr_Paren;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+78:1-78:1 
+      function Foo_Print_IfExpr_Expr return Integer;
+
+      function Foo_Print_IfExpr_Expr return Integer is
+      begin
+         return (if (I > 0)
+         then 10
+         else 42);
+      end Foo_Print_IfExpr_Expr;
+
+
+79:7-82:19 S := Foo_Print_IfExpr_Expr;
+
+Extracting as a ADA_SUBP_KIND_PROCEDURE:
+my_package.adb
+78:1-78:1 
+      procedure Foo_Print_IfExpr_Expr;
+
+      procedure Foo_Print_IfExpr_Expr is
+      begin
+         S :=
+            (if (I > 0)
+            then 10
+            else 42);
+      end Foo_Print_IfExpr_Expr;
+
+
+79:7-82:19 Foo_Print_IfExpr_Expr;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+89:1-89:1 
+      function Extract_Inner return Boolean;
+
+      function Extract_Inner return Boolean is
+      begin
+         if (S = 0)
+         then
+            return False;
+         else
+            return True;
+         end if;
+      end Extract_Inner;
+
+
+93:10-98:17 return Extract_Inner;
+
+Could not extract subprogram my_package.adb : Extract_Recursively
+Could not extract subprogram my_package.adb : Fail_Extract_Loop
+Could not extract subprogram my_package.adb : Fail_Outer_If
+Could not extract subprogram my_package.adb : Fail_Inner_If
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+105:1-105:1 
+      function Extract_Loop_With_Return return Boolean;
+
+      function Extract_Loop_With_Return return Boolean is
+      begin
+         loop
+            if B then
+               if C then
+                  exit;
+               end if;
+               return C;
+            else
+               return D;
+            end if;
+         end loop;
+         return D and C;
+      end Extract_Loop_With_Return;
+
+
+106:7-116:22 return Extract_Loop_With_Return;
+
+Extracting as a ADA_SUBP_KIND_PROCEDURE:
+my_package.adb
+120:1-120:1 
+      procedure Extract_Case_Proc;
+
+      procedure Extract_Case_Proc is
+      begin
+         case X is
+            when A =>
+               F (1);
+            when B =>
+               F (10);
+            when others =>
+               null;
+         end case;
+      end Extract_Case_Proc;
+
+
+121:7-128:16 Extract_Case_Proc;
+
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+132:1-132:1 
+      function Extract_Case_Fn return Positive;
+
+      function Extract_Case_Fn return Positive is
+      begin
+         case X is
+         when A =>
+            return 1;
+         when others =>
+            return 69;
+      end case;
+      end Extract_Case_Fn;
+
+
+133:7-138:16 return Extract_Case_Fn;
+
+Could not extract subprogram my_package.adb : Fail_Case_Mixed_Returns
+Extracting as a ADA_SUBP_KIND_FUNCTION:
+my_package.adb
+142:1-142:1 
+      function Extract_Case_Mixed_Returns return Positive;
+
+      function Extract_Case_Mixed_Returns return Positive is
+      begin
+         case X is
+            when A =>
+               return 1;
+            when others =>
+               Print_Err ("I am not a return!");
+         end case;
+         return 12;
+      end Extract_Case_Mixed_Returns;
+
+
+143:7-149:17 return Extract_Case_Mixed_Returns;
+
