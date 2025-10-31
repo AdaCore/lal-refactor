@@ -1103,9 +1103,11 @@ package body LAL_Refactor.Subprogram_Signature is
       --------------------------
 
       procedure Change_Mode_Callback (Relative_Subp : Basic_Decl'Class) is
-         Relative_Subp_Body : constant Base_Subp_Body :=
-           Find_Subp_Body (Relative_Subp);
-
+         Ignore : Libadalang.Common.Ref_Result_Kind :=
+           Libadalang.Common.No_Ref;
+         Bodies : constant Bodies_List.List :=
+           List_Bodies_Of
+             (Relative_Subp.P_Defining_Name, Refactor_Trace, Ignore);
       begin
          if Is_Subprogram (Relative_Subp) then
             Change_Mode
@@ -1114,13 +1116,13 @@ package body LAL_Refactor.Subprogram_Signature is
                New_Mode,
                Edits);
 
-            if not Relative_Subp_Body.Is_Null then
+            for B of Bodies loop
                Change_Mode
-                 (Relative_Subp_Body,
+                 (B.P_Basic_Decl,
                   Parameter_Indices_Range,
                   New_Mode,
                   Edits);
-            end if;
+            end loop;
          end if;
       end Change_Mode_Callback;
 
@@ -1160,18 +1162,21 @@ package body LAL_Refactor.Subprogram_Signature is
       -----------------------------
 
       procedure Move_Parameter_Callback (Relative_Subp : Basic_Decl'Class) is
-         Relative_Subp_Body : constant Base_Subp_Body :=
-           Find_Subp_Body (Relative_Subp);
+         Ignore : Libadalang.Common.Ref_Result_Kind :=
+           Libadalang.Common.No_Ref;
+         Bodies : constant Bodies_List.List :=
+           List_Bodies_Of
+             (Relative_Subp.P_Defining_Name, Refactor_Trace, Ignore);
 
       begin
          if Is_Subprogram (Relative_Subp) then
             Move_Backward
               (Relative_Subp, Parameter_Index, Edits);
 
-            if not Relative_Subp_Body.Is_Null then
+            for B of Bodies loop
                Move_Backward
-                 (Relative_Subp_Body, Parameter_Index, Edits);
-            end if;
+                 (B.P_Basic_Decl, Parameter_Index, Edits);
+            end loop;
          end if;
       end Move_Parameter_Callback;
 
@@ -1938,18 +1943,20 @@ package body LAL_Refactor.Subprogram_Signature is
 
       procedure Add_Parameter_Callback (Relative_Subp : Basic_Decl'Class)
       is
-         Relative_Subp_Body : constant Base_Subp_Body :=
-           Find_Subp_Body (Relative_Subp);
-
+         Ignore : Libadalang.Common.Ref_Result_Kind :=
+           Libadalang.Common.No_Ref;
+         Bodies : constant Bodies_List.List :=
+           List_Bodies_Of
+             (Relative_Subp.P_Defining_Name, Refactor_Trace, Ignore);
       begin
          if Relative_Subp.P_Is_Subprogram
            or else Relative_Subp.Kind in Ada_Generic_Subp_Decl_Range
          then
             Add_Parameter (Self, Relative_Subp, Edits);
 
-            if not Relative_Subp_Body.Is_Null then
-               Add_Parameter (Self, Relative_Subp_Body, Edits);
-            end if;
+            for B of Bodies loop
+               Add_Parameter (Self, B.P_Basic_Decl, Edits);
+            end loop;
          end if;
       end Add_Parameter_Callback;
 
@@ -1998,13 +2005,6 @@ package body LAL_Refactor.Subprogram_Signature is
       end if;
 
       return Refactoring_Edits'(Text_Edits => Edits, others => <>);
-
-   exception
-      when E : others =>
-         Refactor_Trace.Trace
-           (E,
-            Refactoring_Tool_Refactor_Default_Error_Message ("Add Parameter"));
-         return No_Refactoring_Edits;
    end Refactor;
 
    --------------------------------------

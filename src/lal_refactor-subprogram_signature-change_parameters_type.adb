@@ -513,9 +513,11 @@ package body LAL_Refactor.Subprogram_Signature.Change_Parameters_Type is
       --------------------------
 
       procedure Change_Type_Callback (Relative_Subp : Basic_Decl'Class) is
-         Relative_Subp_Body : constant Base_Subp_Body :=
-           Find_Subp_Body (Relative_Subp);
-
+         Ignore : Libadalang.Common.Ref_Result_Kind :=
+           Libadalang.Common.No_Ref;
+         Bodies : constant Bodies_List.List :=
+           List_Bodies_Of
+             (Relative_Subp.P_Defining_Name, Refactor_Trace, Ignore);
       begin
          if Is_Subprogram (Relative_Subp) then
             Change_Parameter_Type
@@ -524,13 +526,13 @@ package body LAL_Refactor.Subprogram_Signature.Change_Parameters_Type is
                Self.New_Parameters_Type,
                Edits);
 
-            if not Relative_Subp_Body.Is_Null then
+            for B of Bodies loop
                Change_Parameter_Type
-                 (Relative_Subp_Body,
+                 (B.P_Basic_Decl,
                   Parameters_Indices,
                   Self.New_Parameters_Type,
                   Edits);
-            end if;
+            end loop;
          end if;
       end Change_Type_Callback;
 
