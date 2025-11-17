@@ -118,6 +118,8 @@ package body LAL_Refactor.Delete_Entity is
    Null_Statement : constant Unbounded_String :=
      To_Unbounded_String ("null;");
 
+   Tool_Name : constant String := "Delete sEntity";
+
    package Diagnostics is
 
       type Diagnostic is new Refactoring_Diagnostic with record
@@ -159,6 +161,13 @@ package body LAL_Refactor.Delete_Entity is
          Remove_Declaration (Self.Definition, Units, Result);
          Fill_Diagnostics (Self.Definition, Units, Result, Filter);
       end return;
+   exception
+      when E : others =>
+         Refactor_Trace.Trace
+           (E,
+            Refactoring_Tool_Refactor_Default_Error_Message (Tool_Name));
+
+         return No_Refactoring_Edits;
    end Refactor;
 
    ---------------------------
@@ -767,20 +776,35 @@ package body LAL_Refactor.Delete_Entity is
       Node_SLOC : Source_Location)
       return Boolean
    is
-      Node : constant Ada_Node :=
-        (if Unit = No_Analysis_Unit then No_Ada_Node else
-            Unit.Root.Lookup (Node_SLOC));
+      function Declaration_Node return Basic_Decl;
+      --  Find a name at Node_SLOC, resolve it and return corresponding decl
 
-      Definition : constant Defining_Name :=
-        (if Node.Is_Null or else Node.Kind not in Libadalang.Common.Ada_Name
-         then No_Defining_Name
-         else Laltools.Common.Resolve_Name_Precisely (Node.As_Name));
+      ----------------------
+      -- Declaration_Node --
+      ----------------------
 
-      Declaration : constant Basic_Decl :=
-        (if Definition.Is_Null
-         then No_Basic_Decl
-         else Definition.P_Basic_Decl);
+      function Declaration_Node return Basic_Decl is
+         Node : constant Ada_Node :=
+           (if Unit = No_Analysis_Unit then No_Ada_Node else
+               Unit.Root.Lookup (Node_SLOC));
+
+         Definition : constant Defining_Name :=
+           (if Node.Is_Null or else Node.Kind not in Libadalang.Common.Ada_Name
+            then No_Defining_Name
+            else Laltools.Common.Resolve_Name_Precisely (Node.As_Name));
+
+         Declaration : constant Basic_Decl :=
+           (if Definition.Is_Null
+            then No_Basic_Decl
+            else Definition.P_Basic_Decl);
+      begin
+         return Declaration;
+      end Declaration_Node;
+
+      Declaration : Basic_Decl;
    begin
+      Declaration := Declaration_Node;
+
       return not Declaration.Is_Null
         and then
           (case Declaration.Kind is
@@ -794,6 +818,13 @@ package body LAL_Refactor.Delete_Entity is
                  not Is_Single_Item_List
                    (Declaration.Parent.As_Enum_Literal_Decl_List),
               when others => True);
+   exception
+      when E : others =>
+         Refactor_Trace.Trace
+           (E,
+            LAL_Refactor.Is_Refactoring_Tool_Available_Default_Error_Message
+              (Tool_Name));
+         return False;
    end Is_Delete_Entity_Available;
 
    -----------------------
