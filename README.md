@@ -14,19 +14,19 @@ The Safe Rename tool not only allows you to safely rename Ada entities such as v
 
 The Change Subprogram Signatures tool provides several sub-tools to modify subprogram signatures in a controlled and automated manner. The following sub-tools are available:
 
--   Add Parameter: Easily add a new parameter to a subprogram. Currently, all call sites need to be manually handled.
--   Remove Parameter: Safely remove a parameter from a subprogram, handling the necessary adjustments to all references.
--   Move Parameter: Move a parameter from one position to another within a subprogram, automatically updating call sites (if necessary).
--   Change Parameter Mode: Change the mode (in, out, in out) of a parameter in a subprogram, ensuring consistency across the codebase.
--   Change Parameter Default Value: Modify the default value of a parameter in a subprogram.
--   Change Parameter Type: Update the type of a parameter in a subprogram.
--   Change Function Return Type: Change the return type of a function. Currently, all calls and assignments need to be handled manually.
+- **Add Parameter**: Easily add a new parameter to a subprogram. Currently, all call sites need to be manually handled.
+- **Remove Parameter**: Safely remove a parameter from a subprogram, handling the necessary adjustments to all references.
+- **Move Parameter**: Move a parameter from one position to another within a subprogram, automatically updating call sites (if necessary).
+- **Change Parameter Mode**: Change the mode (in, out, in out) of a parameter in a subprogram, ensuring consistency across the codebase.
+- **Change Parameter Default Value**: Modify the default value of a parameter in a subprogram.
+- **Change Parameter Type**: Update the type of a parameter in a subprogram.
+- **Change Function Return Type**: Change the return type of a function. Currently, all calls and assignments need to be handled manually.
 
 ### Pull-Up Declaration
 
 The Pull-Up Declaration tool assists you in refactoring code by moving a declaration from a child unit to its parent unit. It simplifies the code structure, avoids duplication, and promotes better organization of your Ada code. In addition, the tool ensures that dependent declarations are also moved when pulling up a declaration.
 
-#### Handling Dependent Declarations
+### Handling Dependent Declarations
 
 When you use the Pull-Up Declaration tool to move a declaration (let's say, declaration A) from a child unit to its parent unit, the tool takes into account any dependent declarations (e.g., declaration B) that A relies on within the same scope. The tool intelligently identifies these dependent declarations and automatically moves them along with the original declaration.
 
@@ -49,6 +49,18 @@ The Sort Dependencies tool provides functionality to sort the with and use claus
 ### Suppress Separate Subprogram
 
 The Suppress Separate Subprogram tool allows you to suppress a separate subprogram by removing its declaration and merging its body with the parent unit. This helps simplify code organization and improve readability.
+
+### Extract Variable
+
+The Extract Variable tool identifies expressions which can be simplified to a variable, and moves the relevant code for you. This helps improve readability and abstraction.
+
+### Extract Subprogram
+
+The Extract Subprogram tool identifies blocks of expressions or statements which can be extracted into a separate procedure or function (detected from context), and generates the relevant declaration and implementation, replacing the code with a subprogram call. This can improve code readability and complexity.
+
+### Generate Subprogram
+
+The Generate Subprogram tool looks for subprogram declarations without a matching body in the file, and suggests generating a stub for the user to fill out. This reduces developer time spent writing boilerplate code.
 
 ## Contributing
 

@@ -1,0 +1,5 @@
+title: Generate subprogram body from spec.
+
+description: generate_subprogram tool test - test cases for subprograms with private implementation
+
+driver: shell_script
