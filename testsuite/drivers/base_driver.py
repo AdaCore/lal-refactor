@@ -28,6 +28,7 @@ class BaseDriver(DiffTestDriver):
         "change_parameters_default_value",
         "change_parameters_type",
         "extract_subprogram",
+        "generate_subprogram",
         "introduce_parameter",
         "lint",
         "pull_up_declaration",
