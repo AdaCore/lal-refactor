@@ -1,0 +1,170 @@
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+5:1-5:1 
+   function Square (X : Integer) return Natural is
+   begin
+      
+   end Square;
+
+
+
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+5:1-5:1 
+   function Square (X : Integer) return Natural is
+   begin
+      
+   end Square;
+
+
+
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+5:1-5:1 
+   function Square (X : Integer) return Natural is
+   begin
+      
+   end Square;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+8:1-8:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+10:1-10:1 
+   procedure Unimplemented is
+   begin
+      
+   end Unimplemented;
+
+
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+10:1-10:1 
+   procedure Unimplemented is
+   begin
+      
+   end Unimplemented;
+
+
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+10:1-10:1 
+   procedure Unimplemented is
+   begin
+      
+   end Unimplemented;
+
+
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+10:1-10:1 
+   procedure Unimplemented is
+   begin
+      
+   end Unimplemented;
+
+
+
+Could not generate body for subprogram declared in main.adb 8:1
+
+Could not generate body for subprogram declared in main.adb 5:1
+
+Could not generate body for subprogram declared in main.adb 10:1
+
+Could not generate body for subprogram declared in main.adb 11:1
+
+Could not generate body for subprogram declared in main.adb 11:4
+

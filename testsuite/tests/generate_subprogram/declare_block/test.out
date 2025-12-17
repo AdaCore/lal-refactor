@@ -1,0 +1,88 @@
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+3:1-3:1 
+   function Square (X : Integer) return Natural is
+   begin
+      
+   end Square;
+
+
+
+Generating body for subprogram 'Increment' declared in main.adb
+main.adb
+4:1-4:1 
+   procedure Increment (Y : in out Natural) is
+   begin
+      
+   end Increment;
+
+
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+5:1-5:1 
+   procedure Unimplemented is
+   begin
+      
+   end Unimplemented;
+
+
+
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+9:1-9:1 
+      function Square (X : Integer) return Natural is
+      begin
+            
+      end Square;
+
+
+
+Could not generate body for subprogram declared in main.adb 9:1
+
+Generating body for subprogram 'Unimplemented' declared in main.adb
+main.adb
+11:1-11:1 
+      procedure Unimplemented is
+      begin
+            
+      end Unimplemented;
+
+
+
+Could not generate body for subprogram declared in main.adb 14:1
+
+Could not generate body for subprogram declared in main.adb 15:1
+
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+17:1-17:1 
+            function Square (A, B : Integer) return Natural is
+            begin
+                  
+            end Square;
+
+
+
+Generating body for subprogram 'Blip' declared in main.adb
+main.adb
+18:1-18:1 
+            procedure Blip (C : Positive) is
+            begin
+                  
+            end Blip;
+
+
+
+Could not generate body for subprogram declared in main.adb 18:1
+
+Generating body for subprogram 'Square' declared in main.adb
+main.adb
+40:1-40:1 
+      function Square (I : Integer) return Natural is
+      begin
+            
+      end Square;
+
+
+
