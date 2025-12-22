@@ -1,0 +1,5 @@
+title: Generate package body file from specification.
+
+description: generate_package tool test - test cases for subprograms with private implementation
+
+driver: shell_script
