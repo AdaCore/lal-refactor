@@ -2,7 +2,7 @@
 
 This repository provides a collection of source code refactoring tools for the Ada programming language, leveraging the power of [Libadalang](https://github.com/AdaCore/libadalang). These tools aim to automate and assist with common code refactoring tasks, improving code maintainability and reducing the risk of introducing errors during the refactoring process.
 
-Currently, the main user of this tools is the [Ada Language Server](https://github.com/AdaCore/ada_language_server).
+Currently, the main user of these tools is the [Ada Language Server](https://github.com/AdaCore/ada_language_server).
 
 ## Implemented Tools
 
@@ -26,7 +26,7 @@ The Change Subprogram Signatures tool provides several sub-tools to modify subpr
 
 The Pull-Up Declaration tool assists you in refactoring code by moving a declaration from a child unit to its parent unit. It simplifies the code structure, avoids duplication, and promotes better organization of your Ada code. In addition, the tool ensures that dependent declarations are also moved when pulling up a declaration.
 
-### Handling Dependent Declarations
+#### Handling Dependent Declarations
 
 When you use the Pull-Up Declaration tool to move a declaration (let's say, declaration A) from a child unit to its parent unit, the tool takes into account any dependent declarations (e.g., declaration B) that A relies on within the same scope. The tool intelligently identifies these dependent declarations and automatically moves them along with the original declaration.
 
@@ -58,9 +58,16 @@ The Extract Variable tool identifies expressions which can be simplified to a va
 
 The Extract Subprogram tool identifies blocks of expressions or statements which can be extracted into a separate procedure or function (detected from context), and generates the relevant declaration and implementation, replacing the code with a subprogram call. This can improve code readability and complexity.
 
-### Generate Subprogram
+### Generate Package Body
 
-The Generate Subprogram tool looks for subprogram declarations without a matching body in the file, and suggests generating a stub for the user to fill out. This reduces developer time spent writing boilerplate code.
+If a package spec declares subprograms, two sub-tools are available:
+
+- **Generate Package Body**: if no matching package body found, create a new body file with subprogram body stubs fromt he spec.
+- **Update Package Body** can either generate a new package body file and fill it, or if a matching package body already exists, update this with subprogram stubs for new declarations. This aims to reduce developer time spent writing boilerplate code and speed up implementations.
+
+### Generate Subprogram Body
+
+This tool identifies nested subprogram declarations without a matching body in the file, and generates a subprogram body stub for the user to fill. This reduces developer time spent writing boilerplate code.
 
 ## Contributing
 

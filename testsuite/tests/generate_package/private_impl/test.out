@@ -1,0 +1,30 @@
+
+priv_impl.adb
+package body Priv_Impl is
+
+   function Run_Word_Count (S : String) return WordCountT is
+   begin
+      
+   end Run_Word_Count;
+
+   procedure M is
+   begin
+      
+   end M;
+end Priv_Impl;
+
+
+priv_impl-child.adb
+10:1-10:1 
+   function Wide_Char_Count (S : String) return WordCountT is
+   begin
+      
+   end Wide_Char_Count;
+
+   procedure H is
+   begin
+      
+   end H;
+
+
+
