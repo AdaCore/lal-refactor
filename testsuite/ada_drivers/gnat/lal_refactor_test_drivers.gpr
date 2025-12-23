@@ -21,6 +21,7 @@ project LAL_Refactor_Test_Drivers is
       "extract_subprogram.adb",
       "extract_variable.adb",
       "generate_subprogram.adb",
+      "generate_package.adb",
       "inline_variable.adb",
       "introduce_parameter.adb",
       "move_parameter.adb",
