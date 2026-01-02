@@ -1,0 +1,5 @@
+title: Generate Package Body
+
+description: generate_package tool - test on generic package declarations
+
+driver: shell_script
