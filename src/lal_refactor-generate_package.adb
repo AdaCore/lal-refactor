@@ -1,6 +1,6 @@
 --
 --
---  Copyright (C) 2025, AdaCore
+--  Copyright (C) 2025-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -18,19 +18,45 @@ with LAL_Refactor.Stub_Utils;
 package body LAL_Refactor.Generate_Package is
    Tool_Name : constant String := "Generate Package";
 
+   ---------------------
+   -- To_Package_Decl --
+   ---------------------
+
+   function To_Package_Decl (Node : Ada_Node'Class) return Base_Package_Decl is
+      --  Package_Decl includes keywords "package", "private", "end"
+      --  but not the actual package name in declaration
+      function In_Package_Name (Node : Ada_Node'Class) return Boolean
+      is (not Node.Parent.Is_Null
+          and then Node.Kind in Ada_Identifier_Range
+          and then
+            Node.Parent.Kind in Ada_Defining_Name_Range | Ada_End_Name_Range
+          and then Node.P_Parent_Basic_Decl.Kind in Ada_Base_Package_Decl);
+   begin
+      if Node.Is_Null then
+         return No_Base_Package_Decl;
+      elsif Node.Kind in Ada_Base_Package_Decl then
+         return Node.As_Base_Package_Decl;
+      elsif In_Package_Name (Node) then
+         return Node.P_Parent_Basic_Decl.As_Base_Package_Decl;
+      else
+         return No_Base_Package_Decl;
+      end if;
+   end To_Package_Decl;
+
    -----------------------------------
    -- Is_Generate_Package_Available --
    -----------------------------------
 
    function Is_Generate_Package_Available
-     (Unit : Analysis_Unit; Spec : out Base_Package_Decl) return Boolean is
+     (Node : Ada_Node'Class; Spec : out Base_Package_Decl) return Boolean is
    begin
-      Spec := To_Package_Decl (Unit);
+      Spec := To_Package_Decl (Node);
       return
         (not Spec.Is_Null
          and then not Spec.F_Public_Part.Is_Null
-         and then (for some Decl of Spec.F_Public_Part.F_Decls =>
-                     Is_Unimplemented_Subprogram (Decl)));
+         and then
+           (for some Decl of Spec.F_Public_Part.F_Decls =>
+              Is_Unimplemented_Subprogram (Decl)));
    exception
       when E : others =>
          Refactor_Trace.Trace

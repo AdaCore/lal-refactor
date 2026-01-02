@@ -1,0 +1,13 @@
+
+operators.adb
+package body Operators is
+
+   function ">" (L, R : T) return Boolean is
+   begin
+      
+   end ">";
+end Operators;
+
+
+Unable to generate package body for operators.ads at 6:0
+
