@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2025, AdaCore
+--  Copyright (C) 2025-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -17,36 +17,29 @@ package LAL_Refactor.Generate_Package is
 
    subtype Decl_Vector is Declaration_Vectors.Vector;
 
-   function To_Package_Decl (Unit : Analysis_Unit) return Base_Package_Decl
-   is (if Unit in No_Analysis_Unit
-         or else Unit.Root.Is_Null
-         or else Unit.Root.Kind not in Ada_Compilation_Unit_Range
-         or else Unit.Root.As_Compilation_Unit.P_Decl.Is_Null
-         or else Unit.Root.As_Compilation_Unit.P_Decl.Kind
-                 not in Ada_Base_Package_Decl
-       then No_Base_Package_Decl
-       else Unit.Root.As_Compilation_Unit.P_Decl.As_Base_Package_Decl);
-   --  Marshall a Unit node into a package specification node
-   --  if it is one. Otherwise return No_Base_Package_Decl
+   function To_Package_Decl (Node : Ada_Node'Class) return Base_Package_Decl;
+   --  If Node belongs to enclosing package declaration lines
+   --  e.g. "package Spec is... " or "end Spec;"
+   --  Return package declaration node, or No_Base_Package_Decl
 
    function Is_Generate_Package_Available
-     (Unit : Analysis_Unit; Spec : out Base_Package_Decl) return Boolean;
-   --  If Spec_Unit is a package specification with subprogram declarations,
-   --  AND no implementation already exists either privately or in the body
-   --  then write to Spec and return True.
+     (Node : Ada_Node'Class; Spec : out Base_Package_Decl) return Boolean;
+   --  If Node is inside a package declaration
+   --  check whether a matching package body exists.
+   --  If yes but there are missing subprogram implementations,
+   --  or no and the package includes subprogram declarations,
+   --  Return true and write to Spec
 
    type Package_Generator is new Refactoring_Tool with private;
 
    function Build_Package_Generator
      (Spec : Base_Package_Decl) return Package_Generator
-   with
-     Pre =>
-       not (Spec.Is_Null or else Spec.F_Public_Part.Is_Null);
+   with Pre => not (Spec.Is_Null or else Spec.F_Public_Part.Is_Null);
    --  Parse package spec and build generator object
 
    function Get_Body_Path (From_Spec : Base_Package_Decl) return String;
-      --  Return path to existing body
-      --  or create path for package body in same directory
+   --  Return path to existing body
+   --  or create path for package body in same directory
 
    function Package_Body_Exists (For_Spec : Base_Package_Decl) return Boolean
    is (not For_Spec.P_Body_Part.Is_Null);
