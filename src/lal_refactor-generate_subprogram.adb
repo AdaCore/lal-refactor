@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2025, AdaCore
+--  Copyright (C) 2025-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -60,7 +60,9 @@ package body LAL_Refactor.Generate_Subprogram is
 
       function Is_Package_Decl (D : Basic_Decl'Class) return Boolean
       is (not D.P_Parent_Basic_Decl.Is_Null
-          and then D.P_Parent_Basic_Decl.Kind in Ada_Package_Decl_Range);
+          and then
+            D.P_Parent_Basic_Decl.Kind
+            in Ada_Base_Package_Decl | Ada_Generic_Package_Decl_Range);
       --  Check if declaration is a top-level decl from a package spec
       --  in which case a body must be generated in a different file
 
@@ -109,13 +111,11 @@ package body LAL_Refactor.Generate_Subprogram is
          --  parameter declaration or return type,
          --  we still navigate to the parent subprogram declaration
       end if;
-      --  TODO at present we can only generate body in same file
-      --  so we skip top-level package specs
-
       return
         not Target_Subp.Is_Null
-        and then not (Is_Package_Decl (Target_Subp)
-                      or Subprogram_Decl_Has_Body (Target_Subp));
+        and then
+          not (Is_Package_Decl (Target_Subp)
+               or Subprogram_Decl_Has_Body (Target_Subp));
    exception
       when E : others =>
          Refactor_Trace.Trace

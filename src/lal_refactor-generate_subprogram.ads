@@ -1,15 +1,15 @@
 --
 --
---  Copyright (C) 2025, AdaCore
+--  Copyright (C) 2025-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
 --  This package contains refactoring tools to generate subprogram body stubs
 --  from declarations.
---  At present, the tool only checks for a subprogram body in the same file,
+--  This tool checks for a local subprogram declaration in the same scope,
 --  and generates body stubs on the line directly under the declaration.
---  TODO : handle subprogram declarations in package specifications.
+--  Note: for public subprogram declarations, see the Generate Package tool
 
 with VSS;
 with VSS.Strings;
@@ -26,14 +26,17 @@ package LAL_Refactor.Generate_Subprogram is
    --
    --    overriding procedure F (N : Integer) with Pre => N > 10;
    --
-   --  Anywhere in this lin (including start indentation) all the way
+   --  Anywhere in this line (including start indentation) all the way
    --  up to and including the final parenthesis will count as inside
    --  the subprogram declaration. The semicolon will not count.
    --
    --  If a subprogram is found, set Target_Subp to the Subp_Decl node.
    --  Check if a body already exists in the same declarative scope
-   --  e.g. a declare block or subprogram declarative part (see TODO)
+   --  e.g. a declare block or subprogram declarative part
    --  Offer refactoring if no subprogram body found.
+   --  Note : this tool only works on local subprogram declarations
+   --  e.g. nested declarations within a subprogram declarative part.
+   --  For public subprogram declarations, see the Generate Package tool.
 
    function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl;
    --  Only use this when Node is already inside a Subp_Decl
@@ -68,8 +71,12 @@ package LAL_Refactor.Generate_Subprogram is
    function Get_Insertion_Point
      (Self : Subprogram_Generator) return Source_Location_Range;
    --  Calculate suitable text insertion point
-   --  TODO currently defaults to insertion directly below declaration
-   --  (as refactoring only available for non-package decls)
+   --  TODO:
+   --  Currently defaults to insertion directly below declaration.
+   --  May want to make this more intelligent, e.g. detect docstring
+   --  and generate body beneath it?
+   --  Alternatively, detect whether scope groups all declarations together
+   --  with a separate block for implementations
 
    -------------------------------
    --  LSP diagnostic reporting --

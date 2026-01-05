@@ -1,0 +1,5 @@
+title: Generate Subprogram Body
+
+description: generate_subprogram tool - test on generic declarations
+
+driver: shell_script
