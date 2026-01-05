@@ -60,14 +60,14 @@ The Extract Subprogram tool identifies blocks of expressions or statements which
 
 ### Generate Package Body
 
-If a package spec declares subprograms, two sub-tools are available:
+If a package specification declares subprograms, two sub-tools are available to automate creating or modifying the corresponding package body. Available for standard and generic package declarations.
 
-- **Generate Package Body**: if no matching package body found, create a new body file with subprogram body stubs fromt he spec.
-- **Update Package Body** can either generate a new package body file and fill it, or if a matching package body already exists, update this with subprogram stubs for new declarations. This aims to reduce developer time spent writing boilerplate code and speed up implementations.
+- **Generate Package Body**: if no matching package body found, create a new body file with subprogram body stubs from the spec.
+- **Update Package Body**: update existing package body with stubs for new subprogram declarations.
 
 ### Generate Subprogram Body
 
-This tool identifies nested subprogram declarations without a matching body in the file, and generates a subprogram body stub for the user to fill. This reduces developer time spent writing boilerplate code.
+This tool identifies nested subprogram declarations without a matching body in the file, and generates a subprogram body stub for the user to fill. This reduces developer time spent writing boilerplate code. Available code actions: Generate Procedure Body, Generate Function Body.
 
 ## Contributing
 
