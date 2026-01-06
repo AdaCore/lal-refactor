@@ -20,7 +20,7 @@ package LAL_Refactor.Generate_Package is
    function To_Package_Decl (Node : Ada_Node'Class) return Base_Package_Decl;
    --  If Node belongs to enclosing package declaration lines
    --  e.g. "package Spec is... " or "end Spec;"
-   --  Return package declaration node, or No_Base_Package_Decl
+   --  then return the package declaration node, else No_Base_Package_Decl
 
    function Is_Generate_Package_Available
      (Node : Ada_Node'Class; Spec : out Base_Package_Decl) return Boolean;
