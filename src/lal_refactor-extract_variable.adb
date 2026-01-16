@@ -246,7 +246,7 @@ package body LAL_Refactor.Extract_Variable is
    begin
       --  Find all names in Declarative_Parts
       for Scope of Declarative_Parts loop
-         for Decl of Scope.Children loop
+         for Decl of Scope.Children when not Decl.Is_Null loop
             if Decl.Kind in Ada_Basic_Decl then
                Names.Include
                  (To_Unbounded_String
