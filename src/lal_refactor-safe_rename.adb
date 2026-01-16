@@ -1619,7 +1619,7 @@ package body LAL_Refactor.Safe_Rename is
          if Is_Subp then
             Assert (not Canonical_Subp_Spec.Is_Null);
 
-            for Decl of Scope.Children loop
+            for Decl of Scope.Children when not Decl.Is_Null loop
                exit when Decl = Stop_Node;
 
                --  Conflicts can only exist with subprograms and not with other
@@ -1648,7 +1648,7 @@ package body LAL_Refactor.Safe_Rename is
             end loop;
 
          else
-            for Decl of Scope.Children loop
+            for Decl of Scope.Children when not Decl.Is_Null loop
                exit when Decl = Stop_Node;
 
                --  Conflicts can exists with any kind of declaration except
