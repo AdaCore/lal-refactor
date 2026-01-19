@@ -55,14 +55,12 @@ package body LAL_Refactor.Inline_Variable is
          return False;
       end if;
 
-      for Child of Node.Children loop
-         if not Child.Is_Null then
-            if Child.Kind = Ada_Subtype_Indication then
-               Is_Subtype := True;
+      for Child of Node.Children when not Child.Is_Null loop
+         if Child.Kind = Ada_Subtype_Indication then
+            Is_Subtype := True;
 
-            elsif Is_Subtype then
-               Is_Expression := True;
-            end if;
+         elsif Is_Subtype then
+            Is_Expression := True;
          end if;
       end loop;
 
@@ -133,27 +131,23 @@ package body LAL_Refactor.Inline_Variable is
       Expr         : Unbounded_String;
       Is_Subtype   : Boolean := False;
    begin
-      for Child of Self.Node.Children loop
-         if not Child.Is_Null then
-            if Child.Kind = Ada_Defining_Name_List then
-               for K of Child.Children loop
-                  if not K.Is_Null
-                    and then K.Kind = Ada_Defining_Name
-                  then
-                     Defining_Count := Defining_Count + 1;
-                  end if;
-               end loop;
-
-            elsif Child.Kind = Ada_Subtype_Indication then
-               Is_Subtype := True;
-
-            elsif Is_Subtype then
-               Expr := To_Unbounded_String
-                 (Langkit_Support.Text.To_UTF8 (Child.Text));
-
-               if Child.Kind = Ada_Bin_Op then
-                  Expr := "(" & Expr & ")";
+      for Child of Self.Node.Children when not Child.Is_Null loop
+         if Child.Kind = Ada_Defining_Name_List then
+            for K of Child.Children when not K.Is_Null loop
+               if K.Kind = Ada_Defining_Name then
+                  Defining_Count := Defining_Count + 1;
                end if;
+            end loop;
+
+         elsif Child.Kind = Ada_Subtype_Indication then
+            Is_Subtype := True;
+
+         elsif Is_Subtype then
+            Expr := To_Unbounded_String
+              (Langkit_Support.Text.To_UTF8 (Child.Text));
+
+            if Child.Kind = Ada_Bin_Op then
+               Expr := "(" & Expr & ")";
             end if;
          end if;
       end loop;

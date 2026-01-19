@@ -76,12 +76,16 @@ package body LAL_Refactor.Sort_Case is
       end if;
 
       --  Node is CaseStmt
-      for Aux of Node.Children loop
+      for Aux of Node.Children when not Aux.Is_Null loop
          if Aux.Kind = Ada_Case_Stmt_Alternative_List then
             --  Aux is list of `when`es
-            for Case_Stmt_Alternative of Aux.Children loop
+            for Case_Stmt_Alternative of Aux.Children
+              when not Case_Stmt_Alternative.Is_Null
+            loop
                --  Case_Stmt_Alternative is one `when =>`
-               for Alternative_List of Case_Stmt_Alternative.Children loop
+               for Alternative_List of Case_Stmt_Alternative.Children
+                 when not Alternative_List.Is_Null
+               loop
                   if Alternative_List.Kind = Ada_Alternatives_List then
                      --  Alternative_List is the list of identifiers in
                      --  the `when .. =>`
@@ -97,7 +101,9 @@ package body LAL_Refactor.Sort_Case is
                         declare
                            Local : Sets.Set;
                         begin
-                           for Identifier of Alternative_List.Children loop
+                           for Identifier of Alternative_List.Children
+                             when not Identifier.Is_Null
+                           loop
                               Local.Insert (Identifier.Text, C, Dummy);
 
                               if C /= Local.Last then
@@ -179,10 +185,8 @@ package body LAL_Refactor.Sort_Case is
 
       --  Concrete_Type is Ada_Concrete_Type_Decl,
       --   looking for Ada_Enum_Type_Def
-      for Ch of Concrete_Type.Children loop
-         if not Ch.Is_Null
-           and then Ch.Kind = Ada_Enum_Type_Def
-         then
+      for Ch of Concrete_Type.Children when not Ch.Is_Null loop
+         if Ch.Kind = Ada_Enum_Type_Def then
             --  Enum_List is should be Ada_Enum_Literal_Decl_List
             Enum_List := Ch.Child (Ch.First_Child_Index);
 
@@ -192,7 +196,7 @@ package body LAL_Refactor.Sort_Case is
 
             --  Fill literals in the order as they are declared
             --  Literal is Ada_Enum_Literal_Decl
-            for Literal of Enum_List.Children loop
+            for Literal of Enum_List.Children when not Literal.Is_Null loop
                Vector.Append (Literal.Text);
             end loop;
          end if;
@@ -249,7 +253,7 @@ package body LAL_Refactor.Sort_Case is
       end if;
 
       --  Node is CaseStmt
-      for Aux of Node.Children loop
+      for Aux of Node.Children when not Aux.Is_Null loop
          if Aux.Kind = Ada_Identifier then
             --  Aux is the name of the variable that case checks
             Get_Delaration (Aux, Declaration);
@@ -262,21 +266,27 @@ package body LAL_Refactor.Sort_Case is
 
          elsif Aux.Kind = Ada_Case_Stmt_Alternative_List then
             --  Aux is the list of `when`es
-            for Case_Stmt_Alternative of Aux.Children loop
+            for Case_Stmt_Alternative of Aux.Children
+              when not Case_Stmt_Alternative.Is_Null
+            loop
                --  Case_Stmt_Alternative is one `when .. =>`
-               for Alternatives_List of Case_Stmt_Alternative.Children loop
+               for Alternatives_List of Case_Stmt_Alternative.Children
+                 when not Alternatives_List.Is_Null
+               loop
                   if Alternatives_List.Kind = Ada_Alternatives_List then
                      --  Alternatives_List is the list of literals in
                      --  the `when .. =>`
-                     for Identifier of Alternatives_List.Children loop
+                     for Identifier of Alternatives_List.Children
+                       when not Identifier.Is_Null
+                     loop
                         --  Identifier each literal in the when list
                         if Identifier.Kind = Ada_Bin_Op then
                            --  `when Literal1 .. Literal2 =>` case
-                           for Literal of Identifier.Children loop
+                           for Literal of Identifier.Children
+                             when not Literal.Is_Null
+                           loop
                               --  Looking for the firts literal
-                              if not Literal.Is_Null
-                                and then Literal.Kind = Ada_Identifier
-                              then
+                              if Literal.Kind = Ada_Identifier then
                                  if Check (Literal.Text) then
                                     return True;
                                  end if;
@@ -319,7 +329,7 @@ package body LAL_Refactor.Sort_Case is
       Token : constant Token_Reference := Unit.Lookup_Token (Location);
       Node  : constant Ada_Node        := Lookup (Unit, Token, Forward);
    begin
-      for Aux of Node.Children loop
+      for Aux of Node.Children when not Aux.Is_Null loop
          if Aux.Kind = Ada_Case_Stmt_Alternative_List then
             return Alphabetical_Case_Sorter'(Unit, Aux);
          end if;
@@ -367,7 +377,7 @@ package body LAL_Refactor.Sort_Case is
       Result            : Refactoring_Edits;
    begin
       --  iterate over Ada_Case_Stmt_Alternative_List children
-      for Aux of Self.Node.Children loop
+      for Aux of Self.Node.Children when not Aux.Is_Null loop
          --  Aux is CaseStmtAlternative
 
          declare
@@ -375,13 +385,15 @@ package body LAL_Refactor.Sort_Case is
             Names_Cursor : Sets.Cursor;
             Reorder      : Boolean := False;
          begin
-            for Current of Aux.Children loop
+            for Current of Aux.Children when not Current.Is_Null loop
                --  Looking for AlternativesList
                if Current.Kind = Ada_Alternatives_List then
                   Alternatives := Current;
 
                   --  Iterate over Identifiers
-                  for Identifier of Alternatives.Children loop
+                  for Identifier of Alternatives.Children
+                    when not Identifier.Is_Null
+                  loop
                      if Identifier.Kind = Ada_Others_Designator then
                         --  Place "others" to the end of the case's "where"s
                         Names.Insert
@@ -411,7 +423,9 @@ package body LAL_Refactor.Sort_Case is
 
                begin
                   Names_Cursor := Names.Last;
-                  for Identifier of reverse Alternatives.Children loop
+                  for Identifier of reverse Alternatives.Children
+                    when not Identifier.Is_Null
+                  loop
                      --  Edit for reordering identifiers in case we don't need
                      --  to reorder "where"s
                      Names_Text_Edits.Insert
@@ -456,7 +470,7 @@ package body LAL_Refactor.Sort_Case is
       if Whenes_Reorder then
          --  We need to reorder 'when's
          Whenes_Cursor := Whenes.First;
-         for Aux of Self.Node.Children loop
+         for Aux of Self.Node.Children when not Aux.Is_Null loop
             Whenes_Text_Edits.Insert
               ((Aux.Sloc_Range,
                To_Unbounded_String
@@ -505,7 +519,7 @@ package body LAL_Refactor.Sort_Case is
       Result            : Refactoring_Edits;
    begin
       --  Node is CaseStmt
-      for N of Self.Node.Children loop
+      for N of Self.Node.Children when not N.Is_Null loop
          if N.Kind = Ada_Identifier then
             Get_Delaration (N, Declaration);
 
@@ -515,7 +529,7 @@ package body LAL_Refactor.Sort_Case is
             end if;
 
          elsif N.Kind = Ada_Case_Stmt_Alternative_List then
-            for Aux of N.Children loop
+            for Aux of N.Children when not Aux.Is_Null loop
                --  Aux is CaseStmtAlternative
 
                declare
@@ -546,19 +560,23 @@ package body LAL_Refactor.Sort_Case is
                   end Append;
 
                begin
-                  for Alternatives of Aux.Children loop
+                  for Alternatives of Aux.Children
+                    when not Alternatives.Is_Null
+                  loop
                      --  Looking for AlternativesList
                      if Alternatives.Kind = Ada_Alternatives_List then
                         --  Iterate over Identifiers in when ... =>
-                        for Identifier of Alternatives.Children loop
+                        for Identifier of Alternatives.Children
+                          when not Identifier.Is_Null
+                        loop
                            if Identifier.Kind = Ada_Others_Designator then
                               Append ("others", Identifier);
 
                            elsif Identifier.Kind = Ada_Bin_Op then
-                              for Literal of Identifier.Children loop
-                                 if not Literal.Is_Null
-                                   and then Literal.Kind = Ada_Identifier
-                                 then
+                              for Literal of Identifier.Children
+                                when not Literal.Is_Null
+                              loop
+                                 if Literal.Kind = Ada_Identifier then
                                     --  use the firts literal from range A .. B
                                     Append (Literal.Text, Identifier);
                                     exit;
