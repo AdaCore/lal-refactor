@@ -1,0 +1,14 @@
+procedure Main is
+
+   -------------------
+   -- To_Be_Deleted --
+   -------------------
+
+   procedure To_Be_Deleted (Value : Float) is
+   begin
+      To_Be_Deleted (Value - 1.0);
+   end To_Be_Deleted;
+
+begin
+   To_Be_Deleted (9.0);
+end Main;
