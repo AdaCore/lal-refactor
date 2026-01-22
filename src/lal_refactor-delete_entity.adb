@@ -615,6 +615,7 @@ package body LAL_Refactor.Delete_Entity is
 
          else
             --  Remove whole declaration
+            Remove_Comment_Box (Result.Text_Edits, Name);
             Remove_Node (Result.Text_Edits, Name.P_Basic_Decl, Expand => True);
 
             --  Delete file if required. Name is top level and compilation

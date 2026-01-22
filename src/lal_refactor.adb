@@ -10,6 +10,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO; use Ada.Text_IO;
+with LAL_Refactor.Utils;
 with Laltools.Common;
 
 package body LAL_Refactor is
@@ -265,6 +266,26 @@ package body LAL_Refactor is
                else Node.Sloc_Range),
           Text     => Text));
    end Replace_Node;
+
+   ------------------------
+   -- Remove_Comment_Box --
+   ------------------------
+
+   procedure Remove_Comment_Box
+     (Edits  : in out Text_Edit_Map;
+      Name   : Defining_Name'Class)
+   is
+      Span : constant Source_Location_Range :=
+        LAL_Refactor.Utils.Find_Comment_Box (Name);
+   begin
+      if Span /= No_Source_Location_Range then
+         Safe_Insert
+           (Edits,
+            Name.Unit.Get_Filename,
+            (Location => Span,
+             Text     => Null_Unbounded_String));
+      end if;
+   end Remove_Comment_Box;
 
    -----------------
    -- Remove_Node --

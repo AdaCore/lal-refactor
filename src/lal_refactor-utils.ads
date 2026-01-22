@@ -41,4 +41,9 @@ package LAL_Refactor.Utils is
    --  token and Backward will return the previous one.
    --  If Token is No_Token, returns No_Token.
 
+   function Find_Comment_Box
+     (Name : Defining_Name'Class) return Source_Location_Range;
+   --  Find comment box before corresponding declaration. Return
+   --  No_Source_Location_Range is not found.
+
 end LAL_Refactor.Utils;

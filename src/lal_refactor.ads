@@ -142,6 +142,11 @@ package LAL_Refactor is
    --  Create a Text_Edit to remove given node and pass it to Safe_Insert.
    --  Node should be a child of AdaNodeList that has more than one element.
 
+   procedure Remove_Comment_Box
+     (Edits  : in out Text_Edit_Map;
+      Name   : Defining_Name'Class);
+   --  Find comment box corresponding to the Name and remove it if found.
+
    package Unbounded_String_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (Element_Type => Unbounded_String,
       "<"          => "<",
