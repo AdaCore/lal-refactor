@@ -21,11 +21,13 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;           use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse;
 
+with Langkit_Support.Text;
 with Langkit_Support.Slocs;       use Langkit_Support.Slocs;
 with Libadalang.Analysis;         use Libadalang.Analysis;
 with Libadalang.Common;           use Libadalang.Common;
@@ -40,6 +42,9 @@ with LAL_Refactor.Tools;            use LAL_Refactor.Tools;
 --
 --  Usage:
 --  generate_package -P <project_file> -S <package_specification_path>
+--
+--  Can pass a list of multiple SLOCs along with one file
+--  to confirm they all produce the same edit
 --
 --  -P,  --project         Project file to use
 --  -S,  --spec            Package specification filename to read
@@ -75,10 +80,12 @@ procedure Generate_Package is
           (Parser      => Generate_Package_App.Args.Parser,
            Short       => "-SL",
            Long        => "--start-line",
-           Help        => "Start line of cursor",
+           Help        =>
+             "Start line of cursor. If no start column provided,"
+             & " check cursor position across entire line.",
            Arg_Type    => Natural,
            Convert     => Natural'Value,
-           Default_Val => 0,
+           Default_Val => 1,
            Enabled     => True);
       package Start_Column is new
         GNATCOLL.Opt_Parse.Parse_Option
@@ -89,8 +96,8 @@ procedure Generate_Package is
            Arg_Type    => Natural,
            Convert     => Natural'Value,
            Default_Val => 0,
+           --  Check this to see if we test entire line or one SLOC
            Enabled     => True);
-
    end Args;
 
    --------------------------------
@@ -109,50 +116,127 @@ procedure Generate_Package is
       Number_Of_Units : constant Positive := Natural (Files.Length);
       Units_Index     : Positive := 1;
       Units           : Analysis_Unit_Array (1 .. Number_Of_Units);
-      SLOC            : constant Source_Location :=
+      Test_SLOC       : constant Source_Location :=
         (Line   => Line_Number (Args.Start_Line.Get),
          Column => Column_Number (Args.Start_Column.Get));
-      Start_Token     : Token_Reference;
-      Node            : Ada_Node;
-
-      procedure Run_Refactor (Node : Ada_Node);
-      --  Driver to create and run refactoring tool
 
       function Analysis_Units return Analysis_Unit_Array
       is (Units);
       --  Provide context to Refactor
 
-      ------------------
-      -- Run_Refactor --
-      ------------------
+      function Refactoring_Available_Here
+        (Unit  : Analysis_Unit;
+         SLOC  : Source_Location;
+         Edits : in out Refactoring_Edits) return Boolean;
 
-      procedure Run_Refactor (Node : Ada_Node) is
-         Generator : Package_Generator;
-         Edits     : Refactoring_Edits := No_Refactoring_Edits;
-         Spec      : Base_Package_Decl;
+      --  Take a source location, check whether refactoring is offered here
+      --  and write any resulting edit
+
+      procedure Test_Single_Sloc
+        (Unit : Analysis_Unit; Test_SLOC : Source_Location);
+      --  Driver for normal mode of testing
+
+      procedure Test_Entire_Line
+        (Unit : Analysis_Unit; Line : Line_Number);
+      --  Test Generate Package available for entire line
+
+      --------------------------------
+      -- Refactoring_Available_Here --
+      --------------------------------
+
+      function Refactoring_Available_Here
+        (Unit  : Analysis_Unit;
+         SLOC  : Source_Location;
+         Edits : in out Refactoring_Edits) return Boolean
+      is
+         Spec        : Base_Package_Decl := No_Base_Package_Decl;
+         Start_Token : constant Token_Reference := Unit.Lookup_Token (SLOC);
+         --  Start_Token.Line
+         Node        : constant Ada_Node :=
+           Lookup (Unit, Start_Token, Forward);
       begin
          if Is_Generate_Package_Available (Node, Spec) then
-            Generator := Build_Package_Generator (Spec);
-            Edits := Generator.Refactor (Analysis_Units'Access);
+            Edits :=
+              Build_Package_Generator (Spec).Refactor (Analysis_Units'Access);
+            return True;
+         else
+            return False;
+         end if;
+      exception
+         when E : others =>
+            Put_Line (Ada.Exceptions.Exception_Message (E));
+            return False;
+      end Refactoring_Available_Here;
 
-            if Has_Failed (Edits) then
-               Put_Line
-                 ("Unexpected error occurred. Package generation failed.");
-               for Refactor_Error of Edits.Diagnostics loop
-                  Put_Line (Refactor_Error.Info);
-               end loop;
-            else
-               Print (Edits);
-            end if;
+      procedure Print_Results (Edits : Refactoring_Edits);
+      --  Helper to print edits and error messages
+
+      procedure Print_Results (Edits : Refactoring_Edits) is
+      begin
+         if Has_Failed (Edits) then
+            Put_Line ("Unexpected error occurred. Package generation failed.");
+            for Refactor_Error of Edits.Diagnostics loop
+               Put_Line (Refactor_Error.Info);
+            end loop;
+         else
+            Print (Edits);
+         end if;
+      end Print_Results;
+
+      ----------------------
+      -- Test_Single_Sloc --
+      ----------------------
+
+      procedure Test_Single_Sloc
+        (Unit : Analysis_Unit; Test_SLOC : Source_Location)
+      is
+         Edits : Refactoring_Edits := No_Refactoring_Edits;
+      begin
+         if Refactoring_Available_Here (Unit, Test_SLOC, Edits) then
+            Print_Results (Edits);
          else
             Put_Line
               ("Unable to generate package body for "
                & Spec_Path
                & " at "
-               & Image (SLOC));
+               & Image (Test_SLOC));
          end if;
          New_Line;
-      end Run_Refactor;
+      end Test_Single_Sloc;
+
+      -------------------------
+      -- Test_Entire_Line --
+      -------------------------
+
+      procedure Test_Entire_Line (Unit : Analysis_Unit; Line : Line_Number)
+      is
+         --  Check refactoring result for given source location
+         Edits, Exp_Edits : Refactoring_Edits := No_Refactoring_Edits;
+         Line_Text        : constant String :=
+           Langkit_Support.Text.To_UTF8 (Unit.Get_Line (Positive (Line)));
+         Test_SLOC        : Source_Location :=
+           (Line, Column_Number (Line_Text'First));
+         Available        : Boolean;
+      begin
+         if Line_Text'Length < 1 then
+            return;
+         end if;
+         Available := Refactoring_Available_Here (Unit, Test_SLOC, Edits);
+         Exp_Edits := Edits;
+         while Test_SLOC.Column < Column_Number (Line_Text'Last)
+         loop
+            Available := Refactoring_Available_Here (Unit, Test_SLOC, Edits);
+            Test_SLOC.Column := Test_SLOC.Column + Column_Number (1);
+            exit when not Available or Exp_Edits /= Edits;
+         end loop;
+         if Test_SLOC.Column /= Column_Number (Line_Text'Last) then
+            Put_Line ("Refactoring unavailable at " & Image (Test_SLOC));
+         else
+            Put_Line
+              ("Refactoring available for entire line " & Positive (Line)'Img);
+            Print_Results (Exp_Edits);
+         end if;
+      end Test_Entire_Line;
 
    begin
       Main_Unit := Jobs (1).Analysis_Ctx.Get_From_File (Spec_Path);
@@ -164,11 +248,12 @@ procedure Generate_Package is
          Units_Index := Units_Index + 1;
       end loop;
 
-      Start_Token := Main_Unit.Lookup_Token (SLOC);
-      Node := Lookup (Main_Unit, Start_Token, Forward);
-
-      --  Run test
-      Run_Refactor (Node);
+      --  Run test mode
+      if Test_SLOC.Column = Column_Number (0) then
+         Test_Entire_Line (Main_Unit, Test_SLOC.Line);
+      else
+         Test_Single_Sloc (Main_Unit, Test_SLOC);
+      end if;
    end Generate_Package_App_Setup;
 
 begin

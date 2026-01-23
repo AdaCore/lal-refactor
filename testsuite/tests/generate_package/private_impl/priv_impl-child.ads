@@ -4,4 +4,6 @@ package Priv_Impl.Child is
    procedure Print (Self : WordCountT);
 
    procedure H;
+private
+   function Log_Fmt (W: WordCountT) return String;
 end Priv_Impl.Child;

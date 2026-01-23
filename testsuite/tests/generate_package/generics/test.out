@@ -1,3 +1,4 @@
+Refactoring available for entire line  5
 
 operators.adb
 package body Operators is
@@ -8,6 +9,4 @@ package body Operators is
    end ">";
 end Operators;
 
-
-Unable to generate package body for operators.ads at 6:0
-
+Refactoring unavailable at 6:2

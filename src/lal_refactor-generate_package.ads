@@ -17,13 +17,13 @@ package LAL_Refactor.Generate_Package is
 
    subtype Decl_Vector is Declaration_Vectors.Vector;
 
-   function To_Package_Decl (Node : Ada_Node'Class) return Base_Package_Decl;
+   function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl;
    --  If Node belongs to enclosing package declaration lines
    --  e.g. "package Spec is... " or "end Spec;"
    --  then return the package declaration node, else No_Base_Package_Decl
 
    function Is_Generate_Package_Available
-     (Node : Ada_Node'Class; Spec : out Base_Package_Decl) return Boolean;
+     (Node : Ada_Node; Spec : out Base_Package_Decl) return Boolean;
    --  If Node is inside a package declaration
    --  check whether a matching package body exists.
    --  If yes but there are missing subprogram implementations,
