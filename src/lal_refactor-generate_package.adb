@@ -22,22 +22,39 @@ package body LAL_Refactor.Generate_Package is
    -- To_Package_Decl --
    ---------------------
 
-   function To_Package_Decl (Node : Ada_Node'Class) return Base_Package_Decl is
+   function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl is
+      Base_Pkg : Base_Package_Decl := No_Base_Package_Decl;
       --  Package_Decl includes keywords "package", "private", "end"
       --  but not the actual package name in declaration
-      function In_Package_Name (Node : Ada_Node'Class) return Boolean
-      is (not Node.Parent.Is_Null
-          and then Node.Kind in Ada_Identifier_Range
-          and then
-            Node.Parent.Kind in Ada_Defining_Name_Range | Ada_End_Name_Range
-          and then Node.P_Parent_Basic_Decl.Kind in Ada_Base_Package_Decl);
+      function In_Package_Name (Node : Ada_Node) return Boolean;
+      --  Check for code action availability
+
+      function In_Package_Name (Node : Ada_Node) return Boolean is
+         function Inside_Name (Node : Ada_Node) return Boolean
+         is (Node.Kind
+             in Ada_Identifier_Range
+              | Ada_End_Name_Range
+              | Ada_Defining_Name_Range
+              | Ada_Dotted_Name_Range);
+         --  Traverse Full.Package.Name node up to package
+         N : Ada_Node := Node;
+      begin
+         while Inside_Name (N) and then not N.Parent.Is_Null loop
+            N := N.Parent;
+         end loop;
+         Base_Pkg :=
+           (if N.Kind in Ada_Base_Package_Decl
+            then N.As_Base_Package_Decl
+            else No_Base_Package_Decl);
+         return not Base_Pkg.Is_Null;
+      end In_Package_Name;
    begin
       if Node.Is_Null then
          return No_Base_Package_Decl;
       elsif Node.Kind in Ada_Base_Package_Decl then
          return Node.As_Base_Package_Decl;
       elsif In_Package_Name (Node) then
-         return Node.P_Parent_Basic_Decl.As_Base_Package_Decl;
+         return Base_Pkg;
       else
          return No_Base_Package_Decl;
       end if;
@@ -48,7 +65,7 @@ package body LAL_Refactor.Generate_Package is
    -----------------------------------
 
    function Is_Generate_Package_Available
-     (Node : Ada_Node'Class; Spec : out Base_Package_Decl) return Boolean is
+     (Node : Ada_Node; Spec : out Base_Package_Decl) return Boolean is
    begin
       Spec := To_Package_Decl (Node);
       return
