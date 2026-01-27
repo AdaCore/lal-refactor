@@ -1,49 +1,53 @@
 Refactoring available for entire line  1
 
 priv_impl.adb
+
 package body Priv_Impl is
 
-   function Run_Word_Count (S : String) return WordCountT is
+   function Run_Word_Count (S : String) return WordCountT
+   is
    begin
       
    end Run_Word_Count;
 
-   procedure M is
+   procedure M
+   is
    begin
       
    end M;
+
+   procedure Debug (W : WordCountT)
+   is
+   begin
+      
+   end Debug;
+
 end Priv_Impl;
 
 Refactoring available for entire line  8
 
 priv_impl.adb
+
 package body Priv_Impl is
 
-   function Run_Word_Count (S : String) return WordCountT is
+   function Run_Word_Count (S : String) return WordCountT
+   is
    begin
       
    end Run_Word_Count;
 
-   procedure M is
+   procedure M
+   is
    begin
       
    end M;
-end Priv_Impl;
 
-Refactoring available for entire line  15
-
-priv_impl.adb
-package body Priv_Impl is
-
-   function Run_Word_Count (S : String) return WordCountT is
+   procedure Debug (W : WordCountT)
+   is
    begin
       
-   end Run_Word_Count;
+   end Debug;
 
-   procedure M is
-   begin
-      
-   end M;
 end Priv_Impl;
 
 Refactoring unavailable at 4:2
@@ -51,43 +55,67 @@ Refactoring unavailable at 5:2
 Refactoring available for entire line  1
 priv_impl-child.adb
 10:1-10:1 
-   function Wide_Char_Count (S : String) return WordCountT is
+   function Wide_Char_Count (S : String) return WordCountT
+   is
    begin
       
    end Wide_Char_Count;
 
-   procedure H is
+   procedure H
+   is
    begin
       
    end H;
+
+   function Log_Fmt (W: WordCountT) return String
+   is
+   begin
+      
+   end Log_Fmt;
 
 
 Refactoring available for entire line  7
 priv_impl-child.adb
 10:1-10:1 
-   function Wide_Char_Count (S : String) return WordCountT is
+   function Wide_Char_Count (S : String) return WordCountT
+   is
    begin
       
    end Wide_Char_Count;
 
-   procedure H is
+   procedure H
+   is
    begin
       
    end H;
+
+   function Log_Fmt (W: WordCountT) return String
+   is
+   begin
+      
+   end Log_Fmt;
 
 
 Refactoring available for entire line  9
 priv_impl-child.adb
 10:1-10:1 
-   function Wide_Char_Count (S : String) return WordCountT is
+   function Wide_Char_Count (S : String) return WordCountT
+   is
    begin
       
    end Wide_Char_Count;
 
-   procedure H is
+   procedure H
+   is
    begin
       
    end H;
+
+   function Log_Fmt (W: WordCountT) return String
+   is
+   begin
+      
+   end Log_Fmt;
 
 
 Unable to generate package body for priv_impl-child.ads at 2:5

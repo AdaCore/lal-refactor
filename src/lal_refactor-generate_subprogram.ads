@@ -14,12 +14,14 @@
 with VSS;
 with VSS.Strings;
 
+with Libadalang.Common;  use Libadalang.Common;
+
 package LAL_Refactor.Generate_Subprogram is
 
    function Is_Generate_Subprogram_Available
      (Unit        : Analysis_Unit;
       Start_Loc   : Source_Location;
-      Target_Subp : out Subp_Decl) return Boolean
+      Target_Subp : out Basic_Subp_Decl) return Boolean
    with Pre => not (Unit in No_Analysis_Unit or else Unit.Root.Is_Null);
    --  Check whether Start_Loc is inside a subprogram declaration
    --  e.g.
@@ -30,7 +32,7 @@ package LAL_Refactor.Generate_Subprogram is
    --  up to and including the final parenthesis will count as inside
    --  the subprogram declaration. The semicolon will not count.
    --
-   --  If a subprogram is found, set Target_Subp to the Subp_Decl node.
+   --  If a subprogram is found, set Target_Subp to the Basic_Subp_Decl node.
    --  Check if a body already exists in the same declarative scope
    --  e.g. a declare block or subprogram declarative part
    --  Offer refactoring if no subprogram body found.
@@ -38,8 +40,13 @@ package LAL_Refactor.Generate_Subprogram is
    --  e.g. nested declarations within a subprogram declarative part.
    --  For public subprogram declarations, see the Generate Package tool.
 
-   function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl;
-   --  Only use this when Node is already inside a Subp_Decl
+   function Get_Subp_Decl (Node : Ada_Node'Class) return Basic_Subp_Decl;
+   --  Only use this when already inside a subprogram declaration
+
+   function Is_Supported_Subp_Decl (D : Ada_Node'Class) return Boolean
+   is (D.Kind in Ada_Basic_Subp_Decl
+       and then D.Kind not in Ada_Abstract_Subp_Decl_Range);
+   --  Only offer generation for supported subprogram declarations
 
    -----------------------------
    --  Subprogram generation --
@@ -62,11 +69,11 @@ package LAL_Refactor.Generate_Subprogram is
       return Subprogram_Generator
    with
      Pre =>
-       not ((Target_Subp.Is_Null or else Target_Subp.Unit in No_Analysis_Unit)
-            or Dest_Filename'Length = 0)
+       not (Target_Subp.Is_Null or Dest_Filename'Length = 0)
        and then not Get_Subp_Decl (Target_Subp).Is_Null;
    --  Creates a Subprogram_Generator to generate a body for Target_Subp
-   --  Fails if Target_Subp cannot be marshalled into a Subp_Decl
+   --  Fails if Target_Subp cannot be marshalled into a Basic_Subp_Decl
+   --  or if it is an unsupported subprogram type, e.g. abstract
 
    function Get_Insertion_Point
      (Self : Subprogram_Generator) return Source_Location_Range;
@@ -107,8 +114,8 @@ package LAL_Refactor.Generate_Subprogram is
 private
 
    type Subprogram_Generator is new Refactoring_Tool with record
-      Target_Subp   : Subp_Decl;
-      --  Use parent Subp_Decl node instead of child Subp_Spec node
+      Target_Subp   : Basic_Subp_Decl;
+      --  Use parent Basic_Subp_Decl node instead of child Subp_Spec node
       --  as Decl includes overriding status
       Dest_Filename : Unbounded_String;
       --  At present this defaults to Target_Subp source file

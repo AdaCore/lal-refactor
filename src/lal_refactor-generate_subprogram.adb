@@ -6,7 +6,6 @@
 with VSS.Strings; use VSS.Strings;
 with VSS.Strings.Conversions;
 
-with Libadalang.Common;  use Libadalang.Common;
 with Laltools.Common;    use Laltools.Common;
 with LAL_Refactor.Tools; use LAL_Refactor.Tools;
 with LAL_Refactor.Stub_Utils;
@@ -21,18 +20,18 @@ package body LAL_Refactor.Generate_Subprogram is
    -- Get_Subp_Decl --
    -------------------
 
-   function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl is
+   function Get_Subp_Decl (Node : Ada_Node'Class) return Basic_Subp_Decl is
    begin
       if Node.Is_Null then
-         return No_Subp_Decl;
-      elsif Node.Kind in Ada_Subp_Decl_Range then
-         return Node.As_Subp_Decl;
+         return No_Basic_Subp_Decl;
+      elsif Is_Supported_Subp_Decl (Node) then
+         return Node.As_Basic_Subp_Decl;
       elsif not Node.P_Parent_Basic_Decl.Is_Null
-        and then Node.P_Parent_Basic_Decl.Kind in Ada_Subp_Decl_Range
+        and then Is_Supported_Subp_Decl (Node.P_Parent_Basic_Decl)
       then
-         return Node.P_Parent_Basic_Decl.As_Subp_Decl;
+         return Node.P_Parent_Basic_Decl.As_Basic_Subp_Decl;
       else
-         return No_Subp_Decl;
+         return No_Basic_Subp_Decl;
       end if;
    end Get_Subp_Decl;
 
@@ -43,7 +42,7 @@ package body LAL_Refactor.Generate_Subprogram is
    function Is_Generate_Subprogram_Available
      (Unit        : Analysis_Unit;
       Start_Loc   : Source_Location;
-      Target_Subp : out Subp_Decl) return Boolean
+      Target_Subp : out Basic_Subp_Decl) return Boolean
    is
       Start_Token : constant Token_Reference := Unit.Lookup_Token (Start_Loc);
       Node        : Ada_Node := Unit.Root.Lookup (Start_Loc);
@@ -53,10 +52,7 @@ package body LAL_Refactor.Generate_Subprogram is
       --  Helper to check node matches cursor line
 
       procedure Set_Subp_Decl (Parent : Ada_Node; Stop : in out Boolean);
-      --  Write to Target_Subp if a parent Subp_Decl node is found
-
-      function Is_Subp_Decl (Node : Ada_Node'Class) return Boolean
-      is (Node.Kind in Ada_Subp_Decl_Range);
+      --  Write to Target_Subp if a parent Basic_Subp_Decl node is found
 
       function Is_Package_Decl (D : Basic_Decl'Class) return Boolean
       is (not D.P_Parent_Basic_Decl.Is_Null
@@ -66,17 +62,18 @@ package body LAL_Refactor.Generate_Subprogram is
       --  Check if declaration is a top-level decl from a package spec
       --  in which case a body must be generated in a different file
 
-      function Subprogram_Decl_Has_Body (Sp_Decl : Subp_Decl) return Boolean
-      is (not Sp_Decl.P_Body_Part.Is_Null);
+      function Subprogram_Decl_Has_Body
+        (Sp_Decl : Basic_Subp_Decl) return Boolean
+      is (not Sp_Decl.P_Body_Part_For_Decl (False).Is_Null);
       --  Check for a matching subprogram body
 
       procedure Set_Subp_Decl (Parent : Ada_Node; Stop : in out Boolean) is
       begin
          Stop := True;
-         Target_Subp := Parent.As_Subp_Decl;
+         Target_Subp := Parent.As_Basic_Subp_Decl;
       end Set_Subp_Decl;
    begin
-      Target_Subp := No_Subp_Decl;
+      Target_Subp := No_Basic_Subp_Decl;
 
       --  Check for a subprogram declaration on the same line
       if Node.Is_Null then
@@ -102,11 +99,11 @@ package body LAL_Refactor.Generate_Subprogram is
       end if;
 
       --  Now check if Node is inside a subprogram declaration
-      if Is_Subp_Decl (Node) then
-         Target_Subp := Node.As_Subp_Decl;
+      if Is_Supported_Subp_Decl (Node) then
+         Target_Subp := Node.As_Basic_Subp_Decl;
       else
          Find_Matching_Parents
-           (Node, Is_Subp_Decl'Access, Set_Subp_Decl'Access);
+           (Node, Is_Supported_Subp_Decl'Access, Set_Subp_Decl'Access);
          --  This ensures that if we are inside a child node such as a
          --  parameter declaration or return type,
          --  we still navigate to the parent subprogram declaration
@@ -148,13 +145,10 @@ package body LAL_Refactor.Generate_Subprogram is
 
    function Create_Subprogram_Generator
      (Target_Subp : Ada_Node'Class; Dest_Filename : String)
-      return Subprogram_Generator is
-   begin
-      return
-        (Dest_Filename => To_Unbounded_String (Dest_Filename),
-         Target_Subp   => Get_Subp_Decl (Target_Subp));
-      --  Constraint_Error if Get_Subp_Decl fails
-   end Create_Subprogram_Generator;
+      return Subprogram_Generator
+   is (Dest_Filename => To_Unbounded_String (Dest_Filename),
+       Target_Subp   => Get_Subp_Decl (Target_Subp));
+   --  Constraint_Error if Get_Subp_Decl fails
 
    -------------------------
    -- Get_Insertion_Point --
@@ -164,7 +158,7 @@ package body LAL_Refactor.Generate_Subprogram is
      (Self : Subprogram_Generator) return Source_Location_Range is
    begin
       return
-        (Start_Line   | End_Line   => Self.Target_Subp.Sloc_Range.End_Line + 1,
+        (Start_Line | End_Line     => Self.Target_Subp.Sloc_Range.End_Line + 1,
          Start_Column | End_Column => 1);
    end Get_Insertion_Point;
 
@@ -176,7 +170,7 @@ package body LAL_Refactor.Generate_Subprogram is
       use LAL_Refactor.Stub_Utils;
 
       Generated_Subprogram : constant Unbounded_String :=
-        Create_Code_Generator (Self.Target_Subp).Generate_Subprogram_Body;
+        Create_Code_Generator (Self.Target_Subp).Generate_Body;
       Insertion_Point      : constant Source_Location_Range :=
         Self.Get_Insertion_Point;
       Text_Edits           : Text_Edit_Ordered_Set;

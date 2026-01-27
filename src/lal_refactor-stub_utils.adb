@@ -1,153 +1,296 @@
 --
---  Copyright (C) 2025, AdaCore
+--  Copyright (C) 2025-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with Libadalang.Common;    use Libadalang.Common;
+with VSS.Characters;
+with VSS.Characters.Latin;
+with VSS.Strings.Cursors.Iterators.Characters;
+use  VSS.Strings.Cursors.Iterators.Characters;
+
 with Langkit_Support.Text; use Langkit_Support.Text;
+with Libadalang.Common;    use Libadalang.Common;
 
 package body LAL_Refactor.Stub_Utils is
+   function In_Whitespace
+     (X : VSS.Characters.Virtual_Character'Base) return Boolean;
+   --  Helper function
 
-   function Detect_Indent (N : Ada_Node'Class) return Natural
-   with Pre => not (N.Is_Null or else N.Parent.Is_Null);
-   --  Detect indentation from context using node and parent node SLOC
+   function Contains_Only_Whitespace
+     (Item : Virtual_String'Class) return Boolean;
+   --  True unless string contains non-whitespace characters
+   --  True if line empty too
 
-   function Detect_Offset (Start_Pos : Source_Location_Range) return Natural;
-   --  Detect starting offset from context using node SLOC
-
-   function Signature
-     (Self : Subp_Code_Generator'Class) return Unbounded_String;
-   --  Builds string equivalent to declaration text
-
-   -------------------
-   -- Detect_Indent --
-   -------------------
-
-   function Detect_Indent (N : Ada_Node'Class) return Natural is
-      Scope_Indent, Parent_Indent : Natural;
-   begin
-      Scope_Indent := Natural (N.Sloc_Range.Start_Column);
-      Parent_Indent := Natural (N.P_Parent_Basic_Decl.Sloc_Range.Start_Column);
-      return Scope_Indent - Parent_Indent;
-   exception
-      when E : others =>
-         Refactor_Trace.Trace (E, "Could not detect indentation from context");
-         return Default_Indent;
-   end Detect_Indent;
+   function Trim_Right
+     (Item : Virtual_String'Class) return Virtual_String'Class;
+   --  Trim trailing whitespace from the right side of a string
 
    -------------------
-   -- Detect_Offset --
+   -- In_Whitespace --
    -------------------
 
-   function Detect_Offset (Start_Pos : Source_Location_Range) return Natural is
-   begin
-      return Natural (Start_Pos.Start_Column - 1);
-   exception
-      when E : others =>
-         Refactor_Trace.Trace
-           (E, "Could not detect start indentation from context");
-         return 0;
-   end Detect_Offset;
-
-   ---------------
-   -- Signature --
-   ---------------
-
-   function Signature
-     (Self : Subp_Code_Generator'Class) return Unbounded_String
+   function In_Whitespace
+     (X : VSS.Characters.Virtual_Character'Base) return Boolean
    is
-      T           : Token_Reference := Self.Decl.Token_Start;
-      Decl_String : Unbounded_String;
+      use VSS.Characters.Latin;
+      type Virtual_Char_Array is
+        array (Positive range 1 .. 3) of VSS.Characters.Virtual_Character'Base;
+      Whitespace_Set : constant Virtual_Char_Array :=
+        [Line_Feed, Carriage_Return, Space];
    begin
-      --  We do not iterate through the entire token range of Decl
-      --  as this would include declaration-only details, e.g. aspects
-      --  Instead, stop at the end of the subprogram specification
-      loop
-         exit when Self.Decl.F_Subp_Spec.Token_End < T;
-         case Kind (Data (T)) is
-            --  Replace tabs or linebreaks with a single space
-            --  Then fast-forward through any excess whitespace
-            when Ada_Whitespace =>
-               Append (Decl_String, " ");
-               T := T.Next (Exclude_Trivia => True);
-            when Ada_Comment    =>
-               T := T.Next (Exclude_Trivia => True);
-            when others         =>
-               Append (Decl_String, To_UTF8 (T.Text));
-               T := T.Next (Exclude_Trivia => False);
-         end case;
+      return (for some Whitespace of Whitespace_Set => X in Whitespace);
+   end In_Whitespace;
+
+   ------------------------------
+   -- Contains_Only_Whitespace --
+   ------------------------------
+
+   function Contains_Only_Whitespace
+     (Item : Virtual_String'Class) return Boolean
+   is
+      S : Character_Iterator := Item.Before_First_Character;
+      C : VSS.Characters.Virtual_Character'Base := S.Element;
+   begin
+      while S.Forward (C) loop
+         if not In_Whitespace (C) then
+            return False;
+         end if;
       end loop;
-      return Decl_String;
-   exception
-      when E : others =>
-         Refactor_Trace.Trace (E, "Failed to build subprogram signature");
-         return Null_Unbounded_String;
-   end Signature;
+      return True;
+   end Contains_Only_Whitespace;
+
+   ----------------
+   -- Trim_Right --
+   ----------------
+
+   function Trim_Right
+     (Item : Virtual_String'Class) return Virtual_String'Class
+   is
+      S : Character_Iterator := Item.After_Last_Character;
+   begin
+      while S.Backward loop
+         exit when not In_Whitespace (S.Element);
+      end loop;
+      return (if S.Forward then Item.Head_Before (S) else Item);
+   end Trim_Right;
 
    ------------------------
    -- Build_Subunit_Body --
    ------------------------
 
    function Build_Subunit_Body
-     (Name       : String;
-      Signature  : String;
+     (Signature  : VSS_Vector;
       Inner_Body : String;
+      End_Label  : String;
       Offset     : Natural;
-      Indent     : Natural) return Unbounded_String
+      Indent     : Natural) return VSS.Strings.Virtual_String
    is
-      Subunit_Body : Unbounded_String := To_Unbounded_String (Line_End);
+      Stub_Lines : VSS_Vector := Signature;
 
-      function Fmt_Stmt
-        (Line : String; Nesting : Natural := 0) return Unbounded_String
-      is (Fmt_Src (Line, Offset, Indent, Nesting, Stmt_Term => True));
-
-      function Fmt_Decl
-        (Line : String; Nesting : Natural := 0) return Unbounded_String
-      is (Fmt_Src (Line, Offset, Indent, Nesting, Stmt_Term => False));
+      function Fmt_Src
+        (Line : Virtual_String; Nest : Natural := Default_Nesting)
+         return Virtual_String
+      is (To_VS (Padding (Offset, Indent, Nest)) & Line);
+      --  Toggle different levels of indentation
 
    begin
-      Append (Subunit_Body, Fmt_Decl (Signature & " is"));
-      Append (Subunit_Body, Fmt_Decl (Begin_Keyword));
-      if Inner_Body /= "" then
-         Append (Subunit_Body, Fmt_Stmt (Inner_Body, Nesting => 1));
-      else
-         Append (Subunit_Body, Fmt_Decl (Inner_Body, Nesting => 1));
-      end if;
-      Append (Subunit_Body, Fmt_Stmt (End_Keyword & " " & Name));
-      return Subunit_Body;
+      VSS.String_Vectors.Append
+        (Stub_Lines, Fmt_Src (To_VS (Inner_Body), Nest => 1));
+      VSS.String_Vectors.Append (Stub_Lines, Fmt_Src (To_VS (End_Label)));
+      return Generated_Stub : Virtual_String do
+         Generated_Stub :=
+           Fmt_Src
+             (Stub_Lines.Join_Lines
+                (Terminator => VSS.Strings.LF, Terminate_Last => True));
+         Generated_Stub.Prepend (VSS.Characters.Latin.Line_Feed);
+      end return;
    end Build_Subunit_Body;
-
-   ------------------------------
-   -- Generate_Subprogram_Body --
-   ------------------------------
-
-   function Generate_Subprogram_Body
-     (Self : Subp_Code_Generator'Class) return Unbounded_String is
-   begin
-      return
-        Build_Subunit_Body
-          (Name       => To_String (Self.Name),
-           Signature  => To_String (Self.Signature),
-           Inner_Body => "",
-           --  Do not prefill body; leave empty for cursor to move here
-           Offset     => Detect_Offset (Self.Decl.Sloc_Range),
-           Indent     => Detect_Indent (Self.Decl));
-   exception
-      when E : others =>
-         Refactor_Trace.Trace (E, "Failed to build subprogram body text");
-         return Null_Unbounded_String;
-   end Generate_Subprogram_Body;
 
    ---------------------------
    -- Create_Code_Generator --
    ---------------------------
 
    function Create_Code_Generator
-     (Decl : Subp_Decl) return Subp_Code_Generator is
+     (Subprogram : Basic_Subp_Decl) return Subp_Code_Generator
+   is (Name => To_Unbounded_String (To_UTF8 (Subprogram.P_Defining_Name.Text)),
+       Decl => Subprogram);
+
+   -------------------
+   -- Generate_Body --
+   -------------------
+
+   overriding
+   function Generate_Body (Self : Subp_Code_Generator) return Unbounded_String
+   is
+      function Detect_Indent (N : Ada_Node'Class) return Natural
+      with Pre => not (N.Is_Null or else N.Parent.Is_Null);
+      --  Detect indentation from context using node SLOC
+
+      function Detect_Offset
+        (Start_Pos : Source_Location_Range) return Natural;
+      --  Detect starting offset from context using node SLOC
+
+      function Signature (Decl : Basic_Subp_Decl) return VSS_Vector;
+      --  Cleanup subprogram declaration text for use in body
+      --  (remove comments, preserve linebreaks)
+
+      -------------------
+      -- Detect_Indent --
+      -------------------
+
+      function Detect_Indent (N : Ada_Node'Class) return Natural is
+         Scope_Indent, Parent_Indent : Natural;
+      begin
+         Scope_Indent := Natural (N.Sloc_Range.Start_Column);
+         Parent_Indent :=
+           Natural (N.P_Parent_Basic_Decl.Sloc_Range.Start_Column);
+         return Scope_Indent - Parent_Indent;
+      exception
+         when others =>
+            return Default_Indent;
+      end Detect_Indent;
+
+      -------------------
+      -- Detect_Offset --
+      -------------------
+
+      function Detect_Offset (Start_Pos : Source_Location_Range) return Natural
+      is
+      begin
+         return Natural (Start_Pos.Start_Column - 1);
+      exception
+         when others =>
+            return 0;
+      end Detect_Offset;
+
+      ---------------
+      -- Signature --
+      ---------------
+
+      function Signature (Decl : Basic_Subp_Decl) return VSS_Vector is
+
+         --  Most of the relevant text for a subprogram declaration
+         --  is found in the Subp_Spec node, but in special cases
+         --  the parent Subp_Decl will include hierarchy modifiers
+         --  such as "overriding"
+
+         --  -------------------------------------------------------------
+         --  |          subprogram.signature         |
+         --  |---------------------------------------|--------------------
+         --  |              procedure Print (I : T)    is abstract       |
+         --  | overriding   procedure Print (I : Int)  with Pre => I > 0 |
+         --  |            |--------------------------|                   |
+         --  |            |        subp_spec         |                   |
+         --  --------------------- subp_decl -----------------------------
+
+         T          : Token_Reference := Decl.Token_Start;
+         Decl_Text  : VSS.Strings.Virtual_String;
+         Decl_Lines : VSS_Vector;
+         Offset     : constant Natural := Detect_Offset (Decl.Sloc_Range);
+         Indent     : constant Natural := Detect_Indent (Decl);
+         Leading_WS : constant String := Padding (Offset, Indent, 0).To_String;
+
+         I : Positive;
+      begin
+         --  Get text of the entire declaration, skipping comments
+         loop
+            exit when Decl.P_Subp_Decl_Spec.Token_End < T;
+            if Kind (Data (T)) not in Ada_Comment then
+               Decl_Text.Append (VSS.Strings.To_Virtual_String (T.Text));
+            end if;
+            T := T.Next (Exclude_Trivia => False);
+         end loop;
+
+         --  Split at newlines (LF, CR, CRLF)
+         Decl_Lines := Decl_Text.Split_Lines (Keep_Terminator => False);
+         I := Decl_Lines.First_Index;
+
+         --  Trim excess whitespace and remove empty lines
+         while I <= Decl_Lines.Last_Index loop
+            if Contains_Only_Whitespace (Decl_Lines (I)) then
+               Decl_Lines.Delete (I);
+               --  This moves the next element to current index
+            else
+               Decl_Lines.Replace (I, Trim_Right (Decl_Lines (I)));
+               I := I + 1;
+            end if;
+         end loop;
+
+         --  Add keywords
+         Decl_Lines.Append (To_VS (Leading_WS & Keyword_Is));
+         Decl_Lines.Append (To_VS (Leading_WS & Keyword_Begin));
+         return Decl_Lines;
+      exception
+         when E : others =>
+            Refactor_Trace.Trace (E, "Failed to build subprogram signature");
+            return Empty_Virtual_String_Vector;
+      end Signature;
    begin
       return
-          (Name => To_Unbounded_String (To_UTF8 (Decl.P_Defining_Name.Text)),
-           Decl => Decl);
-   end Create_Code_Generator;
+        From_VS
+          (Build_Subunit_Body
+             (Signature  => Signature (Self.Decl),
+              Inner_Body => "",
+              End_Label  => Self.End_Name,
+              Offset     => Detect_Offset (Self.Decl.Sloc_Range),
+              Indent     => Detect_Indent (Self.Decl)));
+   exception
+      when E : others =>
+         Refactor_Trace.Trace (E, "Failed to build subprogram body text");
+         return Null_Unbounded_String;
+   end Generate_Body;
+
+   ---------------------------
+   -- Create_Code_Generator --
+   ---------------------------
+
+   function Create_Code_Generator
+     (Spec : Base_Package_Decl; Subprograms : Decl_Vector)
+      return Pkg_Code_Generator
+   is (Name        => To_Unbounded_String (To_UTF8 (Spec.F_Package_Name.Text)),
+       Subprograms => Subprograms);
+
+   -------------------
+   -- Generate_Body --
+   -------------------
+
+   overriding
+   function Generate_Body (Self : Pkg_Code_Generator) return Unbounded_String
+   is
+      Signature : constant VSS_Vector :=
+        To_Virtual_String_Vector
+          (To_VS
+             ((Keyword_Package_Body
+               & " "
+               & Self.Name.To_String
+               & " "
+               & Keyword_Is)));
+
+      Subprogram_Block : Unbounded_String;
+   begin
+      --  Package body subprograms follow declaration order
+      --  in package specification
+      for D of Self.Subprograms loop
+         declare
+            Subprogram_Body : constant Unbounded_String :=
+              Create_Code_Generator (D).Generate_Body;
+         begin
+            Subprogram_Block.Append (Subprogram_Body);
+         end;
+      end loop;
+      return
+        From_VS
+          (Build_Subunit_Body
+             (Signature  => Signature,
+              Inner_Body => Subprogram_Block.To_String,
+              End_Label  => Self.End_Name,
+              Offset     => 0,
+              Indent     => 0));
+   exception
+      when E : others =>
+         Refactor_Trace.Trace (E, "Failed to build package body text");
+         return Null_Unbounded_String;
+   end Generate_Body;
+
 end LAL_Refactor.Stub_Utils;

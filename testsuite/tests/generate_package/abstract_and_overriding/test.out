@@ -1,0 +1,14 @@
+Refactoring available for entire line  1
+
+abstruction.adb
+
+package body Abstruction is
+
+   overriding procedure Hash (Key, Value : V'Class)
+   is
+   begin
+      
+   end Hash;
+
+end Abstruction;
+

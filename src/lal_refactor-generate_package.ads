@@ -3,19 +3,16 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
-with Ada.Containers.Indefinite_Vectors;
-
 with VSS;
 with VSS.Strings;
 
-with Libadalang.Common; use Libadalang.Common;
 private with Langkit_Support.Text;
 
-package LAL_Refactor.Generate_Package is
-   package Declaration_Vectors is new
-     Ada.Containers.Indefinite_Vectors (Natural, Basic_Subp_Decl'Class);
+with LAL_Refactor.Generate_Subprogram;
+with LAL_Refactor.Stub_Utils;
 
-   subtype Decl_Vector is Declaration_Vectors.Vector;
+package LAL_Refactor.Generate_Package is
+   subtype Decl_Vector is LAL_Refactor.Stub_Utils.Decl_Vector;
 
    function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl;
    --  If Node belongs to enclosing package declaration lines
@@ -87,7 +84,7 @@ private
    end record;
 
    function Is_Unimplemented_Subprogram (D : Ada_Node'Class) return Boolean
-   is (D.Kind in Ada_Basic_Subp_Decl
+   is (LAL_Refactor.Generate_Subprogram.Is_Supported_Subp_Decl (D)
        and then D.As_Basic_Subp_Decl.P_Body_Part_For_Decl (False).Is_Null);
    --  Helper to check for viable subprogram declarations
 
