@@ -1,0 +1,34 @@
+Generating body for subprogram 'My_Subprogram' declared in main.adb
+main.adb
+14:1-14:1 
+   function My_Subprogram (
+      Multiple   : Integer;
+      Parameters : String;
+      Here       : Positive
+   ) return
+   Boolean
+   is
+   begin
+      
+   end My_Subprogram;
+
+
+
+Generating body for subprogram 'Traverse' declared in main.adb
+main.adb
+26:1-26:1 
+   overriding
+   procedure
+   Traverse (S
+   :
+         not
+   null
+               access
+   String'Class)
+   is
+   begin
+      
+   end Traverse;
+
+
+

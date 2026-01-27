@@ -1,12 +1,15 @@
 Refactoring available for entire line  5
 
 operators.adb
+
 package body Operators is
 
-   function ">" (L, R : T) return Boolean is
+   function ">"  (L, R : T) return Boolean
+   is
    begin
       
    end ">";
+
 end Operators;
 
 Refactoring unavailable at 6:2
