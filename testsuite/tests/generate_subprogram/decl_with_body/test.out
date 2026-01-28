@@ -45,7 +45,8 @@ Could not generate body for subprogram declared in main.adb 27:1
 Generating body for subprogram 'Int_Image' declared in main.adb
 main.adb
 25:1-25:1 
-      function Int_Image (N : Integer'Class) return String is
+      function Int_Image (N : Integer'Class) return String
+      is
       begin
          
       end Int_Image;
@@ -55,7 +56,8 @@ main.adb
 Generating body for subprogram 'Int_Image' declared in main.adb
 main.adb
 26:1-26:1 
-      function Int_Image (N : Integer) return String is
+      function Int_Image (N : Integer)       return String
+      is
       begin
          
       end Int_Image;
@@ -65,7 +67,8 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 30:1-30:1 
-      procedure Increment (X : in out Natural) is
+      procedure Increment (X : in out Natural)
+      is
       begin
          
       end Increment;

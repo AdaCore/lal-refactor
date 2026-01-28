@@ -1,7 +1,8 @@
 Generating body for subprogram 'Square' declared in main.adb
 main.adb
 5:1-5:1 
-   function Square (X : Integer) return Natural is
+   function Square (X : Integer) return Natural
+   is
    begin
       
    end Square;
@@ -11,7 +12,8 @@ main.adb
 Generating body for subprogram 'Square' declared in main.adb
 main.adb
 5:1-5:1 
-   function Square (X : Integer) return Natural is
+   function Square (X : Integer) return Natural
+   is
    begin
       
    end Square;
@@ -21,7 +23,8 @@ main.adb
 Generating body for subprogram 'Square' declared in main.adb
 main.adb
 5:1-5:1 
-   function Square (X : Integer) return Natural is
+   function Square (X : Integer) return Natural
+   is
    begin
       
    end Square;
@@ -31,7 +34,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -41,7 +46,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -51,7 +58,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -61,7 +70,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -71,7 +82,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -81,7 +94,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -91,7 +106,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -101,7 +118,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -111,7 +130,9 @@ main.adb
 Generating body for subprogram 'Increment' declared in main.adb
 main.adb
 8:1-8:1 
-   procedure Increment (Y : in out Natural) is
+   procedure Increment
+      (Y : in out Natural)
+   is
    begin
       
    end Increment;
@@ -121,7 +142,8 @@ main.adb
 Generating body for subprogram 'Unimplemented' declared in main.adb
 main.adb
 10:1-10:1 
-   procedure Unimplemented is
+   procedure Unimplemented
+   is
    begin
       
    end Unimplemented;
@@ -131,7 +153,8 @@ main.adb
 Generating body for subprogram 'Unimplemented' declared in main.adb
 main.adb
 10:1-10:1 
-   procedure Unimplemented is
+   procedure Unimplemented
+   is
    begin
       
    end Unimplemented;
@@ -141,7 +164,8 @@ main.adb
 Generating body for subprogram 'Unimplemented' declared in main.adb
 main.adb
 10:1-10:1 
-   procedure Unimplemented is
+   procedure Unimplemented
+   is
    begin
       
    end Unimplemented;
@@ -151,7 +175,8 @@ main.adb
 Generating body for subprogram 'Unimplemented' declared in main.adb
 main.adb
 10:1-10:1 
-   procedure Unimplemented is
+   procedure Unimplemented
+   is
    begin
       
    end Unimplemented;

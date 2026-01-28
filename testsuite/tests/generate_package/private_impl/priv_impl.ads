@@ -12,4 +12,6 @@ private
 
    function Get_Line_Count (W : WordCountT) return Natural
    is (W.Lines);
+
+   procedure Debug (W : WordCountT);
 end Priv_Impl;
