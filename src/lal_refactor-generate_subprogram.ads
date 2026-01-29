@@ -21,7 +21,7 @@ package LAL_Refactor.Generate_Subprogram is
    function Is_Generate_Subprogram_Available
      (Unit        : Analysis_Unit;
       Start_Loc   : Source_Location;
-      Target_Subp : out Basic_Subp_Decl) return Boolean
+      Target_Subp : out Subp_Decl) return Boolean
    with Pre => not (Unit in No_Analysis_Unit or else Unit.Root.Is_Null);
    --  Check whether Start_Loc is inside a subprogram declaration
    --  e.g.
@@ -32,7 +32,7 @@ package LAL_Refactor.Generate_Subprogram is
    --  up to and including the final parenthesis will count as inside
    --  the subprogram declaration. The semicolon will not count.
    --
-   --  If a subprogram is found, set Target_Subp to the Basic_Subp_Decl node.
+   --  If a subprogram is found, set Target_Subp to the Subp_Decl node.
    --  Check if a body already exists in the same declarative scope
    --  e.g. a declare block or subprogram declarative part
    --  Offer refactoring if no subprogram body found.
@@ -40,29 +40,27 @@ package LAL_Refactor.Generate_Subprogram is
    --  e.g. nested declarations within a subprogram declarative part.
    --  For public subprogram declarations, see the Generate Package tool.
 
-   function Get_Subp_Decl (Node : Ada_Node'Class) return Basic_Subp_Decl;
-   --  Only use this when already inside a subprogram declaration
+   function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl;
+   --  Navigate from a child node to parent subprogram declaration
+   --  Return No_Subp_Decl if no such parent exists
 
    function Is_Supported_Subp_Decl (D : Ada_Node'Class) return Boolean
-   is (D.Kind in Ada_Basic_Subp_Decl
-       and then D.Kind not in Ada_Abstract_Subp_Decl_Range);
-   --  Only offer generation for supported subprogram declarations
+   is (D.Kind in Ada_Subp_Decl
+       and then not D.P_Parent_Basic_Decl.Is_Null
+       and then
+         D.P_Parent_Basic_Decl.Kind
+         in Ada_Subp_Body_Range | Ada_Base_Package_Decl);
+   --  This restricts subprogram types to concrete declarations,
+   --  excluding abstract declarations and formal declarations
+   --  as part of a generic declaration.
+   --  Note that subprograms declared in a generic internal package
+   --  are also allowed by this subprogram
+   --  TODO: enable Generate Subprogram for public package subprograms
 
    -----------------------------
    --  Subprogram generation --
 
    type Subprogram_Generator is new Refactoring_Tool with private;
-
-   function Generate (Self : Subprogram_Generator) return Refactoring_Edits
-   with Post => not Generate'Result.Has_Failed;
-   --  Generates a subprogram body from the declaration
-
-   overriding
-   function Refactor
-     (Self           : Subprogram_Generator;
-      Analysis_Units : access function return Analysis_Unit_Array)
-      return Refactoring_Edits;
-   --  Driver for Generate action
 
    function Create_Subprogram_Generator
      (Target_Subp : Ada_Node'Class; Dest_Filename : String)
@@ -70,20 +68,17 @@ package LAL_Refactor.Generate_Subprogram is
    with
      Pre =>
        not (Target_Subp.Is_Null or Dest_Filename'Length = 0)
-       and then not Get_Subp_Decl (Target_Subp).Is_Null;
+       and then Is_Supported_Subp_Decl (Target_Subp);
    --  Creates a Subprogram_Generator to generate a body for Target_Subp
-   --  Fails if Target_Subp cannot be marshalled into a Basic_Subp_Decl
+   --  Fails if Target_Subp cannot be marshalled into a Subp_Decl
    --  or if it is an unsupported subprogram type, e.g. abstract
 
-   function Get_Insertion_Point
-     (Self : Subprogram_Generator) return Source_Location_Range;
-   --  Calculate suitable text insertion point
-   --  TODO:
-   --  Currently defaults to insertion directly below declaration.
-   --  May want to make this more intelligent, e.g. detect docstring
-   --  and generate body beneath it?
-   --  Alternatively, detect whether scope groups all declarations together
-   --  with a separate block for implementations
+   overriding
+   function Refactor
+     (Self           : Subprogram_Generator;
+      Analysis_Units : access function return Analysis_Unit_Array)
+      return Refactoring_Edits;
+   --  Driver for Generate action
 
    -------------------------------
    --  LSP diagnostic reporting --
@@ -114,8 +109,8 @@ package LAL_Refactor.Generate_Subprogram is
 private
 
    type Subprogram_Generator is new Refactoring_Tool with record
-      Target_Subp   : Basic_Subp_Decl;
-      --  Use parent Basic_Subp_Decl node instead of child Subp_Spec node
+      Target_Subp   : Subp_Decl;
+      --  Use parent Subp_Decl node instead of child Subp_Spec node
       --  as Decl includes overriding status
       Dest_Filename : Unbounded_String;
       --  At present this defaults to Target_Subp source file
