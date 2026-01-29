@@ -1,12 +1,12 @@
---  Here we get to put code!
-
 procedure Main is
    function Square (X : Integer) return Natural;
+   --  One-liner function with docstring
 
-   procedure Increment
-      (Y : in out Natural);
+   procedure Increment  --  Declaration split
+      (Y : in out Natural);  --  over
+      --  two lines with some comments in the middle
 
-   procedure Unimplemented;
+   procedure Unimplemented;  --  More comment
 begin
    null;
 end Main;

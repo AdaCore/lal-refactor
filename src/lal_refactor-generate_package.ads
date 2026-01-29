@@ -3,12 +3,12 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
+with Libadalang.Common;
 with VSS;
 with VSS.Strings;
 
 private with Langkit_Support.Text;
 
-with LAL_Refactor.Generate_Subprogram;
 with LAL_Refactor.Stub_Utils;
 
 package LAL_Refactor.Generate_Package is
@@ -84,8 +84,8 @@ private
    end record;
 
    function Is_Unimplemented_Subprogram (D : Ada_Node'Class) return Boolean
-   is (LAL_Refactor.Generate_Subprogram.Is_Supported_Subp_Decl (D)
-       and then D.As_Basic_Subp_Decl.P_Body_Part_For_Decl (False).Is_Null);
+   is (D.Kind in Libadalang.Common.Ada_Subp_Decl_Range
+       and then D.As_Subp_Decl.P_Body_Part.Is_Null);
    --  Helper to check for viable subprogram declarations
 
    function Get_Package_Name (Spec : Base_Package_Decl) return String

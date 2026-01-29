@@ -19,7 +19,7 @@ with VSS.Strings.Conversions;
 
 package LAL_Refactor.Stub_Utils is
    package Declaration_Vectors is new
-     Ada.Containers.Indefinite_Vectors (Natural, Basic_Subp_Decl);
+     Ada.Containers.Indefinite_Vectors (Natural, Subp_Decl);
    subtype Decl_Vector is Declaration_Vectors.Vector;
 
    subtype VSS_Vector is Virtual_String_Vector;
@@ -53,7 +53,7 @@ package LAL_Refactor.Stub_Utils is
    type Subp_Code_Generator is new Code_Generator with private;
 
    function Create_Code_Generator
-     (Subprogram : Basic_Subp_Decl) return Subp_Code_Generator
+     (Subprogram : Subp_Decl) return Subp_Code_Generator
    with Pre => not Subprogram.Is_Null;
    --  Extract information from LAL node to create subprogram generator
 
@@ -137,7 +137,7 @@ private
    --  Closing line of generated body
 
    type Subp_Code_Generator is new Code_Generator with record
-      Decl : Basic_Subp_Decl;
+      Decl : Subp_Decl;
    end record;
 
    type Pkg_Code_Generator is new Code_Generator with record

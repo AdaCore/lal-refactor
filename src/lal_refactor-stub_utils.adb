@@ -112,7 +112,7 @@ package body LAL_Refactor.Stub_Utils is
    ---------------------------
 
    function Create_Code_Generator
-     (Subprogram : Basic_Subp_Decl) return Subp_Code_Generator
+     (Subprogram : Subp_Decl) return Subp_Code_Generator
    is (Name => To_Unbounded_String (To_UTF8 (Subprogram.P_Defining_Name.Text)),
        Decl => Subprogram);
 
@@ -131,7 +131,7 @@ package body LAL_Refactor.Stub_Utils is
         (Start_Pos : Source_Location_Range) return Natural;
       --  Detect starting offset from context using node SLOC
 
-      function Signature (Decl : Basic_Subp_Decl) return VSS_Vector;
+      function Signature (Decl : Subp_Decl) return VSS_Vector;
       --  Cleanup subprogram declaration text for use in body
       --  (remove comments, preserve linebreaks)
 
@@ -168,7 +168,7 @@ package body LAL_Refactor.Stub_Utils is
       -- Signature --
       ---------------
 
-      function Signature (Decl : Basic_Subp_Decl) return VSS_Vector is
+      function Signature (Decl : Subp_Decl) return VSS_Vector is
 
          --  Most of the relevant text for a subprogram declaration
          --  is found in the Subp_Spec node, but in special cases
@@ -193,10 +193,10 @@ package body LAL_Refactor.Stub_Utils is
 
          I : Positive;
       begin
-         --  Get text of the entire declaration, skipping comments
+         --  Get text of the subprogram signature, skipping comments
          loop
-            exit when Decl.P_Subp_Decl_Spec.Token_End < T;
-            if Kind (Data (T)) not in Ada_Comment then
+            exit when Decl.F_Subp_Spec.Token_End < T;
+            if T.Data.Kind not in Ada_Comment then
                Decl_Text.Append (VSS.Strings.To_Virtual_String (T.Text));
             end if;
             T := T.Next (Exclude_Trivia => False);
@@ -210,7 +210,8 @@ package body LAL_Refactor.Stub_Utils is
          while I <= Decl_Lines.Last_Index loop
             if Contains_Only_Whitespace (Decl_Lines (I)) then
                Decl_Lines.Delete (I);
-               --  This moves the next element to current index
+            --  This moves the next element to current index
+
             else
                Decl_Lines.Replace (I, Trim_Right (Decl_Lines (I)));
                I := I + 1;

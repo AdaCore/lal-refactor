@@ -24,6 +24,18 @@ procedure Main is
    String'Class) --  moar?
    ;
 
+   --  Comment at start!
+   function Add (L, R : Integer)
+   --  Comment sandwich
+   return Integer;
+   --  This is a docstring attached to function
+   --  You can tell because there is only ony newline after
+   --  And then every line is a comment.
+   --
+   --  Even that "blank" line is part of the comment!
+         --  also this.
+
+   --  Not meeeee tho
 begin
    null;
 end Main;

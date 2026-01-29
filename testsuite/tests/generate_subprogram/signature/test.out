@@ -1,6 +1,6 @@
 Generating body for subprogram 'My_Subprogram' declared in main.adb
 main.adb
-14:1-14:1 
+15:1-15:1 
    function My_Subprogram (
       Multiple   : Integer;
       Parameters : String;
@@ -29,6 +29,18 @@ main.adb
    begin
       
    end Traverse;
+
+
+
+Generating body for subprogram 'Add' declared in main.adb
+main.adb
+37:1-37:1 
+   function Add (L, R : Integer)
+   return Integer
+   is
+   begin
+      
+   end Add;
 
 
 

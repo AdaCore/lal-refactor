@@ -121,11 +121,11 @@ procedure Generate_Subprogram is
       is (Units);
       --  Provide context to Refactor
 
-      function Get_Subp_Name (Subp : Basic_Subp_Decl) return String
+      function Get_Subp_Name (Subp : Subp_Decl) return String
       is (To_UTF8 (Subp.P_Defining_Name.Text));
       --  Name string for debugging
 
-      Target_Subprogram : Basic_Subp_Decl := No_Basic_Subp_Decl;
+      Target_Subprogram : Subp_Decl := No_Subp_Decl;
 
       Edits : Refactoring_Edits;
 

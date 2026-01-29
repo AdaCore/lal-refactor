@@ -8,9 +8,11 @@
 --  This package contains refactoring tools to generate or update
 --  a GNAT-compliant package body file from a package declaration
 
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;
 with VSS.Strings.Conversions;
 
-with Libadalang.Common; use Libadalang.Common;
+with Libadalang.Common;    use Libadalang.Common;
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 package body LAL_Refactor.Generate_Package is
@@ -22,40 +24,43 @@ package body LAL_Refactor.Generate_Package is
 
    function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl is
       Base_Pkg : Base_Package_Decl := No_Base_Package_Decl;
-      --  Package_Decl includes keywords "package", "private", "end"
-      --  but not the actual package name in declaration
-      function In_Package_Name (Node : Ada_Node) return Boolean;
-      --  Check for code action availability
 
-      function In_Package_Name (Node : Ada_Node) return Boolean is
+      procedure Set_Parent_Package
+        (Node : Ada_Node; Spec : out Base_Package_Decl);
+      --  Traverse Full.Package.Name up to parent package node
+
+      procedure Set_Parent_Package
+        (Node : Ada_Node; Spec : out Base_Package_Decl)
+      is
          function Inside_Name (Node : Ada_Node) return Boolean
          is (Node.Kind
              in Ada_Identifier_Range
               | Ada_End_Name_Range
               | Ada_Defining_Name_Range
               | Ada_Dotted_Name_Range);
-         --  Traverse Full.Package.Name node up to package
+
          N : Ada_Node := Node;
       begin
          while Inside_Name (N) and then not N.Parent.Is_Null loop
             N := N.Parent;
          end loop;
-         Base_Pkg :=
+         Spec :=
            (if N.Kind in Ada_Base_Package_Decl
             then N.As_Base_Package_Decl
             else No_Base_Package_Decl);
-         return not Base_Pkg.Is_Null;
-      end In_Package_Name;
+      end Set_Parent_Package;
    begin
       if Node.Is_Null then
          return No_Base_Package_Decl;
       elsif Node.Kind in Ada_Base_Package_Decl then
-         return Node.As_Base_Package_Decl;
-      elsif In_Package_Name (Node) then
-         return Base_Pkg;
+         Base_Pkg := Node.As_Base_Package_Decl;
+      elsif Node.Kind in Ada_Generic_Package_Decl_Range then
+         Base_Pkg :=
+           Node.As_Generic_Package_Decl.F_Package_Decl.As_Base_Package_Decl;
       else
-         return No_Base_Package_Decl;
+         Set_Parent_Package (Node, Base_Pkg);
       end if;
+      return Base_Pkg;
    end To_Package_Decl;
 
    -----------------------------------
@@ -90,14 +95,36 @@ package body LAL_Refactor.Generate_Package is
    -------------------
 
    function Get_Body_Path (From_Spec : Base_Package_Decl) return String is
-      S : String := From_Spec.Unit.Get_Filename;
    begin
       if Package_Body_Exists (From_Spec) then
          return From_Spec.P_Body_Part.Unit.Get_Filename;
       else
-         --  Really relying on GNAT filename conventions
-         S (S'Last) := 'b';
-         return S;
+         --  Create a new file in the same directory
+         --  No guarantee that filenaming conventions follow GNAT,
+         --  but Generate Package will use a GNAT-compliant naming scheme
+         --  and create a body file with an ".adb" suffix,
+         --  even if the spec does not use ".ads"
+
+         declare
+            S   : constant String := From_Spec.Unit.Get_Filename;
+            Sfx : constant String := ".adb";
+            Idx : constant Natural :=
+              Ada.Strings.Fixed.Index
+                (Source => S,
+                 Set    => Ada.Strings.Maps.To_Set ("."),
+                 From   => S'Last,
+                 Test   => Ada.Strings.Inside,
+                 Going  => Ada.Strings.Backward);
+         begin
+            --  Unlikely that the file will have no extension
+            --  but it's a simple fix
+            if Idx = 0 then
+               return S & Sfx;
+
+            else
+               return S (S'First .. Idx - 1) & Sfx;
+            end if;
+         end;
       end if;
    end Get_Body_Path;
 
@@ -121,14 +148,14 @@ package body LAL_Refactor.Generate_Package is
             if not Spec.F_Public_Part.Is_Null then
                for Decl of Spec.F_Public_Part.F_Decls loop
                   if Is_Unimplemented_Subprogram (Decl) then
-                     Decls.Append (Decl.As_Basic_Subp_Decl);
+                     Decls.Append (Decl.As_Subp_Decl);
                   end if;
                end loop;
             end if;
             if not Spec.F_Private_Part.Is_Null then
                for Decl of Spec.F_Private_Part.F_Decls loop
                   if Is_Unimplemented_Subprogram (Decl) then
-                     Decls.Append (Decl.As_Basic_Subp_Decl);
+                     Decls.Append (Decl.As_Subp_Decl);
                   end if;
                end loop;
             end if;
