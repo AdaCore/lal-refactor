@@ -1,12 +1,50 @@
-Could not generate body for subprogram declared in priv_impl.ads 4:1
 
-Could not generate body for subprogram declared in priv_impl.ads 4:4
+Generate Subprogram refactoring for subprogram Run_Word_Count
 
-Could not generate body for subprogram declared in priv_impl.ads 4:46
+priv_impl.adb
 
-Could not generate body for subprogram declared in priv_impl.ads 5:1
+package body Priv_Impl is
 
-Could not generate body for subprogram declared in priv_impl.ads 5:4
+   function Run_Word_Count (S : String) return WordCountT
+   is
+   begin
+      
+   end Run_Word_Count;
 
-Could not generate body for subprogram declared in priv_impl.ads 5:56
+end Priv_Impl;
+
+Generate Subprogram unavailable at location 5:1
+
+Generate Subprogram available on line  2
+priv_impl-child.adb
+10:1-10:1 
+   function Wide_Char_Count (S : String) return WordCountT
+   is
+   begin
+      
+   end Wide_Char_Count;
+
+
+Generate Subprogram unavailable on line  4
+
+Generate Subprogram available on line  6
+priv_impl-child.adb
+10:1-10:1 
+   procedure H
+   is
+   begin
+      
+   end H;
+
+
+
+Generate Subprogram available on line  8
+priv_impl-child.adb
+10:1-10:1 
+   function Log_Fmt (W: WordCountT) return String
+   is
+   begin
+      
+   end Log_Fmt;
+
 

@@ -1,0 +1,16 @@
+Generate Subprogram unavailable at location 4:1
+Generate Subprogram unavailable at location 7:1
+
+Generate Subprogram refactoring for subprogram Map
+spec.adb
+19:1-19:1 
+   function Map
+     (List : Int_List;
+      Fn   : not null access function (I : Integer) return Integer)
+      return Int_List
+   is
+   begin
+      
+   end Map;
+
+

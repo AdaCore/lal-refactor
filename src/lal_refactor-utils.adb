@@ -348,4 +348,44 @@ package body LAL_Refactor.Utils is
       end case;
    end Skip_Trivia;
 
+   ------------------------------
+   -- Expand_SLOC_To_Docstring --
+   ------------------------------
+
+   function Expand_SLOC_To_Docstring
+     (Node : Ada_Node'Class) return Source_Location_Range
+   is
+      use Libadalang.Common;
+      AU             : constant Analysis_Unit := Node.Unit;
+      Scope_End_Line : constant Line_Number :=
+        Node.P_Declarative_Scope.Sloc_Range.End_Line;
+      Node_End_Line  : constant Line_Number := Node.Sloc_Range.End_Line;
+      Line_Cursor    : Line_Number := Node_End_Line + Line_Number (1);
+      Point          : Source_Location := Node.Sloc_Range.End_Sloc;
+      T              : Token_Reference :=
+        AU.Lookup_Token ((Line_Cursor, Column_Number (1)));
+   begin
+      --  indicates empty line
+      if T in No_Token then
+         return Node.Sloc_Range;
+      end if;
+
+      while Line_Cursor < Scope_End_Line and T.Is_Trivia loop
+         if T.Data.Kind in Ada_Comment then
+            Point := T.Data.Sloc_Range.End_Sloc;
+            Line_Cursor := Line_Cursor + 1;
+            T := AU.Lookup_Token ((Line_Cursor, Column_Number (1)));
+         else
+            T := T.Next (Exclude_Trivia => False);
+            exit when T.Data.Sloc_Range.Start_Line > Line_Cursor;
+         end if;
+      end loop;
+      return Make_Range (Node.Sloc_Range.Start_Sloc, Point);
+   exception
+      when E : others =>
+         Refactor_Trace.Trace
+           (E, "Could not identify context around Node declaration.");
+         return Node.Sloc_Range;
+   end Expand_SLOC_To_Docstring;
+
 end LAL_Refactor.Utils;

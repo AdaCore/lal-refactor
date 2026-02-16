@@ -46,4 +46,8 @@ package LAL_Refactor.Utils is
    --  Find comment box before corresponding declaration. Return
    --  No_Source_Location_Range is not found.
 
+   function Expand_SLOC_To_Docstring
+     (Node : Ada_Node'Class) return Source_Location_Range
+   with Pre => not Node.Is_Null;
+   --  Expand node end SLOC to include docstring underneathd
 end LAL_Refactor.Utils;

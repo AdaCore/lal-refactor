@@ -10,9 +10,9 @@
 
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
+with LAL_Refactor.Utils;
 with VSS.Strings.Conversions;
 
-with Libadalang.Common;    use Libadalang.Common;
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 package body LAL_Refactor.Generate_Package is
@@ -22,46 +22,21 @@ package body LAL_Refactor.Generate_Package is
    -- To_Package_Decl --
    ---------------------
 
-   function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl is
-      Base_Pkg : Base_Package_Decl := No_Base_Package_Decl;
-
-      procedure Set_Parent_Package
-        (Node : Ada_Node; Spec : out Base_Package_Decl);
-      --  Traverse Full.Package.Name up to parent package node
-
-      procedure Set_Parent_Package
-        (Node : Ada_Node; Spec : out Base_Package_Decl)
-      is
-         function Inside_Name (Node : Ada_Node) return Boolean
-         is (Node.Kind
-             in Ada_Identifier_Range
-              | Ada_End_Name_Range
-              | Ada_Defining_Name_Range
-              | Ada_Dotted_Name_Range);
-
-         N : Ada_Node := Node;
-      begin
-         while Inside_Name (N) and then not N.Parent.Is_Null loop
-            N := N.Parent;
-         end loop;
-         Spec :=
-           (if N.Kind in Ada_Base_Package_Decl
-            then N.As_Base_Package_Decl
-            else No_Base_Package_Decl);
-      end Set_Parent_Package;
-   begin
-      if Node.Is_Null then
-         return No_Base_Package_Decl;
-      elsif Node.Kind in Ada_Base_Package_Decl then
-         Base_Pkg := Node.As_Base_Package_Decl;
-      elsif Node.Kind in Ada_Generic_Package_Decl_Range then
-         Base_Pkg :=
-           Node.As_Generic_Package_Decl.F_Package_Decl.As_Base_Package_Decl;
-      else
-         Set_Parent_Package (Node, Base_Pkg);
-      end if;
-      return Base_Pkg;
-   end To_Package_Decl;
+   function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl
+   is (case Node.Kind is
+         when Ada_Base_Package_Decl
+         => Node.As_Base_Package_Decl,
+         when Ada_Generic_Package_Decl_Range
+         => Node.As_Generic_Package_Decl.F_Package_Decl.As_Base_Package_Decl,
+         when Ada_Dotted_Name_Range | Ada_End_Name_Range | Ada_Identifier_Range
+         =>
+           (if not Node.P_Semantic_Parent.Is_Null
+              and then Node.P_Semantic_Parent.Kind in Ada_Base_Package_Decl
+            then Node.P_Semantic_Parent.As_Base_Package_Decl
+            else No_Base_Package_Decl),
+         when others
+         => No_Base_Package_Decl);
+   --  Get package node from "package [Name] is" or "end [Name]" text
 
    -----------------------------------
    -- Is_Generate_Package_Available --
@@ -77,6 +52,9 @@ package body LAL_Refactor.Generate_Package is
             (for some Decl of Decl_Block.F_Decls =>
                Is_Unimplemented_Subprogram (Decl)));
    begin
+      if Node.Is_Null then
+         return False;
+      end if;
       Spec := To_Package_Decl (Node);
       return
         (not Spec.Is_Null
@@ -116,11 +94,8 @@ package body LAL_Refactor.Generate_Package is
                  Test   => Ada.Strings.Inside,
                  Going  => Ada.Strings.Backward);
          begin
-            --  Unlikely that the file will have no extension
-            --  but it's a simple fix
             if Idx = 0 then
                return S & Sfx;
-
             else
                return S (S'First .. Idx - 1) & Sfx;
             end if;
@@ -168,6 +143,82 @@ package body LAL_Refactor.Generate_Package is
          Body_Path   => To_Unbounded_String (Get_Body_Path (Spec)));
    end Build_Package_Generator;
 
+   ---------------------------
+   -- Add_New_Package_Edits --
+   ---------------------------
+
+   procedure Add_New_Package_Edits
+     (Edits      : out Refactoring_Edits;
+      From_Spec  : Base_Package_Decl;
+      With_Decls : Decl_Vector;
+      To_Path    : Unbounded_String)
+   is
+      Package_Body_Text : constant Unbounded_String :=
+        LAL_Refactor.Stub_Utils.Create_Code_Generator
+          (Spec => From_Spec, Subprograms => With_Decls)
+          .Generate_Body;
+   begin
+      Edits.File_Creations.Insert
+        (New_Item => (Filepath => To_Path, Content => Package_Body_Text));
+   end Add_New_Package_Edits;
+
+   --------------------------
+   -- Update_Package_Edits --
+   --------------------------
+
+   procedure Update_Package_Edits
+     (Edits     : out Refactoring_Edits;
+      New_Decls : Decl_Vector;
+      To_Body   : Package_Body)
+   is
+      function Find_Insertion_Point
+        (To_Body : Package_Body) return Source_Location_Range;
+      --  Find a place to insert subprogram body stubs into existing
+      --  package body file.
+      --
+      --  By default, insert just below the last declaration:
+      --
+      --  F_Package_Name  | package body Name
+      --  F_Decls.F_Decls |   [declarations]
+      --  F_Decls         |   [remaining whitespace]
+      --  F_End_Name      | end Name
+      --
+      --  TODO : contextual insertion
+
+      --------------------------
+      -- Find_Insertion_Point --
+      --------------------------
+
+      function Find_Insertion_Point
+        (To_Body : Package_Body) return Source_Location_Range
+      is
+         Body_Decls   : constant Ada_Node_List := To_Body.F_Decls.F_Decls;
+         End_Line     : constant Line_Number :=
+           To_Body.F_End_Name.Sloc_Range.Start_Line;
+         Insert_Point : Source_Location := (End_Line, Column_Number (1));
+      begin
+         if not (Body_Decls.Is_Null or else Body_Decls.Last_Child.Is_Null) then
+            Insert_Point.Line :=
+              LAL_Refactor.Utils.Expand_SLOC_To_Docstring
+                (Body_Decls.Last_Child)
+                .End_Line
+              + Line_Number (1);
+         end if;
+         return Make_Range (Insert_Point, Insert_Point);
+      end Find_Insertion_Point;
+
+      Package_Stubs : Unbounded_String;
+      use LAL_Refactor.Stub_Utils;
+   begin
+      for Decl of New_Decls loop
+         Package_Stubs.Append (Create_Code_Generator (Decl).Generate_Body);
+      end loop;
+      Safe_Insert
+        (Edits.Text_Edits,
+         To_Body.Unit.Get_Filename,
+         (Location => Find_Insertion_Point (To_Body), Text => Package_Stubs));
+   end Update_Package_Edits;
+
    --------------
    -- Refactor --
    --------------
@@ -179,127 +230,12 @@ package body LAL_Refactor.Generate_Package is
       return Refactoring_Edits
    is
       Package_Edits : Refactoring_Edits := No_Refactoring_Edits;
-
-      function Get_Insertion_Point
-        (Body_Unit : Analysis_Unit := No_Analysis_Unit)
-         return Source_Location_Range;
-      --  Calculate appropriate insertion point in package body
-      --  Text edit maps use insertion point location as map key
-      --  thus insertion points must be unique for each edit.
-      --  To avoid worrying about line numbers changing,
-      --  text edits are placed from the bottom of the file
-      --  (highest line number) to the top (lowest).
-      --
-      --  Easy strategy for updating an existing package body:
-      --  insert new subprogram body stubs at the bottom.
-      --  This means putting all the new stubs in one edit
-      --  so the insertion point is unique.
-      --
-      --  Complicated strategy: follow the order in which subprograms
-      --  are declared in the package specification.
-      --  This means grouping new stubs together around existing
-      --  subprogram declarations.
-      --
-      --  e.g. refactoring a package specification like this:
-      --
-      --  -----------------------------------------------------|
-      --  -- Package Spec -|- Package Body -|- Text edits -|-L-|
-      --  -----------------------------------------------------|
-      --  L2  procedure A; |----------------|- A before B  | 3 |
-      --  L5  function  B; |-L3 function B -|--------------|---|
-      --  L8  function  C; |-L9-------------|- C after B --| 9 |
-      --  L9  procedure D; |----------------|- D after C --| 9 |
-      --  -----------------------------------------------------|
-      --
-      --  should produce the following text edits
-      --    1. Insert A at line 3
-      --    2. Insert (C + D) at line 9
-      --  to be processed in reverse order
-
-      procedure Add_New_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Spec  : Base_Package_Decl;
-         With_Decls : Decl_Vector;
-         To_Path    : Unbounded_String);
-      --  Create edits to go into one new file
-
-      procedure Update_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Decls : Decl_Vector;
-         To_Body    : Analysis_Unit);
-      --  Text edits to modify an existing package body
-
-      -------------------------
-      -- Get_Insertion_Point --
-      -------------------------
-
-      function Get_Insertion_Point
-        (Body_Unit : Analysis_Unit := No_Analysis_Unit)
-         return Source_Location_Range
-      is
-         --  Currently defaults to end of package
-         --  TODO : update to check Decl placement in Body_Unit
-         Last_Line        : constant Line_Number :=
-           (if Body_Unit in No_Analysis_Unit
-            then Line_Number (2)
-            else Sloc_Range (Data (Body_Unit.Last_Token)).End_Line);
-         Package_Body_End : constant Source_Location_Range :=
-           (Start_Line | End_Line     => Last_Line - Line_Number (1),
-            Start_Column | End_Column => Column_Number (1));
-      begin
-         return Package_Body_End;
-      end Get_Insertion_Point;
-
-      ---------------------------
-      -- Add_New_Package_Edits --
-      ---------------------------
-
-      procedure Add_New_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Spec  : Base_Package_Decl;
-         With_Decls : Decl_Vector;
-         To_Path    : Unbounded_String)
-      is
-         Package_Body_Text : constant Unbounded_String :=
-           LAL_Refactor.Stub_Utils.Create_Code_Generator
-             (Spec => From_Spec, Subprograms => With_Decls)
-             .Generate_Body;
-      begin
-         Edits.File_Creations.Insert
-           (New_Item => (Filepath => To_Path, Content => Package_Body_Text));
-      end Add_New_Package_Edits;
-
-      --------------------------
-      -- Update_Package_Edits --
-      --------------------------
-
-      procedure Update_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Decls : Decl_Vector;
-         To_Body    : Analysis_Unit)
-      is
-         Subprogram_Stub : Unbounded_String;
-         Generated_Block : Unbounded_String;
-         use LAL_Refactor.Stub_Utils;
-      begin
-         for Decl of From_Decls loop
-            Subprogram_Stub := Create_Code_Generator (Decl).Generate_Body;
-            Append (Source => Generated_Block, New_Item => Subprogram_Stub);
-         end loop;
-         Edits.Text_Edits.Insert
-           (Key      => To_Body.Get_Filename,
-            New_Item =>
-              Text_Edit_Ordered_Sets.To_Set
-                (New_Item =>
-                   (Location => Get_Insertion_Point (To_Body),
-                    Text     => Generated_Block)));
-      end Update_Package_Edits;
    begin
       if Package_Body_Exists (Self.Spec) then
          Update_Package_Edits
-           (Edits      => Package_Edits,
-            From_Decls => Self.Subprograms,
-            To_Body    => Self.Spec.P_Body_Part.Unit);
+           (Edits     => Package_Edits,
+            New_Decls => Self.Subprograms,
+            To_Body   => Self.Spec.P_Body_Part);
       else
          Add_New_Package_Edits
            (Edits      => Package_Edits,

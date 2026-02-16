@@ -1,0 +1,48 @@
+
+Generate Subprogram refactoring for subprogram Add
+
+spec.adb
+
+package body Spec is
+
+   function Add (L, R : Int_List) return Int_List
+   is
+   begin
+      
+   end Add;
+
+end Spec;
+
+
+Generate Subprogram refactoring for subprogram Print
+
+spec.adb
+
+package body Spec is
+
+   procedure Print (List : Int_List)
+   is
+   begin
+      
+   end Print;
+
+end Spec;
+
+
+Generate Subprogram refactoring for subprogram Map
+
+spec.adb
+
+package body Spec is
+
+   function Map
+     (List : Int_List;
+      Fn   : not null access function (I : Integer) return Integer)
+      return Int_List
+   is
+   begin
+      
+   end Map;
+
+end Spec;
+
