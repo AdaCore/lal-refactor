@@ -1,4 +1,5 @@
-Generating body for subprogram 'Scan' declared in main.adb
+
+Generate Subprogram refactoring for subprogram Scan
 main.adb
 3:1-3:1 
    procedure Scan (T : Struct)
@@ -9,7 +10,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Scan' declared in main.adb
+Generate Subprogram refactoring for subprogram Scan
 main.adb
 4:1-4:1 
    overriding procedure Scan (T : Named_Struct)
@@ -17,6 +18,5 @@ main.adb
    begin
       
    end Scan;
-
 
 

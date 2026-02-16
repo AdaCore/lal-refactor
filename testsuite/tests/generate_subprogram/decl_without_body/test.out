@@ -1,4 +1,5 @@
-Generating body for subprogram 'Square' declared in main.adb
+
+Generate Subprogram available on line  2
 main.adb
 4:1-4:1 
    function Square (X : Integer) return Natural
@@ -9,29 +10,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Square' declared in main.adb
-main.adb
-4:1-4:1 
-   function Square (X : Integer) return Natural
-   is
-   begin
-      
-   end Square;
-
-
-
-Generating body for subprogram 'Square' declared in main.adb
-main.adb
-4:1-4:1 
-   function Square (X : Integer) return Natural
-   is
-   begin
-      
-   end Square;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
+Generate Subprogram available on line  5
 main.adb
 8:1-8:1 
    procedure Increment
@@ -43,7 +22,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Increment' declared in main.adb
+Generate Subprogram available on line  6
 main.adb
 8:1-8:1 
    procedure Increment
@@ -55,115 +34,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Increment' declared in main.adb
-main.adb
-8:1-8:1 
-   procedure Increment
-      (Y : in out Natural)
-   is
-   begin
-      
-   end Increment;
-
-
-
-Generating body for subprogram 'Unimplemented' declared in main.adb
+Generate Subprogram available on line  9
 main.adb
 10:1-10:1 
    procedure Unimplemented
@@ -173,49 +44,7 @@ main.adb
    end Unimplemented;
 
 
-
-Generating body for subprogram 'Unimplemented' declared in main.adb
-main.adb
-10:1-10:1 
-   procedure Unimplemented
-   is
-   begin
-      
-   end Unimplemented;
-
-
-
-Generating body for subprogram 'Unimplemented' declared in main.adb
-main.adb
-10:1-10:1 
-   procedure Unimplemented
-   is
-   begin
-      
-   end Unimplemented;
-
-
-
-Generating body for subprogram 'Unimplemented' declared in main.adb
-main.adb
-10:1-10:1 
-   procedure Unimplemented
-   is
-   begin
-      
-   end Unimplemented;
-
-
-
-Could not generate body for subprogram declared in main.adb 4:1
-
-Could not generate body for subprogram declared in main.adb 8:1
-
-Could not generate body for subprogram declared in main.adb 10:1
-
-Could not generate body for subprogram declared in main.adb 11:1
-
-Could not generate body for subprogram declared in main.adb 11:4
-
-Could not generate body for subprogram declared in main.adb 12:1
-
+Generate Subprogram unavailable at location 10:1
+Generate Subprogram unavailable at location 11:1
+Generate Subprogram unavailable at location 11:4
+Generate Subprogram unavailable at location 12:1

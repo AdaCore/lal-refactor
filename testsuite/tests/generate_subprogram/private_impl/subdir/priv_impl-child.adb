@@ -7,9 +7,4 @@ package body Priv_Impl.Child is
       Ada.Text_IO.Put_Line ("Words: " & Self.Words'Image);
       Ada.Text_IO.Put_Line ("Bytes: " & Self.Bytes'Image);
    end Print;
-   --  okay one little doc
-
-
-
-
 end Priv_Impl.Child;
