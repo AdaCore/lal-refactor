@@ -14,7 +14,7 @@
 with VSS;
 with VSS.Strings;
 
-with Libadalang.Common;  use Libadalang.Common;
+with Libadalang.Common; use Libadalang.Common;
 
 package LAL_Refactor.Generate_Subprogram is
 
@@ -44,18 +44,23 @@ package LAL_Refactor.Generate_Subprogram is
    --  Navigate from a child node to parent subprogram declaration
    --  Return No_Subp_Decl if no such parent exists
 
-   function Is_Supported_Subp_Decl (D : Ada_Node'Class) return Boolean
-   is (D.Kind in Ada_Subp_Decl
-       and then not D.P_Parent_Basic_Decl.Is_Null
+   function Valid_Subp_Decl (N : Ada_Node'Class) return Boolean
+   is (N.Kind in Ada_Subp_Decl_Range
+       and then not N.P_Parent_Basic_Decl.Is_Null
        and then
-         D.P_Parent_Basic_Decl.Kind
-         in Ada_Subp_Body_Range | Ada_Base_Package_Decl);
-   --  This restricts subprogram types to concrete declarations,
-   --  excluding abstract declarations and formal declarations
-   --  as part of a generic declaration.
-   --  Note that subprograms declared in a generic internal package
-   --  are also allowed by this subprogram
-   --  TODO: enable Generate Subprogram for public package subprograms
+         ((N.P_Parent_Basic_Decl.Kind
+           in Ada_Base_Package_Decl | Ada_Subp_Body_Range)
+          or else
+            (N.P_Parent_Basic_Decl.Kind in Ada_Generic_Package_Decl_Range
+             and then not N.P_Semantic_Parent.Is_Null
+             and then
+               N.P_Semantic_Parent.Kind
+               in Ada_Generic_Package_Internal_Range)));
+   --  This check filters for subprograms declared in:
+   --    a subprogram body declarative part
+   --    a subprogram body declare block
+   --    a concrete package specification
+   --    a generic package internal specification
 
    -----------------------------
    --  Subprogram generation --
@@ -63,12 +68,8 @@ package LAL_Refactor.Generate_Subprogram is
    type Subprogram_Generator is new Refactoring_Tool with private;
 
    function Create_Subprogram_Generator
-     (Target_Subp : Ada_Node'Class; Dest_Filename : String)
-      return Subprogram_Generator
-   with
-     Pre =>
-       not (Target_Subp.Is_Null or Dest_Filename'Length = 0)
-       and then Is_Supported_Subp_Decl (Target_Subp);
+     (Target_Subp : Ada_Node'Class) return Subprogram_Generator
+   with Pre => not Target_Subp.Is_Null and then Valid_Subp_Decl (Target_Subp);
    --  Creates a Subprogram_Generator to generate a body for Target_Subp
    --  Fails if Target_Subp cannot be marshalled into a Subp_Decl
    --  or if it is an unsupported subprogram type, e.g. abstract
@@ -108,13 +109,28 @@ package LAL_Refactor.Generate_Subprogram is
    --  Used for LSP error propagation when Node.Is_Null
 private
 
+   type Generate_Mode is (Local, Add_To_Pkg_Body, New_Pkg_Body);
+   --  @Local
+   --    Non-visible declaration, nested in parent subprogram
+   --    Scope may be declare block or subprogram declarative part
+   --    Stub location: insert into same scope
+   --
+   --  @Add_To_Pkg_Body
+   --    Visible declaration, top-level package declaration
+   --    Scope is package specification, package body exists
+   --    Stub location: insert into package body
+   --
+   --  @New_Pkg_Body
+   --    Visible declaration, top-level package declaration
+   --    Scope is package specification, no package body exists
+   --    Stub location: create new package body for stub
+
    type Subprogram_Generator is new Refactoring_Tool with record
-      Target_Subp   : Subp_Decl;
-      --  Use parent Subp_Decl node instead of child Subp_Spec node
-      --  as Decl includes overriding status
-      Dest_Filename : Unbounded_String;
-      --  At present this defaults to Target_Subp source file
-      --  but this will support subprogram generation in packages
+      Target_Subp : Subp_Decl;
+      --  LAL node containing contextual information
+      Action      : Generate_Mode;
+      --  Indicates the type of refactoring edit required:
+      --  File creation or modification
    end record;
 
    type Generate_Subprogram_Problem is new Refactoring_Diagnostic with record
@@ -123,4 +139,7 @@ private
       Filename : VSS.Strings.Virtual_String;
    end record;
 
+   --  LAL node traversal helpers for package declarations
+   function Get_Parent_Package_Spec (D : Subp_Decl) return Base_Package_Decl
+   with Pre => not D.Is_Null;
 end LAL_Refactor.Generate_Subprogram;

@@ -1,0 +1,5 @@
+title: Generate subprogram body stub in a new package body
+
+description: generate_subprogram tool test - test cases for top-level subprograms without an existing package body
+
+driver: shell_script

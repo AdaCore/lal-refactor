@@ -21,21 +21,20 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO;           use Ada.Text_IO;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Text_IO;                      use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse;
 
 with Langkit_Support;
-with Langkit_Support.Text;  use Langkit_Support.Text;
-with Langkit_Support.Slocs; use Langkit_Support.Slocs;
+with Langkit_Support.Text;             use Langkit_Support.Text;
+with Langkit_Support.Slocs;            use Langkit_Support.Slocs;
 
-with Libadalang.Analysis;         use Libadalang.Analysis;
-with Libadalang.Helpers;          use Libadalang.Helpers;
-with Libadalang.Project_Provider; use Libadalang.Project_Provider;
-
+with Libadalang.Analysis;              use Libadalang.Analysis;
+with Libadalang.Helpers;               use Libadalang.Helpers;
+with Libadalang.Project_Provider;      use Libadalang.Project_Provider;
 with LAL_Refactor;                     use LAL_Refactor;
-with LAL_Refactor.Generate_Subprogram; use LAL_Refactor.Generate_Subprogram;
+with LAL_Refactor.Generate_Subprogram;
 
 --  Generate Subprogram Tool
 --
@@ -125,9 +124,89 @@ procedure Generate_Subprogram is
       is (To_UTF8 (Subp.P_Defining_Name.Text));
       --  Name string for debugging
 
-      Target_Subprogram : Subp_Decl := No_Subp_Decl;
+      procedure Test_Line (Unit : Analysis_Unit; L : Line_Number);
+      --  Test refactoring available and equivalent everywhere on this line
 
-      Edits : Refactoring_Edits;
+      procedure Test_Sloc (Unit : Analysis_Unit; Sloc : Source_Location);
+      --  Test refactoring only for one location
+
+      ---------------
+      -- Test_Line --
+      ---------------
+
+      procedure Test_Line (Unit : Analysis_Unit; L : Line_Number) is
+         Line_Text  : constant Text_Type := Unit.Get_Line (Positive (L));
+         Line_Start : constant Source_Location := (L, Column_Number (1));
+
+         C                 : Positive := 2;
+         Point             : Source_Location := (L, Column_Number (C));
+         Subp              : Subp_Decl := No_Subp_Decl;
+         Base_Edits, Edits : Refactoring_Edits := No_Refactoring_Edits;
+
+         use LAL_Refactor.Generate_Subprogram;
+      begin
+         Base_Edits :=
+           (if Is_Generate_Subprogram_Available (Unit, Line_Start, Subp)
+            then
+              Create_Subprogram_Generator (Subp).Refactor
+                (Analysis_Units'Access)
+            else No_Refactoring_Edits);
+         --  If no refactoring available, check this is true across entire line
+         --  If refactoring successful, check the result is the same
+
+         while C < Line_Text'Length
+           and then Is_Generate_Subprogram_Available (Unit, Point, Subp)
+         loop
+            Edits :=
+              Create_Subprogram_Generator (Subp).Refactor
+                (Analysis_Units'Access);
+            exit when Base_Edits /= Edits;
+            C := C + 1;
+            Point.Column := Column_Number (C);
+         end loop;
+
+         if Base_Edits /= Edits then
+            New_Line;
+            Put_Line ("Generate Subprogram results differ on line " & L'Img);
+            Put_Line ("Expected results at " & Line_Start.Image);
+            Print (Base_Edits);
+            Put_Line ("Unexpected result at " & Point.Image);
+            Print (Edits);
+         elsif Base_Edits.Has_Failed then
+            Put_Line ("Generate Subprogram unavailable on line " & L'Img);
+         elsif C < Line_Text'Length then
+            Put_Line
+              ("Generate Subprogram unavailable at location " & Point.Image);
+         else
+            New_Line;
+            Put_Line ("Generate Subprogram available on line " & L'Img);
+            Print (Edits);
+         end if;
+      end Test_Line;
+
+      ---------------
+      -- Test_Sloc --
+      ---------------
+
+      procedure Test_Sloc (Unit : Analysis_Unit; Sloc : Source_Location) is
+         Subp  : Subp_Decl := No_Subp_Decl;
+         Edits : Refactoring_Edits := No_Refactoring_Edits;
+         use LAL_Refactor.Generate_Subprogram;
+      begin
+         if Is_Generate_Subprogram_Available (Unit, Sloc, Subp) then
+            Edits :=
+              Create_Subprogram_Generator (Subp).Refactor
+                (Analysis_Units'Access);
+            New_Line;
+            Put_Line
+              ("Generate Subprogram refactoring for subprogram "
+               & Get_Subp_Name (Subp));
+            Print (Edits);
+         else
+            Put_Line
+              ("Generate Subprogram unavailable at location " & Sloc.Image);
+         end if;
+      end Test_Sloc;
 
    begin
       Main_Unit := Jobs (1).Analysis_Ctx.Get_From_File (Source_File);
@@ -138,33 +217,13 @@ procedure Generate_Subprogram is
            Main_Unit.Context.Get_From_File (To_String (File));
          Units_Index := Units_Index + 1;
       end loop;
-      if Is_Generate_Subprogram_Available (Main_Unit, Sloc, Target_Subprogram)
+
+      if Sloc.Column = 0
+        and then Main_Unit.Get_Line (Positive (Sloc.Line))'Length > 0
       then
-         declare
-            Generator : constant Subprogram_Generator :=
-              Create_Subprogram_Generator (Target_Subprogram, Source_File);
-            --  Test body generation in the same file as declaration
-
-         begin
-            Put_Line
-              ("Generating body for subprogram '"
-               & Get_Subp_Name (Target_Subprogram)
-               & "' declared in "
-               & Source_File);
-
-            Edits := Generator.Refactor (Analysis_Units'Access);
-
-            Print (Edits);
-            New_Line;
-         end;
-
+         Test_Line (Main_Unit, Sloc.Line);
       else
-         Put_Line
-           ("Could not generate body for subprogram declared in "
-            & Source_File
-            & " "
-            & Sloc.Image);
-         New_Line;
+         Test_Sloc (Main_Unit, Sloc);
       end if;
    end Generate_Subprogram_App_Setup;
 

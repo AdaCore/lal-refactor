@@ -1,48 +1,21 @@
-Could not generate body for subprogram declared in main.adb 2:1
+Generate Subprogram unavailable at location 2:1
+Generate Subprogram unavailable at location 3:1
+Generate Subprogram unavailable at location 5:1
+Generate Subprogram unavailable at location 5:21
+Generate Subprogram unavailable at location 6:1
+Generate Subprogram unavailable at location 8:1
+Generate Subprogram unavailable at location 10:1
+Generate Subprogram unavailable at location 12:1
+Generate Subprogram unavailable at location 13:8
+Generate Subprogram unavailable at location 16:3
+Generate Subprogram unavailable at location 18:1
+Generate Subprogram unavailable at location 19:5
+Generate Subprogram unavailable at location 20:1
+Generate Subprogram unavailable at location 21:7
+Generate Subprogram unavailable at location 22:1
+Generate Subprogram unavailable at location 27:1
 
-Could not generate body for subprogram declared in main.adb 2:50
-
-Could not generate body for subprogram declared in main.adb 3:1
-
-Could not generate body for subprogram declared in main.adb 5:1
-
-Could not generate body for subprogram declared in main.adb 5:4
-
-Could not generate body for subprogram declared in main.adb 5:20
-
-Could not generate body for subprogram declared in main.adb 5:21
-
-Could not generate body for subprogram declared in main.adb 6:1
-
-Could not generate body for subprogram declared in main.adb 6:7
-
-Could not generate body for subprogram declared in main.adb 6:21
-
-Could not generate body for subprogram declared in main.adb 8:1
-
-Could not generate body for subprogram declared in main.adb 10:1
-
-Could not generate body for subprogram declared in main.adb 12:1
-
-Could not generate body for subprogram declared in main.adb 12:4
-
-Could not generate body for subprogram declared in main.adb 13:8
-
-Could not generate body for subprogram declared in main.adb 16:3
-
-Could not generate body for subprogram declared in main.adb 18:1
-
-Could not generate body for subprogram declared in main.adb 19:5
-
-Could not generate body for subprogram declared in main.adb 20:1
-
-Could not generate body for subprogram declared in main.adb 21:7
-
-Could not generate body for subprogram declared in main.adb 22:1
-
-Could not generate body for subprogram declared in main.adb 27:1
-
-Generating body for subprogram 'Int_Image' declared in main.adb
+Generate Subprogram refactoring for subprogram Int_Image
 main.adb
 25:1-25:1 
       function Int_Image (N : Integer'Class) return String
@@ -53,7 +26,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Int_Image' declared in main.adb
+Generate Subprogram refactoring for subprogram Int_Image
 main.adb
 26:1-26:1 
       function Int_Image (N : Integer)       return String
@@ -64,7 +37,7 @@ main.adb
 
 
 
-Generating body for subprogram 'Increment' declared in main.adb
+Generate Subprogram refactoring for subprogram Increment
 main.adb
 30:1-30:1 
       procedure Increment (X : in out Natural)
@@ -72,6 +45,5 @@ main.adb
       begin
          
       end Increment;
-
 
 

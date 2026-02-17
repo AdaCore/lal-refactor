@@ -54,7 +54,7 @@ Refactoring unavailable at 4:2
 Refactoring unavailable at 5:2
 Refactoring available for entire line  1
 priv_impl-child.adb
-10:1-10:1 
+11:1-11:1 
    function Wide_Char_Count (S : String) return WordCountT
    is
    begin
@@ -76,7 +76,7 @@ priv_impl-child.adb
 
 Refactoring available for entire line  7
 priv_impl-child.adb
-10:1-10:1 
+11:1-11:1 
    function Wide_Char_Count (S : String) return WordCountT
    is
    begin
@@ -98,7 +98,7 @@ priv_impl-child.adb
 
 Refactoring available for entire line  9
 priv_impl-child.adb
-10:1-10:1 
+11:1-11:1 
    function Wide_Char_Count (S : String) return WordCountT
    is
    begin

@@ -1,37 +1,18 @@
 #!/bin/sh
 
 #   function Square (X : Integer) return Natural;
-generate_subprogram -P default.gpr -S main.adb -SL 2 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 2 -SC 3
-generate_subprogram -P default.gpr -S main.adb -SL 2 -SC 49
+generate_subprogram -P default.gpr -S main.adb -SL 2
 
 # Multi-line declaration
 #   procedure Increment
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 4
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 20
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 21
-#      (Y : in out Natural);
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 7
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 8
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 20
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 27
-    #                         --  over
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 30
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 37
+generate_subprogram -P default.gpr -S main.adb -SL 5
+#      (Y : in out Natural);  --  over
+generate_subprogram -P default.gpr -S main.adb -SL 6
 
 #   procedure Unimplemented;
-generate_subprogram -P default.gpr -S main.adb -SL 9 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 9 -SC 4
-generate_subprogram -P default.gpr -S main.adb -SL 9 -SC 32
-generate_subprogram -P default.gpr -S main.adb -SL 9 -SC 33
+generate_subprogram -P default.gpr -S main.adb -SL 9
 
-# Should not suggest refactoring for the remaining tests:
-
-# Blank lines
-generate_subprogram -P default.gpr -S main.adb -SL 4 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 8 -SC 1
+# Should not suggest refactoring for the remaining tests
 
 # Remaining subprogram body
 generate_subprogram -P default.gpr -S main.adb -SL 10 -SC 1

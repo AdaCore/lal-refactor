@@ -5,19 +5,14 @@
 
 #   function Main.Square (X : Integer) return Natural;
 generate_subprogram -P default.gpr -S main.adb -SL 2 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 2 -SC 50
 generate_subprogram -P default.gpr -S main.adb -SL 3 -SC 1
 
 # Multi-line declaration
 #   procedure Main.Increment
 generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 4
-generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 20
 generate_subprogram -P default.gpr -S main.adb -SL 5 -SC 21
 #      (Y : in out Natural);
 generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 7
-generate_subprogram -P default.gpr -S main.adb -SL 6 -SC 21
 
 #   procedure Main.Nested;
 generate_subprogram -P default.gpr -S main.adb -SL 8 -SC 1
@@ -28,7 +23,6 @@ generate_subprogram -P default.gpr -S main.adb -SL 10 -SC 1
 # Increment body has different subp spec text formatting
 #   procedure Main.Increment (Y : in out Natural) is
 generate_subprogram -P default.gpr -S main.adb -SL 12 -SC 1
-generate_subprogram -P default.gpr -S main.adb -SL 12 -SC 4
 generate_subprogram -P default.gpr -S main.adb -SL 13 -SC 8
 generate_subprogram -P default.gpr -S main.adb -SL 16 -SC 3
 

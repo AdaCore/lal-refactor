@@ -1,6 +1,38 @@
-Could not generate body for subprogram declared in operators.ads 4:10
+Generate Subprogram unavailable at location 4:10
+Generate Subprogram unavailable at location 5:1
+Generate Subprogram unavailable at location 7:10
+Generate Subprogram unavailable at location 8:10
+Generate Subprogram unavailable on line  11
+Generate Subprogram unavailable at location 12:4
+Generate Subprogram unavailable on line  20
+Generate Subprogram unavailable on line  22
 
-Could not generate body for subprogram declared in operators.ads 6:1
+Generate Subprogram refactoring for subprogram ">"
 
-Could not generate body for subprogram declared in operators.ads 6:4
+operators.adb
+
+package body Operators is
+
+   function ">"  (L, R : T) return Boolean
+   is
+   begin
+      
+   end ">";
+
+end Operators;
+
+
+Generate Subprogram refactoring for subprogram Standard
+
+simple.adb
+
+package body Simple is
+
+   procedure Standard (X : String'Class)
+   is
+   begin
+      
+   end Standard;
+
+end Simple;
 
