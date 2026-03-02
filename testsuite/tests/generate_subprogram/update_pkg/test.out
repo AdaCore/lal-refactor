@@ -1,9 +1,24 @@
-Generate Subprogram unavailable at location 4:1
-Generate Subprogram unavailable at location 7:1
+Generate Subprogram unavailable on line  4
+Generate Subprogram unavailable on line  13
 
-Generate Subprogram refactoring for subprogram Map
-spec.adb
-19:1-19:1 
+Generate Subprogram available on line  7
+many_pub.adb
+11:1-11:1 
+   function Fold
+     (Start : Integer;
+      List  : Int_List;
+      Fn    : not null access function (L, R : Integer) return Integer)
+      return Integer
+   is
+   begin
+      
+   end Fold;
+
+
+
+Generate Subprogram available on line  17
+many_pub.adb
+25:1-25:1 
    function Map
      (List : Int_List;
       Fn   : not null access function (I : Integer) return Integer)
@@ -14,3 +29,48 @@ spec.adb
    end Map;
 
 
+
+Generate Subprogram available on line  2
+empty_body.adb
+1:28-1:28 
+   procedure Print
+   is
+   begin
+      
+   end Print;
+
+
+
+Generate Subprogram available on line  2
+many_priv.adb
+4:1-4:1 
+   procedure Unroll
+   is
+   begin
+      
+   end Unroll;
+
+
+
+Generate Subprogram available on line  4
+many_priv.adb
+4:1-4:1 
+   procedure A
+   is
+   begin
+      
+   end A;
+
+
+
+Generate Subprogram available on line  8
+many_priv.adb
+17:1-17:1 
+   function Concat (C : Character; S : String) return String
+   is
+   begin
+      
+   end Concat;
+
+
+Generate Subprogram unavailable on line  6

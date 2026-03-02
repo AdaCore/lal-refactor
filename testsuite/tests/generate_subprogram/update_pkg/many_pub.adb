@@ -1,11 +1,17 @@
+package body Many_Pub is
 
-package body Spec is
-
+   --  Docstring up here
+      --  with questionable indentation
    function Add (L, R : Int_List) return Int_List
    is
    begin
       
-   end Add;
+   end Add;  --  end of node!
+      --  also here  
+
+   -----------
+   -- Print --
+   -----------
 
    procedure Print (List : Int_List)
    is
@@ -22,4 +28,4 @@ package body Spec is
    --  Expect that new stub will insert just under Print
    --  leaving only one blank line between
 
-end Spec;
+end Many_Pub;

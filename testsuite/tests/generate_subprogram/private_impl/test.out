@@ -15,9 +15,24 @@ end Priv_Impl;
 
 Generate Subprogram unavailable at location 5:1
 
+Generate Subprogram refactoring for subprogram Debug
+
+priv_impl.adb
+
+package body Priv_Impl is
+
+   procedure Debug (W : WordCountT)
+   is
+   begin
+      
+   end Debug;
+
+end Priv_Impl;
+
+
 Generate Subprogram available on line  2
 priv_impl-child.adb
-10:1-10:1 
+4:1-4:1 
    function Wide_Char_Count (S : String) return WordCountT
    is
    begin

@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2023, AdaCore
+--  Copyright (C) 2023-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -46,8 +46,28 @@ package LAL_Refactor.Utils is
    --  Find comment box before corresponding declaration. Return
    --  No_Source_Location_Range is not found.
 
-   function Expand_SLOC_To_Docstring
-     (Node : Ada_Node'Class) return Source_Location_Range
-   with Pre => not Node.Is_Null;
-   --  Expand node end SLOC to include docstring underneathd
+   function Expand_Start_SLOC (N : Ada_Node'Class) return Source_Location
+   with Pre => not N.Is_Null and then N.Sloc_Range.Start_Line > 1;
+   --  If N has a title box above, return the start SLOC of this box.
+   --  Otherwise look for comments beginning immediately above N
+   --  without blank lines in between, and return the start SLOC
+   --  of the earliest comment.
+
+   function Expand_End_SLOC (N : Ada_Node'Class) return Source_Location
+   with Pre => not N.Is_Null;
+   --  Search for a docstring beginning directly after N,
+   --  return the end SLOC of this comment.
+   --  This includes a comment on the same line after N terminates,
+   --  or one or multiple lines directly beneath N,
+   --  as long as there are no blank lines in between.
+
+   function Get_Contextual_Insertion_Point
+     (Subp : Subp_Decl) return Source_Location
+   with Pre => not (Subp.Is_Null or else Subp.P_Parent_Basic_Decl.Is_Null);
+   --  Determine where to insert a generated subprogram body stub.
+   --  If any other subprograms are declared and implemented in the same scope,
+   --  try to match the declaration order. Otherwise insert at the end.
+   --
+   --  Note that declaration scope and insertion scope differ for packages.
+   --  Only match the order of subprograms implemented in the package body.
 end LAL_Refactor.Utils;

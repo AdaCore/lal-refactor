@@ -1,0 +1,1 @@
+package body Empty_Body is end Empty_Body;

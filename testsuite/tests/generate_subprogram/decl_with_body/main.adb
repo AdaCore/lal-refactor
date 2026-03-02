@@ -1,13 +1,16 @@
 procedure Main is
-   function Square (X : Integer) return Natural is
-   (X*X);
+   type Coordinates is array (Positive range 1..2) of Integer;
+
+   function Square (X : Integer) return Natural is (X*X);
 
    procedure Increment --  blub
       (Y :     in out Natural);
 
    procedure Nested;
 
-   Tracker : Natural := 40;
+   function Taxicab_Distance (L, R : Coordinates) return Natural;
+
+   --  Bodies ---
 
    procedure Increment (Y : in out Natural) is
    begin
@@ -17,24 +20,26 @@ procedure Main is
 
    procedure Nested
    is
-      procedure Traverse --  Declaration with trivia
-        (N : Integer;
-         F : not null access function (NN : Integer) return String);
+      type T is tagged null record;
+      T_Obj : constant T := null;
 
-      function Int_Image (N : Integer'Class) return String;
-      function Int_Image (N : Integer)       return String;
+      procedure Traverse --  Declaration with trivia
+        (Obj : T;
+         F : not null access function (X : T) return String);
+
+      function Int_Image (N : T'Class) return String;
+      function Int_Image (N : T)       return String;
 
       function Add (L, R : Integer) return Integer;
 
       procedure Increment (X : in out Natural);
 
+      --  Bodies ---
+
       procedure Traverse
-        (N : Integer; F : not null access function (NN : Integer) return String) is
+        (Obj : T; F : not null access function (X : T) return String) is
       begin
-         while N > 0 loop
-            Ada.Text_IO.Put_Line (F (N));
-            N := N - 1;
-         end loop;
+         Ada.Text_IO.Put_Line (F (Obj));
       end Traverse;
 
       function Add (L,
@@ -44,7 +49,7 @@ procedure Main is
          return L + R;
       end Add;
    begin
-      Traverse (NUP, Int_Image'Access);
+      Traverse (7, Int_Image'Access);
    end Nested;
 begin
    null;

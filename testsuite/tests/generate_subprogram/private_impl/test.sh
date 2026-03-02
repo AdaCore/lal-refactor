@@ -1,13 +1,16 @@
 #!/bin/sh
 
-##  Test Generate Subprogram in New_Pkg_Body mode
+###  Test Generate Subprogram in New_Pkg_Body mode
 #    function Run_Word_Count (S : String) return WordCountT;
 generate_subprogram -P default.gpr -S priv_impl.ads -SL 4 -SC 1
 ##   Function privately implemented
 #    function Get_Line_Count (W : WordCountT) return Natural;
 generate_subprogram -P default.gpr -S priv_impl.ads -SL 5 -SC 1
+# private
+#   procedure Debug (W : WordCountT);
+generate_subprogram -P default.gpr -S priv_impl.ads -SL 15 -SC 1
 
-##  Test Generate Subprogram in Add_To_Pkg mode
+###  Test Generate Subprogram in Add_To_Pkg mode
 #    function Wide_Char_Count (S : String) return WordCountT;
 generate_subprogram -P default.gpr -S priv_impl-child.ads -SL 2
 ## Already implemented, should not be available

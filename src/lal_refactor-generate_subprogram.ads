@@ -7,9 +7,20 @@
 
 --  This package contains refactoring tools to generate subprogram body stubs
 --  from declarations.
---  This tool checks for a local subprogram declaration in the same scope,
---  and generates body stubs on the line directly under the declaration.
---  Note: for public subprogram declarations, see the Generate Package tool
+--  The tool checks for subprogram declarations without an implementation.
+--  If the subprogram is locally declared in a declarative part such as the
+--  declaration part of a parent subprogram body or declare block,
+--  the resulting subprogram body stub is generated in the same scope.
+--
+--  Top-level subprograms declared in package specifications will be
+--  inserted into the corresponding package body file if it exists.
+--  Otherwise, a new package body file will be generated
+--  in the same directory, containing only the generated subprogram body.
+--
+--  Abstract and generic subprogram declarations are not supported,
+--  although subprograms declared in generic packages are supported.
+--
+--  See Generate Package to complete package bodies with multiple subprograms.
 
 with VSS;
 with VSS.Strings;
@@ -23,22 +34,13 @@ package LAL_Refactor.Generate_Subprogram is
       Start_Loc   : Source_Location;
       Target_Subp : out Subp_Decl) return Boolean
    with Pre => not (Unit in No_Analysis_Unit or else Unit.Root.Is_Null);
-   --  Check whether Start_Loc is inside a subprogram declaration
-   --  e.g.
+   --  Check whether Start_Loc is inside a subprogram declaration.
+   --  See Valid_Subp_Decl for permitted subprogram decl types
    --
-   --    overriding procedure F (N : Integer) with Pre => N > 10;
+   --  If so, check whether a matching subprogram body exists in the
+   --  expected scope (local or package body file).
    --
-   --  Anywhere in this line (including start indentation) all the way
-   --  up to and including the final parenthesis will count as inside
-   --  the subprogram declaration. The semicolon will not count.
-   --
-   --  If a subprogram is found, set Target_Subp to the Subp_Decl node.
-   --  Check if a body already exists in the same declarative scope
-   --  e.g. a declare block or subprogram declarative part
-   --  Offer refactoring if no subprogram body found.
-   --  Note : this tool only works on local subprogram declarations
-   --  e.g. nested declarations within a subprogram declarative part.
-   --  For public subprogram declarations, see the Generate Package tool.
+   --  Refactoring is available if no subprogram body exists.
 
    function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl;
    --  Navigate from a child node to parent subprogram declaration
@@ -61,6 +63,7 @@ package LAL_Refactor.Generate_Subprogram is
    --    a subprogram body declare block
    --    a concrete package specification
    --    a generic package internal specification
+   --  Abstract and generic subprogram declarations are excluded.
 
    -----------------------------
    --  Subprogram generation --
@@ -68,8 +71,8 @@ package LAL_Refactor.Generate_Subprogram is
    type Subprogram_Generator is new Refactoring_Tool with private;
 
    function Create_Subprogram_Generator
-     (Target_Subp : Ada_Node'Class) return Subprogram_Generator
-   with Pre => not Target_Subp.Is_Null and then Valid_Subp_Decl (Target_Subp);
+     (Node : Ada_Node'Class) return Subprogram_Generator
+   with Pre => not Node.Is_Null and then Valid_Subp_Decl (Node);
    --  Creates a Subprogram_Generator to generate a body for Target_Subp
    --  Fails if Target_Subp cannot be marshalled into a Subp_Decl
    --  or if it is an unsupported subprogram type, e.g. abstract
@@ -129,7 +132,7 @@ private
       Target_Subp : Subp_Decl;
       --  LAL node containing contextual information
       Action      : Generate_Mode;
-      --  Indicates the type of refactoring edit required:
+      --  Indicates the type of refactoring edit required
       --  File creation or modification
    end record;
 
