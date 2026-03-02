@@ -26,22 +26,13 @@ package body LAL_Refactor.Generate_Subprogram is
    -------------------
 
    function Get_Subp_Decl (Node : Ada_Node'Class) return Subp_Decl is
-      Target_Subp : Subp_Decl := No_Subp_Decl;
-      Decl        : Basic_Decl;
+      N : Ada_Node := Node.As_Ada_Node;
    begin
-      if Valid_Subp_Decl (Node) then
-         Target_Subp := Node.As_Subp_Decl;
-      else
-         Decl := Node.P_Parent_Basic_Decl;
-         while not Decl.Is_Null loop
-            exit when Valid_Subp_Decl (Decl);
-            Decl := Decl.P_Parent_Basic_Decl;
-         end loop;
-         if not Decl.Is_Null then
-            Target_Subp := Decl.As_Subp_Decl;
-         end if;
-      end if;
-      return Target_Subp;
+      while not N.Is_Null loop
+         exit when Valid_Subp_Decl (N);
+         N := N.P_Parent_Basic_Decl.As_Ada_Node;
+      end loop;
+      return (if N.Is_Null then No_Subp_Decl else N.As_Subp_Decl);
    end Get_Subp_Decl;
 
    -----------------------------
@@ -75,7 +66,7 @@ package body LAL_Refactor.Generate_Subprogram is
       Start_Token : constant Token_Reference := Unit.Lookup_Token (Start_Loc);
       Node        : Ada_Node := Unit.Root.Lookup (Start_Loc);
 
-      function Subprogram_Unimplemented (Sp_Decl : Subp_Decl) return Boolean
+      function Is_Unimplemented (Sp_Decl : Subp_Decl) return Boolean
       is (Sp_Decl.P_Body_Part.Is_Null);
       --  Check local and package scopes for an existing implementation
 
@@ -86,26 +77,23 @@ package body LAL_Refactor.Generate_Subprogram is
       if Node.Is_Null then
          return False;
       elsif Node.Kind in Ada_Ada_Node_List_Range | Ada_Declarative_Part_Range
+        and Start_Token.Is_Trivia
       then
          --  If cursor is in whitespace or comment,
          --  scan nearest non-trivial text on the same line
-         if Start_Token.Is_Trivia then
-            if Start_Line (Start_Token.Next (Exclude_Trivia => True))
-              = Start_Loc.Line
-            then
-               Node := Lookup (Unit, Start_Token, Forward);
-            elsif Start_Line (Start_Token.Previous (Exclude_Trivia => True))
-              = Start_Loc.Line
-            then
-               Node := Lookup (Unit, Start_Token, Backward);
-            end if;
+         if Start_Line (Start_Token.Next (Exclude_Trivia => True))
+           = Start_Loc.Line
+         then
+            Node := Lookup (Unit, Start_Token, Forward);
+         elsif Start_Line (Start_Token.Previous (Exclude_Trivia => True))
+           = Start_Loc.Line
+         then
+            Node := Lookup (Unit, Start_Token, Backward);
          end if;
       end if;
 
       Target_Subp := Get_Subp_Decl (Node);
-      return
-        not Target_Subp.Is_Null
-        and then Subprogram_Unimplemented (Target_Subp);
+      return not Target_Subp.Is_Null and then Is_Unimplemented (Target_Subp);
    exception
       when E : others =>
          Refactor_Trace.Trace
@@ -119,9 +107,9 @@ package body LAL_Refactor.Generate_Subprogram is
    ---------------------------------
 
    function Create_Subprogram_Generator
-     (Target_Subp : Ada_Node'Class) return Subprogram_Generator
+     (Node : Ada_Node'Class) return Subprogram_Generator
    is
-      Subprogram   : constant Subp_Decl := Get_Subp_Decl (Target_Subp);
+      Subprogram   : constant Subp_Decl := Get_Subp_Decl (Node);
       Package_Spec : constant Base_Package_Decl :=
         Get_Parent_Package_Spec (Subprogram);
       Insert_Mode  : constant Generate_Mode :=
@@ -148,84 +136,43 @@ package body LAL_Refactor.Generate_Subprogram is
       use LAL_Refactor.Stub_Utils;
 
       function Generate (Subprogram : Subp_Decl) return Unbounded_String
+      is (Create_Code_Generator (Subprogram).Generate_Body)
       with Post => Generate'Result not in Null_Unbounded_String;
       --  Generate subprogram body text
 
-      function Find_Local_Insertion_Point
-        (Subprogram : Subp_Decl) return Source_Location
-      with Post => Find_Local_Insertion_Point'Result not in No_Source_Location;
-      --  Calculate suitable text insertion point in declarative scope
-      --  If a docstring is attached, insert beneath it
-
-      --------------------------------
-      -- Find_Local_Insertion_Point --
-      --------------------------------
-
-      function Find_Local_Insertion_Point
-        (Subprogram : Subp_Decl) return Source_Location
-      is
-         Full_Node_Sloc : constant Source_Location_Range :=
-           LAL_Refactor.Utils.Expand_SLOC_To_Docstring (Subprogram);
-      begin
-         return (Full_Node_Sloc.End_Line + Line_Number (1), Column_Number (1));
-      end Find_Local_Insertion_Point;
-
-      --------------
-      -- Generate --
-      --------------
-
-      function Generate (Subprogram : Subp_Decl) return Unbounded_String is
-      begin
-         return Create_Code_Generator (Subprogram).Generate_Body;
-      end Generate;
-
-      Edits : Refactoring_Edits;
-
+      Edits     : Refactoring_Edits;
+      Dest_File : constant String :=
+        (if Self.Action in Local
+         then Self.Target_Subp.Unit.Get_Filename
+         else
+           LAL_Refactor.Generate_Package.Get_Body_Path
+             (Get_Parent_Package_Spec (Self.Target_Subp)));
    begin
       case Self.Action is
-         when Local                          =>
+         when New_Pkg_Body            =>
+            LAL_Refactor.Generate_Package.Add_New_Package_Edits
+              (Edits      => Edits,
+               From_Spec  => Get_Parent_Package_Spec (Self.Target_Subp),
+               With_Decls =>
+                 LAL_Refactor.Stub_Utils.Declaration_Vectors.To_Vector
+                   (Self.Target_Subp, 1),
+               To_Path    => To_Unbounded_String (Dest_File));
+
+         when Local | Add_To_Pkg_Body =>
             declare
-               Insert_Point   : constant Source_Location :=
-                 Find_Local_Insertion_Point (Self.Target_Subp);
-               Insert_Range   : constant Source_Location_Range :=
-                 Make_Range (Insert_Point, Insert_Point);
-               Generated_Stub : constant Unbounded_String :=
+               Generated_Stub  : constant Unbounded_String :=
                  Generate (Self.Target_Subp);
-               Destination    : constant String :=
-                 Self.Target_Subp.Unit.Get_Filename;
-               Subp_Stub      : constant Text_Edit :=
-                 (Location => Insert_Range, Text => Generated_Stub);
+               Insert_Point    : constant Source_Location :=
+                 LAL_Refactor.Utils.Get_Contextual_Insertion_Point
+                   (Self.Target_Subp);
+               Insert_Location : constant Source_Location_Range :=
+                 Make_Range (Insert_Point, Insert_Point);
+               Stub_Edit       : constant Text_Edit :=
+                 (Location => Insert_Location, Text => Generated_Stub);
             begin
-               Safe_Insert (Edits.Text_Edits, Destination, Subp_Stub);
-            end;
-
-         when Add_To_Pkg_Body | New_Pkg_Body =>
-            declare
-               use LAL_Refactor.Generate_Package;
-
-               Spec        : constant Base_Package_Decl :=
-                 Get_Parent_Package_Spec (Self.Target_Subp);
-               Pkg_Body    : constant Package_Body := Spec.P_Body_Part;
-               Decls       : constant LAL_Refactor.Stub_Utils.Decl_Vector :=
-                 Declaration_Vectors.To_Vector (Self.Target_Subp, 1);
-               Destination : constant Unbounded_String :=
-                 To_Unbounded_String (Get_Body_Path (Spec));
-            begin
-               if Pkg_Body.Is_Null then
-                  Add_New_Package_Edits
-                    (Edits      => Edits,
-                     From_Spec  => Spec,
-                     With_Decls => Decls,
-                     To_Path    => Destination);
-               else
-                  Update_Package_Edits
-                    (Edits     => Edits,
-                     New_Decls => Decls,
-                     To_Body   => Pkg_Body);
-               end if;
+               Safe_Insert (Edits.Text_Edits, Dest_File, Stub_Edit);
             end;
       end case;
-
       return Edits;
    exception
       when E : others =>

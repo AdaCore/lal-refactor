@@ -1,0 +1,131 @@
+
+Generate Subprogram available on line  4
+main.adb
+56:1-56:1 
+   function Square (X : Integer) return Natural
+   is
+   begin
+      
+   end Square;
+
+
+
+Generate Subprogram available on line  9
+main.adb
+28:1-28:1 
+   procedure Increment
+      (Y : in out Natural)
+   is
+   begin
+      
+   end Increment;
+
+
+
+Generate Subprogram available on line  10
+main.adb
+28:1-28:1 
+   procedure Increment
+      (Y : in out Natural)
+   is
+   begin
+      
+   end Increment;
+
+
+
+Generate Subprogram available on line  23
+main.adb
+25:1-25:1 
+      function F return Boolean
+      is
+      begin
+         
+      end F;
+
+
+
+Generate Subprogram available on line  41
+main.adb
+53:1-53:1 
+      procedure Insert_Me_Under_Last
+      is
+      begin
+         
+      end Insert_Me_Under_Last;
+
+
+
+Generate Subprogram available on line  67
+main.adb
+70:1-70:1 
+      procedure Insert_Me_Above
+      is
+      begin
+         
+      end Insert_Me_Above;
+
+
+
+Generate Subprogram available on line  89
+main.adb
+92:1-92:1 
+      function Concat (L, R : String) return String
+      is
+      begin
+         
+      end Concat;
+
+
+
+Generate Subprogram available on line  96
+main.adb
+110:1-110:1 
+         function Difference (L, R : String) return String
+         is
+         begin
+               
+         end Difference;
+
+
+
+Generate Subprogram available on line  126
+main.adb
+128:1-128:1 
+      function Trim (S : String) return String
+      is
+      begin
+         
+      end Trim;
+
+
+
+Generate Subprogram available on line  154
+main.adb
+164:1-164:1 
+      function To_String (X : Integer) return String
+      is
+      begin
+         
+      end To_String;
+
+
+
+Generate Subprogram available on line  160
+main.adb
+164:1-164:1 
+      function To_String (X : Float) return String
+      is
+      begin
+         
+      end To_String;
+
+
+Generate Subprogram unavailable on line  2
+Generate Subprogram unavailable on line  7
+Generate Subprogram unavailable on line  13
+Generate Subprogram unavailable on line  21
+Generate Subprogram unavailable on line  35
+Generate Subprogram unavailable on line  38
+Generate Subprogram unavailable on line  39
+Generate Subprogram unavailable on line  69

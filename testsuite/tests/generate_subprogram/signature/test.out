@@ -1,7 +1,7 @@
 
 Generate Subprogram available on line  4
 main.adb
-15:1-15:1 
+37:1-37:1 
    function My_Subprogram (
       Multiple   : Integer;
       Parameters : String;
@@ -17,7 +17,7 @@ main.adb
 
 Generate Subprogram available on line  16
 main.adb
-26:1-26:1 
+37:1-37:1 
    overriding
    procedure
    Traverse (S

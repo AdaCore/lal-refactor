@@ -1,7 +1,7 @@
 
 Generate Subprogram refactoring for subprogram Square
 main.adb
-3:1-3:1 
+12:1-12:1 
    function Square (X : Integer) return Natural
    is
    begin
@@ -12,7 +12,7 @@ main.adb
 
 Generate Subprogram refactoring for subprogram Increment
 main.adb
-4:1-4:1 
+12:1-12:1 
    procedure Increment (Y : in out Natural)
    is
    begin
@@ -23,7 +23,7 @@ main.adb
 
 Generate Subprogram refactoring for subprogram Unimplemented
 main.adb
-5:1-5:1 
+12:1-12:1 
    procedure Unimplemented
    is
    begin
@@ -34,7 +34,7 @@ main.adb
 
 Generate Subprogram refactoring for subprogram Square
 main.adb
-9:1-9:1 
+18:1-18:1 
       function Square (X : Integer) return Natural
       is
       begin
@@ -42,11 +42,11 @@ main.adb
       end Square;
 
 
-Generate Subprogram unavailable at location 9:1
+Generate Subprogram unavailable at location 16:1
 
 Generate Subprogram refactoring for subprogram Unimplemented
 main.adb
-11:1-11:1 
+41:1-41:1 
       procedure Unimplemented
       is
       begin
@@ -54,12 +54,12 @@ main.adb
       end Unimplemented;
 
 
-Generate Subprogram unavailable at location 14:1
-Generate Subprogram unavailable at location 15:1
+Generate Subprogram unavailable at location 21:1
+Generate Subprogram unavailable at location 22:1
 
 Generate Subprogram refactoring for subprogram Square
 main.adb
-17:1-17:1 
+29:1-29:1 
             function Square (A, B : Integer) return Natural
             is
             begin
@@ -70,7 +70,7 @@ main.adb
 
 Generate Subprogram refactoring for subprogram Blip
 main.adb
-18:1-18:1 
+29:1-29:1 
             procedure Blip (C : Positive)
             is
             begin
@@ -78,11 +78,11 @@ main.adb
             end Blip;
 
 
-Generate Subprogram unavailable at location 18:1
+Generate Subprogram unavailable at location 25:1
 
 Generate Subprogram refactoring for subprogram Square
 main.adb
-40:1-40:1 
+55:1-55:1 
       function Square (I : Integer) return Natural
       is
       begin

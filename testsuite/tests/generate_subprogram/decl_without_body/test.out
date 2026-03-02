@@ -1,7 +1,7 @@
 
 Generate Subprogram available on line  2
 main.adb
-4:1-4:1 
+10:1-10:1 
    function Square (X : Integer) return Natural
    is
    begin
@@ -12,7 +12,7 @@ main.adb
 
 Generate Subprogram available on line  5
 main.adb
-8:1-8:1 
+10:1-10:1 
    procedure Increment
       (Y : in out Natural)
    is
@@ -24,7 +24,7 @@ main.adb
 
 Generate Subprogram available on line  6
 main.adb
-8:1-8:1 
+10:1-10:1 
    procedure Increment
       (Y : in out Natural)
    is
