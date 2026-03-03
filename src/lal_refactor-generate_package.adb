@@ -199,9 +199,9 @@ package body LAL_Refactor.Generate_Package is
       begin
          if not (Body_Decls.Is_Null or else Body_Decls.Last_Child.Is_Null) then
             Insert_Point.Line :=
-              LAL_Refactor.Utils.Expand_SLOC_To_Docstring
+              LAL_Refactor.Utils.Expand_End_SLOC
                 (Body_Decls.Last_Child)
-                .End_Line
+                .Line
               + Line_Number (1);
          end if;
          return Make_Range (Insert_Point, Insert_Point);
