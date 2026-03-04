@@ -434,6 +434,44 @@ package body LAL_Refactor.Utils is
       return Comment_End;
    end Expand_End_SLOC;
 
+   ----------------
+   -- Line_Above --
+   ----------------
+
+   function Line_Above (Node : Ada_Node'Class) return Line_Number is
+      use Libadalang.Common;
+      --  Check for clashes with another node in the line above
+
+      function Is_Whitespace (L : Line_Number) return Boolean;
+
+      function Is_Whitespace (L : Line_Number) return Boolean is
+         T : Token_Reference :=
+           Node.Unit.Lookup_Token ((L, Column_Number (1)));
+      begin
+         while T not in No_Token loop
+            exit when T.Data.Sloc_Range.Start_Line > L;  --  End of line
+            if T.Data.Kind not in Ada_Whitespace then
+               return False;
+            end if;
+            T := T.Next (Exclude_Trivia => False);
+         end loop;
+         return True;
+      end Is_Whitespace;
+
+      Line : Line_Number := Expand_Start_SLOC (Node).Line;
+
+   begin
+      if Line > Line_Number'First
+        and then Is_Whitespace (Line_Number'Pred (Line))
+      then
+         Line := Line_Number'Pred (Line);
+      end if;
+      return Line;
+   exception
+      when others =>
+         return Node.Sloc_Range.Start_Line;
+   end Line_Above;
+
    ------------------------------------
    -- Get_Contextual_Insertion_Point --
    ------------------------------------
@@ -473,18 +511,9 @@ package body LAL_Refactor.Utils is
       --  Find next node for which Match is true, otherwise No_Ada_Node
       --  Note: only iterates within declarative scope of Node
 
-      function Line_Above (Node : Ada_Node'Class) return Line_Number
-      with Pre => not Node.Is_Null;
-      --  Return the first line for safely inserting code above Node.
-      --  This includes comment boxes if any are found.
-
-      function Line_Below (Node : Ada_Node'Class) return Line_Number
-      is (Line_Number'Succ (Expand_End_SLOC (Node).Line))
-      with Pre => not Node.Is_Null;
-      --  Return line below node, including docstrings in node range
-
       function Package_Insertion (Subp : Subp_Decl) return Source_Location
-      with Pre =>
+      with
+        Pre =>
           Subp.P_Parent_Basic_Decl.Kind in Ada_Base_Package_Decl
           and then not Subp.P_Parent_Basic_Decl.P_Body_Part_For_Decl.Is_Null;
       --  Given top-level subprogram declared in package specification,
@@ -522,7 +551,7 @@ package body LAL_Refactor.Utils is
         (Node  : Ada_Node;
          Match : not null access function (N : Ada_Node'Class) return Boolean)
          return Ada_Node
-       is
+      is
          Result : Ada_Node := Node;
       begin
          while not Result.Is_Null loop
@@ -531,43 +560,6 @@ package body LAL_Refactor.Utils is
          end loop;
          return Result;
       end Find_Next_Subp;
-
-      ----------------
-      -- Line_Above --
-      ----------------
-
-      function Line_Above (Node : Ada_Node'Class) return Line_Number is
-         --  Check for clashes with another node in the line above
-
-         function Is_Whitespace (L : Line_Number) return Boolean;
-
-         function Is_Whitespace (L : Line_Number) return Boolean is
-            T : Token_Reference :=
-              Node.Unit.Lookup_Token ((L, Column_Number (1)));
-         begin
-            while T not in No_Token loop
-               exit when T.Data.Sloc_Range.Start_Line > L;  --  End of line
-               if T.Data.Kind not in Ada_Whitespace then
-                  return False;
-               end if;
-               T := T.Next (Exclude_Trivia => False);
-            end loop;
-            return True;
-         end Is_Whitespace;
-
-         Line : Line_Number := Expand_Start_SLOC (Node).Line;
-
-      begin
-         if Line > Line_Number'First
-           and then Is_Whitespace (Line_Number'Pred (Line))
-         then
-            Line := Line_Number'Pred (Line);
-         end if;
-         return Line;
-      exception
-         when others =>
-            return Node.Sloc_Range.Start_Line;
-      end Line_Above;
 
       ---------------------------------
       -- Package_Insertion --
@@ -601,7 +593,7 @@ package body LAL_Refactor.Utils is
            Find_Prev_Subp (Subp.Previous_Sibling, Has_Impl'Access);
          Next_Subp : Ada_Node :=
            Find_Next_Subp (Subp.Next_Sibling, Has_Impl'Access);
-         Point : Source_Location := (0, Column_Number (1));
+         Point     : Source_Location := (0, Column_Number (1));
 
       begin
          if Scope.Kind in Ada_Public_Part_Range and Next_Subp.Is_Null then
@@ -631,8 +623,7 @@ package body LAL_Refactor.Utils is
       -- Nested_Insertion --
       --------------------------------
 
-      function Nested_Insertion (Subp : Subp_Decl) return Source_Location
-      is
+      function Nested_Insertion (Subp : Subp_Decl) return Source_Location is
          --  As the subprogram body for Subp must occur after its declaration,
          --  any subprogram used as insertion context must occur after Subp.
          --  First try to insert under a subprogram body declared above,
@@ -653,7 +644,7 @@ package body LAL_Refactor.Utils is
            Find_Prev_Subp (Subp.Previous_Sibling, Has_Impl'Access);
          Next_Subp : constant Ada_Node :=
            Find_Next_Subp (Subp.Next_Sibling, Has_Impl'Access);
-         Point : Source_Location := (0, Column_Number (1));
+         Point     : Source_Location := (0, Column_Number (1));
 
       begin
          if not Prev_Subp.Is_Null then
@@ -668,11 +659,12 @@ package body LAL_Refactor.Utils is
 
       --  Default insertion at start of line
    begin
-      return (case Subp.P_Parent_Basic_Decl.Kind is
-         when Ada_Base_Package_Decl => Package_Insertion (Subp),
-         when Ada_Subp_Body_Range   => Nested_Insertion (Subp),
-         when others                =>
-            raise Constraint_Error with Subp.P_Parent_Basic_Decl.Kind_Name);
+      return
+        (case Subp.P_Parent_Basic_Decl.Kind is
+           when Ada_Base_Package_Decl => Package_Insertion (Subp),
+           when Ada_Subp_Body_Range   => Nested_Insertion (Subp),
+           when others                =>
+             raise Constraint_Error with Subp.P_Parent_Basic_Decl.Kind_Name);
    exception
       when E : others =>
          Refactor_Trace.Trace

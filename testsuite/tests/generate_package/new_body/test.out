@@ -1,0 +1,108 @@
+Refactoring available for entire line  1
+
+single_pub.adb
+
+package body Single_Pub is
+
+   procedure Draw (Obj : Cute_Animal)
+   is
+   begin
+      
+   end Draw;
+
+end Single_Pub;
+
+Refactoring available for entire line  1
+
+single_priv.adb
+
+package body Single_Priv is
+
+   procedure Render (Friend : Critter)
+   is
+   begin
+      
+   end Render;
+
+end Single_Priv;
+
+Refactoring available for entire line  1
+
+mixed_mode.adb
+
+package body Mixed_Mode is
+
+   function Run_Word_Count (S : String) return WordCountT
+   is
+   begin
+      
+   end Run_Word_Count;
+
+   procedure M
+   is
+   begin
+      
+   end M;
+
+   procedure Debug (W : WordCountT)
+   is
+   begin
+      
+   end Debug;
+
+end Mixed_Mode;
+
+Refactoring available for entire line  8
+
+mixed_mode.adb
+
+package body Mixed_Mode is
+
+   function Run_Word_Count (S : String) return WordCountT
+   is
+   begin
+      
+   end Run_Word_Count;
+
+   procedure M
+   is
+   begin
+      
+   end M;
+
+   procedure Debug (W : WordCountT)
+   is
+   begin
+      
+   end Debug;
+
+end Mixed_Mode;
+
+Refactoring available for entire line  17
+
+mixed_mode.adb
+
+package body Mixed_Mode is
+
+   function Run_Word_Count (S : String) return WordCountT
+   is
+   begin
+      
+   end Run_Word_Count;
+
+   procedure M
+   is
+   begin
+      
+   end M;
+
+   procedure Debug (W : WordCountT)
+   is
+   begin
+      
+   end Debug;
+
+end Mixed_Mode;
+
+Refactoring unavailable at 4:2
+Refactoring unavailable at 5:2

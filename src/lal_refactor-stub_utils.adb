@@ -194,8 +194,7 @@ package body LAL_Refactor.Stub_Utils is
          I : Positive;
       begin
          --  Get text of the subprogram signature, skipping comments
-         loop
-            exit when Decl.F_Subp_Spec.Token_End < T;
+         while T <= Decl.F_Subp_Spec.Token_End loop
             if T.Data.Kind not in Ada_Comment then
                Decl_Text.Append (VSS.Strings.To_Virtual_String (T.Text));
             end if;
@@ -247,7 +246,7 @@ package body LAL_Refactor.Stub_Utils is
    ---------------------------
 
    function Create_Code_Generator
-     (Spec : Base_Package_Decl; Subprograms : Decl_Vector)
+     (Spec : Base_Package_Decl; Subprograms : Subp_Set)
       return Pkg_Code_Generator
    is (Name        => To_Unbounded_String (To_UTF8 (Spec.F_Package_Name.Text)),
        Subprograms => Subprograms);
@@ -270,8 +269,8 @@ package body LAL_Refactor.Stub_Utils is
 
       Subprogram_Block : Unbounded_String;
    begin
-      --  Package body subprograms follow declaration order
-      --  in package specification
+      --  Generate package body subprogram stubs in declaration order
+      --  So public subprograms will always be before private ones
       for D of Self.Subprograms loop
          declare
             Subprogram_Body : constant Unbounded_String :=

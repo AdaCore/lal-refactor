@@ -67,7 +67,7 @@ If a package specification declares subprograms, two sub-tools are available to 
 
 ### Generate Subprogram Body
 
-This tool identifies nested subprogram declarations without a matching body in the file, and generates a subprogram body stub for the user to fill. This reduces developer time spent writing boilerplate code. Available code actions: Generate Procedure Body, Generate Function Body.
+This tool identifies subprogram declarations without an implementation, and generates a subprogram body stub for the user to fill. This reduces developer time spent writing boilerplate code. Available code actions: Generate Procedure Body, Generate Function Body.
 
 ## Contributing
 
