@@ -3,13 +3,14 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
-with LAL_Refactor.Generate_Package;
-with LAL_Refactor.Utils;
-with VSS.Strings; use VSS.Strings;
+
+with VSS.Strings;        use VSS.Strings;
 with VSS.Strings.Conversions;
 
+with LAL_Refactor.Utils;
 with LAL_Refactor.Tools; use LAL_Refactor.Tools;
 with LAL_Refactor.Stub_Utils;
+with LAL_Refactor.Generate_Package;
 
 package body LAL_Refactor.Generate_Subprogram is
    Tool_Name : constant String := "Generate Subprogram";
@@ -150,13 +151,20 @@ package body LAL_Refactor.Generate_Subprogram is
    begin
       case Self.Action is
          when New_Pkg_Body            =>
-            LAL_Refactor.Generate_Package.Add_New_Package_Edits
-              (Edits      => Edits,
-               From_Spec  => Get_Parent_Package_Spec (Self.Target_Subp),
-               With_Decls =>
-                 LAL_Refactor.Stub_Utils.Declaration_Vectors.To_Vector
-                   (Self.Target_Subp, 1),
-               To_Path    => To_Unbounded_String (Dest_File));
+            declare
+               File_Path              : constant Unbounded_String :=
+                 To_Unbounded_String (Dest_File);
+               Spec                   : constant Base_Package_Decl :=
+                 Get_Parent_Package_Spec (Self.Target_Subp);
+               Set                    : constant Subp_Set :=
+                 To_Subp_Set (Self.Target_Subp);
+               Generated_Package_Text : constant Unbounded_String :=
+                 Create_Code_Generator (Spec => Spec, Subprograms => Set)
+                   .Generate_Body;
+            begin
+               Edits.File_Creations.Insert
+                 ((File_Path, Generated_Package_Text));
+            end;
 
          when Local | Add_To_Pkg_Body =>
             declare

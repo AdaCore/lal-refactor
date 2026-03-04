@@ -157,7 +157,7 @@ procedure Generate_Package is
       begin
          if Is_Generate_Package_Available (Node, Spec) then
             Edits :=
-              Build_Package_Generator (Spec).Refactor (Analysis_Units'Access);
+              Create_Package_Generator (Spec).Refactor (Analysis_Units'Access);
             return True;
          else
             return False;

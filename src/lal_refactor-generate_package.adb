@@ -11,6 +11,7 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with LAL_Refactor.Utils;
+with Langkit_Support.Slocs;
 with VSS.Strings.Conversions;
 
 with Langkit_Support.Text; use Langkit_Support.Text;
@@ -43,24 +44,13 @@ package body LAL_Refactor.Generate_Package is
    -----------------------------------
 
    function Is_Generate_Package_Available
-     (Node : Ada_Node; Spec : out Base_Package_Decl) return Boolean
-   is
-      function Has_Unimplemented_Subprograms
-        (Decl_Block : Declarative_Part'Class) return Boolean
-      is (not Decl_Block.Is_Null
-          and then
-            (for some Decl of Decl_Block.F_Decls =>
-               Is_Unimplemented_Subprogram (Decl)));
+     (Node : Ada_Node; Spec : out Base_Package_Decl) return Boolean is
    begin
       if Node.Is_Null then
          return False;
       end if;
       Spec := To_Package_Decl (Node);
-      return
-        (not Spec.Is_Null
-         and then
-           (Has_Unimplemented_Subprograms (Spec.F_Public_Part)
-            or Has_Unimplemented_Subprograms (Spec.F_Private_Part)));
+      return Can_Generate (Spec);
    exception
       when E : others =>
          Refactor_Trace.Trace
@@ -103,121 +93,213 @@ package body LAL_Refactor.Generate_Package is
       end if;
    end Get_Body_Path;
 
-   -----------------------------
-   -- Build_Package_Generator --
-   -----------------------------
+   ------------------------------
+   -- Create_Package_Generator --
+   ------------------------------
 
-   function Build_Package_Generator
+   function Create_Package_Generator
      (Spec : Base_Package_Decl) return Package_Generator
    is
-      function Build_Decl_Map (Spec : Base_Package_Decl) return Decl_Vector;
-      --  Build list of only declaration nodes which must be generated
+      Public_Decls  : constant Ada_Node_Array :=
+        (if Spec.F_Public_Part.Is_Null
+         then []
+         else Spec.F_Public_Part.F_Decls.Children);
+      Private_Decls : constant Ada_Node_Array :=
+        (if Spec.F_Private_Part.Is_Null
+         then []
+         else Spec.F_Private_Part.F_Decls.Children);
+      Pkg_Decls     : constant Ada_Node_Array := Public_Decls & Private_Decls;
+      --  This should be non-empty
 
-      --------------------
-      -- Build_Decl_Map --
-      --------------------
+      function To_Range (S : Source_Location) return Source_Location_Range
+      is (Make_Range (S, S));
+      --  Refactoring edits require a location range, but insertion
+      --  without deletion typically only needs one point
 
-      function Build_Decl_Map (Spec : Base_Package_Decl) return Decl_Vector is
+      function Has_Empty_Body (Spec : Base_Package_Decl) return Boolean
+      is (Package_Body_Exists (Spec)
+          and then Spec.P_Body_Part.F_Decls.F_Decls.Children_Count = 0);
+      --  Check for edge case when inserting into package body
+
+      function Filter_Subp_Set
+        (From  : Positive := Positive'First;
+         Nodes : Ada_Node_Array;
+         Match : not null access function (N : Ada_Node'Class) return Boolean;
+         Til   : not null access function (N : Ada_Node'Class) return Boolean;
+         Set   : in out Subp_Set) return Positive;
+      --  Starting at From and iterating through each N in Nodes,
+      --  add N to Set when Match (N); stop if Til (N) or the array ends.
+      --  Return final iteration index. Set may be empty.
+
+      function Build_Subp_Set (From_Decls : Ada_Node_Array) return Subp_Set
+      with Post => not Build_Subp_Set'Result.Is_Empty;
+      --  Build list of all subprograms to generate in new package body.
+      --  Used by Generate Package action,
+      --  and by Update Package in the edge case that
+      --  package body object exists without any child declarations
+
+      function Build_Singleton_Map
+        (From_Decls : Ada_Node_Array) return Subp_Map;
+      --  Edge case : insertion into an empty package body
+      --  Produces a map with one subprogram block
+      --  to be inserted above the package F_End_Name node
+
+      function Build_Subp_Map (From_Decls : Ada_Node_Array) return Subp_Map
+      with
+        Pre  => Package_Body_Exists (Spec) and not Has_Empty_Body (Spec),
+        Post => not Build_Subp_Map'Result.Is_Empty;
+      --  Builds map of subprogram declarations without an implementation.
+      --  Used by Update Package action
+      --
+      --  Builds a map of unimplemented subprograms in contiguous blocks
+      --  separated by subprograms which already exist in the package body.
+      --  Each element is a block of subprograms,
+      --  and each key is the unique insertion point for this block.
+
+      ---------------------
+      -- Filter_Subp_Set --
+      ---------------------
+
+      function Filter_Subp_Set
+        (From  : Positive := Positive'First;
+         Nodes : Ada_Node_Array;
+         Match : not null access function (N : Ada_Node'Class) return Boolean;
+         Til   : not null access function (N : Ada_Node'Class) return Boolean;
+         Set   : in out Subp_Set) return Positive
+      is
+         Idx : Positive := From;
       begin
-         return Decls : Decl_Vector do
-            if not Spec.F_Public_Part.Is_Null then
-               for Decl of Spec.F_Public_Part.F_Decls loop
-                  if Is_Unimplemented_Subprogram (Decl) then
-                     Decls.Append (Decl.As_Subp_Decl);
-                  end if;
-               end loop;
+         while Idx <= Nodes'Last loop
+            exit when Til (Nodes (Idx));
+            if Match (Nodes (Idx)) then
+               Set.Insert (Nodes (Idx).As_Subp_Decl);
             end if;
-            if not Spec.F_Private_Part.Is_Null then
-               for Decl of Spec.F_Private_Part.F_Decls loop
-                  if Is_Unimplemented_Subprogram (Decl) then
-                     Decls.Append (Decl.As_Subp_Decl);
-                  end if;
-               end loop;
-            end if;
+            Idx := Positive'Succ (Idx);
+         end loop;
+         return Idx;
+      end Filter_Subp_Set;
+
+      --------------------
+      -- Build_Subp_Set --
+      --------------------
+
+      function Build_Subp_Set (From_Decls : Ada_Node_Array) return Subp_Set is
+         Set     : Subp_Set;
+         End_Idx : Positive;
+      begin
+         End_Idx :=
+           Filter_Subp_Set
+             (Nodes => From_Decls,
+              Match => Is_Unimplemented_Subprogram'Access,
+              Til   => Libadalang.Analysis.Is_Null'Access,
+              Set   => Set);
+         if End_Idx < From_Decls'Last then
+            raise Constraint_Error with End_Idx'Img;
+         end if;
+         return Set;
+      end Build_Subp_Set;
+
+      -------------------------
+      -- Build_Singleton_Map --
+      -------------------------
+
+      function Build_Singleton_Map
+        (From_Decls : Ada_Node_Array) return Subp_Map
+      is
+         Insert_Point : constant Source_Location_Range :=
+           To_Range (Spec.P_Body_Part.F_Decls.Sloc_Range.End_Sloc);
+      begin
+         return Singleton_Map : Subp_Map do
+            Singleton_Map.Insert (Insert_Point, Build_Subp_Set (From_Decls));
          end return;
-      end Build_Decl_Map;
+      end Build_Singleton_Map;
+
+      --------------------
+      -- Build_Subp_Map --
+      --------------------
+
+      function Build_Subp_Map (From_Decls : Ada_Node_Array) return Subp_Map is
+
+         --  Insertion point helpers
+         function Insert_Below
+           (N : Ada_Node'Class) return Source_Location_Range
+         is (To_Range ((LAL_Refactor.Utils.Line_Below (N), 1)));
+
+         function Insert_Above
+           (N : Ada_Node'Class) return Source_Location_Range
+         is (To_Range ((LAL_Refactor.Utils.Line_Above (N), 1)));
+
+         function Is_Context_Node (N : Ada_Node'Class) return Boolean
+         is (N.Kind in Ada_Subp_Decl_Range
+             and then not N.As_Subp_Decl.P_Body_Part.Is_Null
+             and then
+               N.As_Subp_Decl.P_Body_Part.P_Parent_Basic_Decl.Kind
+               in Ada_Package_Body_Range);
+         --  Group unimplemented subprogram declarations
+         --  around implemented subprograms that exist in the package body.
+         --  These are context nodes, and will be used
+         --  to calculate insertion point
+
+         Map                    : Subp_Map;
+         Subp_Batch             : Subp_Set;
+         Insert_Point           : Source_Location_Range;
+         Context_Idx            : Natural := 0;
+         --  Store idx of last context node
+         Subp_Above, Subp_Below : Subp_Decl := No_Subp_Decl;
+         --  Track context nodes (implemented subprograms) declared
+         --  before or after unimplemented subp decls
+         Idx                    : Positive := From_Decls'First;
+
+      begin
+         while Idx <= From_Decls'Last loop
+            --  To insert subprogram body stubs in the order of declaration,
+            --  note the nearest implemented subprogram in the spec
+            --  and insert above or below.
+            if Context_Idx in From_Decls'Range then
+               Subp_Above := From_Decls (Context_Idx).As_Subp_Decl;
+            end if;
+            --  Only need Subp_Above for first subp batch
+            Context_Idx :=
+              Filter_Subp_Set
+                (From  => Idx,
+                 Nodes => From_Decls,
+                 Match => Is_Unimplemented_Subprogram'Access,
+                 Til   => Is_Context_Node'Access,
+                 Set   => Subp_Batch);
+            if Context_Idx in From_Decls'Range then
+               Subp_Below := From_Decls (Context_Idx).As_Subp_Decl;
+            end if;
+
+            if not Subp_Batch.Is_Empty then
+               Insert_Point :=
+                 (if Subp_Above.Is_Null
+                  then Insert_Above (Subp_Below.P_Body_Part)
+                  else Insert_Below (Subp_Above.P_Body_Part));
+               Map.Insert (Insert_Point, Subp_Batch);
+               Subp_Batch.Clear;
+            end if;
+            Idx := Positive'Succ (Context_Idx);
+         end loop;
+         return Map;
+      end Build_Subp_Map;
+
    begin
       return
-        (Spec        => Spec,
-         Subprograms => Build_Decl_Map (Spec),
-         Body_Path   => To_Unbounded_String (Get_Body_Path (Spec)));
-   end Build_Package_Generator;
-
-   ---------------------------
-   -- Add_New_Package_Edits --
-   ---------------------------
-
-   procedure Add_New_Package_Edits
-     (Edits      : out Refactoring_Edits;
-      From_Spec  : Base_Package_Decl;
-      With_Decls : Decl_Vector;
-      To_Path    : Unbounded_String)
-   is
-      Package_Body_Text : constant Unbounded_String :=
-        LAL_Refactor.Stub_Utils.Create_Code_Generator
-          (Spec => From_Spec, Subprograms => With_Decls)
-          .Generate_Body;
-   begin
-      Edits.File_Creations.Insert
-        (New_Item => (Filepath => To_Path, Content => Package_Body_Text));
-   end Add_New_Package_Edits;
-
-   --------------------------
-   -- Update_Package_Edits --
-   --------------------------
-
-   procedure Update_Package_Edits
-     (Edits     : out Refactoring_Edits;
-      New_Decls : Decl_Vector;
-      To_Body   : Package_Body)
-   is
-      function Find_Insertion_Point
-        (To_Body : Package_Body) return Source_Location_Range;
-      --  Find a place to insert subprogram body stubs into existing
-      --  package body file.
-      --
-      --  By default, insert just below the last declaration:
-      --
-      --  F_Package_Name  | package body Name
-      --  F_Decls.F_Decls |   [declarations]
-      --  F_Decls         |   [remaining whitespace]
-      --  F_End_Name      | end Name
-      --
-      --  TODO : contextual insertion
-
-      --------------------------
-      -- Find_Insertion_Point --
-      --------------------------
-
-      function Find_Insertion_Point
-        (To_Body : Package_Body) return Source_Location_Range
-      is
-         Body_Decls   : constant Ada_Node_List := To_Body.F_Decls.F_Decls;
-         End_Line     : constant Line_Number :=
-           To_Body.F_End_Name.Sloc_Range.Start_Line;
-         Insert_Point : Source_Location := (End_Line, Column_Number (1));
-      begin
-         if not (Body_Decls.Is_Null or else Body_Decls.Last_Child.Is_Null) then
-            Insert_Point.Line :=
-              LAL_Refactor.Utils.Expand_End_SLOC
-                (Body_Decls.Last_Child)
-                .Line
-              + Line_Number (1);
-         end if;
-         return Make_Range (Insert_Point, Insert_Point);
-      end Find_Insertion_Point;
-
-      Package_Stubs : Unbounded_String;
-      use LAL_Refactor.Stub_Utils;
-   begin
-      for Decl of New_Decls loop
-         Package_Stubs.Append (Create_Code_Generator (Decl).Generate_Body);
-      end loop;
-      Safe_Insert
-        (Edits.Text_Edits,
-         To_Body.Unit.Get_Filename,
-         (Location => Find_Insertion_Point (To_Body), Text => Package_Stubs));
-   end Update_Package_Edits;
+        (if Package_Body_Exists (Spec)
+         then
+           (Action          => Update_Existing,
+            Spec            => Spec,
+            Body_Path       => To_Unbounded_String (Get_Body_Path (Spec)),
+            New_Subprograms =>
+              (if Has_Empty_Body (Spec)
+               then Build_Singleton_Map (Pkg_Decls)
+               else Build_Subp_Map (Pkg_Decls)))
+         else
+           (Action          => Create_New,
+            Spec            => Spec,
+            Body_Path       => To_Unbounded_String (Get_Body_Path (Spec)),
+            All_Subprograms => Build_Subp_Set (Pkg_Decls)));
+   end Create_Package_Generator;
 
    --------------
    -- Refactor --
@@ -229,20 +311,103 @@ package body LAL_Refactor.Generate_Package is
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
    is
+      procedure Add_New_Package_Edits
+        (Edits      : out Refactoring_Edits;
+         From_Spec  : Base_Package_Decl;
+         With_Decls : Subp_Set)
+      with Pre => not (From_Spec.Is_Null or With_Decls.Is_Empty);
+      --  Create edits to go into one new file
+
+      procedure Update_Package_Edits
+        (Edits : out Refactoring_Edits; New_Decls : Subp_Map)
+      with Pre => not New_Decls.Is_Empty;
+      --  Text edits to modify an existing package body
+
+      ---------------------------
+      -- Add_New_Package_Edits --
+      ---------------------------
+
+      procedure Add_New_Package_Edits
+        (Edits      : out Refactoring_Edits;
+         From_Spec  : Base_Package_Decl;
+         With_Decls : Subp_Set)
+      is
+         Package_Body_Text : constant Unbounded_String :=
+           LAL_Refactor.Stub_Utils.Create_Code_Generator
+             (From_Spec, With_Decls)
+             .Generate_Body;
+      begin
+         Edits.File_Creations.Insert ((Self.Body_Path, Package_Body_Text));
+      end Add_New_Package_Edits;
+
+      --------------------------
+      -- Update_Package_Edits --
+      --------------------------
+
+      procedure Update_Package_Edits
+        (Edits : out Refactoring_Edits; New_Decls : Subp_Map)
+      is
+         --  Iterate over subprogram blocks and convert to edit
+         procedure Insert_Edit (Position : Subp_Decl_Maps.Cursor)
+         with Pre => Position.Has_Element;
+
+         -----------------
+         -- Insert_Edit --
+         -----------------
+
+         procedure Insert_Edit (Position : Subp_Decl_Maps.Cursor) is
+            use LAL_Refactor.Stub_Utils;
+
+            Subp_Batch : constant Subp_Set := Position.Element;
+            Insert_Loc : constant Source_Location_Range := Position.Key;
+
+            Package_Stub : Unbounded_String;
+
+            procedure Generate_Subp_Stub (Position : Subp_Sets.Cursor)
+            with Pre => Position.Has_Element;
+            --  Generate individual subprogram stub
+
+            ------------------------
+            -- Generate_Subp_Stub --
+            ------------------------
+
+            procedure Generate_Subp_Stub (Position : Subp_Sets.Cursor) is
+               Subprogram_Decl : constant Subp_Decl := Position.Element;
+               Subprogram_Stub : constant Unbounded_String :=
+                 Create_Code_Generator (Subprogram_Decl).Generate_Body;
+            begin
+               Package_Stub.Append (Subprogram_Stub);
+            end Generate_Subp_Stub;
+         begin
+            if not Subp_Batch.Is_Empty then
+               Subp_Batch.Iterate (Generate_Subp_Stub'Access);
+               Safe_Insert
+                 (Edits     => Edits.Text_Edits,
+                  File_Name => Self.Body_Path.To_String,
+                  Edit      => (Insert_Loc, Package_Stub));
+            end if;
+         end Insert_Edit;
+
+      begin
+         if not New_Decls.Is_Empty then
+            New_Decls.Iterate (Insert_Edit'Access);
+         end if;
+      end Update_Package_Edits;
+
       Package_Edits : Refactoring_Edits := No_Refactoring_Edits;
    begin
-      if Package_Body_Exists (Self.Spec) then
-         Update_Package_Edits
-           (Edits     => Package_Edits,
-            New_Decls => Self.Subprograms,
-            To_Body   => Self.Spec.P_Body_Part);
-      else
-         Add_New_Package_Edits
-           (Edits      => Package_Edits,
-            From_Spec  => Self.Spec,
-            With_Decls => Self.Subprograms,
-            To_Path    => Self.Body_Path);
-      end if;
+      case Self.Action is
+         when Update_Existing =>
+            Update_Package_Edits
+              (Edits     => Package_Edits,
+               New_Decls => Self.New_Subprograms);
+
+         when Create_New      =>
+            Add_New_Package_Edits
+              (Edits      => Package_Edits,
+               From_Spec  => Self.Spec,
+               With_Decls => Self.All_Subprograms);
+      end case;
       return Package_Edits;
    exception
       when E : others =>

@@ -1,0 +1,212 @@
+Refactoring available for entire line  1
+apparent.adb
+2:1-2:1 
+   function "<" (L, R : Animal'Class) return Boolean
+   is
+   begin
+      
+   end "<";
+
+10:1-10:1 
+   function Native_Habitat (A : Animal'Class) return String
+   is
+   begin
+      
+   end Native_Habitat;
+
+   procedure Print (A : Animal'Class)
+   is
+   begin
+      
+   end Print;
+
+   procedure Fossilize (A : Animal'Class)
+   is
+   begin
+      
+   end Fossilize;
+
+
+Refactoring available for entire line  13
+apparent.adb
+2:1-2:1 
+   function "<" (L, R : Animal'Class) return Boolean
+   is
+   begin
+      
+   end "<";
+
+10:1-10:1 
+   function Native_Habitat (A : Animal'Class) return String
+   is
+   begin
+      
+   end Native_Habitat;
+
+   procedure Print (A : Animal'Class)
+   is
+   begin
+      
+   end Print;
+
+   procedure Fossilize (A : Animal'Class)
+   is
+   begin
+      
+   end Fossilize;
+
+
+Refactoring available for entire line  24
+apparent.adb
+2:1-2:1 
+   function "<" (L, R : Animal'Class) return Boolean
+   is
+   begin
+      
+   end "<";
+
+10:1-10:1 
+   function Native_Habitat (A : Animal'Class) return String
+   is
+   begin
+      
+   end Native_Habitat;
+
+   procedure Print (A : Animal'Class)
+   is
+   begin
+      
+   end Print;
+
+   procedure Fossilize (A : Animal'Class)
+   is
+   begin
+      
+   end Fossilize;
+
+
+Refactoring unavailable at 4:2
+Refactoring available for entire line  2
+apparent-child.adb
+6:1-6:1 
+   procedure Visit_Vet (P : Pet'Class)
+   is
+   begin
+      
+   end Visit_Vet;
+
+   procedure Draw (P : Pet'Class)
+   is
+   begin
+      
+   end Draw;
+
+   function Genus (A : Animal'Class) return String
+   is
+   begin
+      
+   end Genus;
+
+   function MicroChip_ID (P : Pet'Class) return String
+   is
+   begin
+      
+   end MicroChip_ID;
+
+
+Refactoring available for entire line  14
+apparent-child.adb
+6:1-6:1 
+   procedure Visit_Vet (P : Pet'Class)
+   is
+   begin
+      
+   end Visit_Vet;
+
+   procedure Draw (P : Pet'Class)
+   is
+   begin
+      
+   end Draw;
+
+   function Genus (A : Animal'Class) return String
+   is
+   begin
+      
+   end Genus;
+
+   function MicroChip_ID (P : Pet'Class) return String
+   is
+   begin
+      
+   end MicroChip_ID;
+
+
+Refactoring available for entire line  26
+apparent-child.adb
+6:1-6:1 
+   procedure Visit_Vet (P : Pet'Class)
+   is
+   begin
+      
+   end Visit_Vet;
+
+   procedure Draw (P : Pet'Class)
+   is
+   begin
+      
+   end Draw;
+
+   function Genus (A : Animal'Class) return String
+   is
+   begin
+      
+   end Genus;
+
+   function MicroChip_ID (P : Pet'Class) return String
+   is
+   begin
+      
+   end MicroChip_ID;
+
+
+apparent-child.adb
+6:1-6:1 
+   procedure Visit_Vet (P : Pet'Class)
+   is
+   begin
+      
+   end Visit_Vet;
+
+   procedure Draw (P : Pet'Class)
+   is
+   begin
+      
+   end Draw;
+
+   function Genus (A : Animal'Class) return String
+   is
+   begin
+      
+   end Genus;
+
+   function MicroChip_ID (P : Pet'Class) return String
+   is
+   begin
+      
+   end MicroChip_ID;
+
+
+
+Unable to generate package body for apparent-child.ads at 4:29
+
+empty_body.adb
+1:28-1:28 
+   procedure Print
+   is
+   begin
+      
+   end Print;
+
+
+

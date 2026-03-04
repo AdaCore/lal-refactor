@@ -3,22 +3,35 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
-with Libadalang.Common;
+
+with Ada.Containers.Ordered_Maps;
+
 with VSS;
 with VSS.Strings;
 
 private with Langkit_Support.Text;
 
-use Libadalang.Common;
+with Libadalang.Common; use Libadalang.Common;
+
 with LAL_Refactor.Stub_Utils;
 
 package LAL_Refactor.Generate_Package is
-   subtype Decl_Vector is LAL_Refactor.Stub_Utils.Decl_Vector;
+   subtype Subp_Set is LAL_Refactor.Stub_Utils.Subp_Set;
+
+   package Subp_Decl_Maps is new Ada.Containers.Ordered_Maps
+       (Key_Type     => Source_Location_Range,
+        Element_Type => Subp_Set,
+        "<"          => Langkit_Support.Slocs."<",
+        "="          => LAL_Refactor.Stub_Utils.Subp_Sets."=");
+   subtype Subp_Map is Subp_Decl_Maps.Map;
 
    function To_Package_Decl (Node : Ada_Node) return Base_Package_Decl;
    --  If Node belongs to enclosing package declaration lines
    --  e.g. "package Spec is... " or "end Spec;"
    --  then return the package declaration node, else No_Base_Package_Decl
+
+   function Can_Generate (Spec : Base_Package_Decl) return Boolean;
+   --  Once found, check package spec is a viable candidate
 
    function Is_Generate_Package_Available
      (Node : Ada_Node; Spec : out Base_Package_Decl) return Boolean;
@@ -36,28 +49,14 @@ package LAL_Refactor.Generate_Package is
    is (not For_Spec.P_Body_Part.Is_Null);
    --  Check package body exists in project
 
-   --  These helpers are public so that Generate Subprogram
-   --  may also use them
-   procedure Add_New_Package_Edits
-     (Edits      : out Refactoring_Edits;
-      From_Spec  : Base_Package_Decl;
-      With_Decls : Decl_Vector;
-      To_Path    : Unbounded_String)
-   with Pre => not (From_Spec.Is_Null or With_Decls.Is_Empty);
-   --  Create edits to go into one new file
+   type Package_Mode is (Create_New, Update_Existing);
 
-   procedure Update_Package_Edits
-     (Edits      : out Refactoring_Edits;
-      New_Decls  : Decl_Vector;
-      To_Body    : Package_Body)
-   with Pre => not (To_Body.Is_Null or New_Decls.Is_Empty);
-   --  Text edits to modify an existing package body
+   type Package_Generator (Action : Package_Mode) is
+     new Refactoring_Tool with private;
 
-   type Package_Generator is new Refactoring_Tool with private;
-
-   function Build_Package_Generator
+   function Create_Package_Generator
      (Spec : Base_Package_Decl) return Package_Generator
-   with Pre => not (Spec.Is_Null or else Spec.F_Public_Part.Is_Null);
+   with Pre => Can_Generate (Spec);
    --  Parse package spec and build generator object
 
    overriding
@@ -112,10 +111,22 @@ package LAL_Refactor.Generate_Package is
      (Msg, File : String; SLOC : Source_Location_Range)
       return Generate_Package_Problem;
 private
-   type Package_Generator is new Refactoring_Tool with record
-      Spec        : Base_Package_Decl;
-      Subprograms : Decl_Vector;
-      Body_Path   : Unbounded_String;
+   --  type Package_Mode is (Create_New, Update_Existing);
+
+   type Package_Generator (Action : Package_Mode) is new Refactoring_Tool
+   with record
+      Spec      : Base_Package_Decl;
+      Body_Path : Unbounded_String;
+      case Action is
+         when Create_New =>
+            All_Subprograms : Subp_Set;
+            --  One ordered list of subprogram declarations
+         when Update_Existing =>
+            New_Subprograms : Subp_Map;
+            --  Map of subprogram declarations split around
+            --  implemented subprograms,
+            --  using insertion point as key
+      end case;
    end record;
 
    type Generate_Package_Problem is new Refactoring_Diagnostic with record
@@ -128,6 +139,19 @@ private
    is (D.Kind in Ada_Subp_Decl_Range | Ada_Generic_Subp_Internal_Range
        and then D.As_Subp_Decl.P_Body_Part_For_Decl.Is_Null);
    --  Helper to check for viable subprogram declarations
+
+   function Has_Unimplemented_Subprograms
+     (Decl_Block : Declarative_Part'Class) return Boolean
+   is (not Decl_Block.Is_Null
+       and then
+         (for some Decl of Decl_Block.F_Decls =>
+            Is_Unimplemented_Subprogram (Decl)));
+
+   function Can_Generate (Spec : Base_Package_Decl) return Boolean
+   is (not Spec.Is_Null
+       and then
+         (Has_Unimplemented_Subprograms (Spec.F_Public_Part)
+          or Has_Unimplemented_Subprograms (Spec.F_Private_Part)));
 
    function Get_Package_Name (Spec : Base_Package_Decl) return String
    is (Langkit_Support.Text.To_UTF8
