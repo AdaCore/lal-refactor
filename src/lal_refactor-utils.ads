@@ -18,12 +18,11 @@ package LAL_Refactor.Utils is
    --  Project_Filename can either be a full path or a filename in the current
    --  directory.
 
-   type Sources_List is array (Positive range <>) of
-     Ada.Strings.Unbounded.Unbounded_String;
+   type Sources_List is
+     array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;
 
    function Get_Analysis_Units_From_Sources_List
-     (Sources          : Sources_List;
-      Project_Filename : String := "")
+     (Sources : Sources_List; Project_Filename : String := "")
       return Libadalang.Analysis.Analysis_Unit_Array;
    --  Gets all units defined by Sources.
    --  If Project_Filename is defined, then uses it to create a unit provider.
@@ -60,6 +59,16 @@ package LAL_Refactor.Utils is
    --  This includes a comment on the same line after N terminates,
    --  or one or multiple lines directly beneath N,
    --  as long as there are no blank lines in between.
+
+   function Line_Above (Node : Ada_Node'Class) return Line_Number
+   with Pre => not Node.Is_Null;
+   --  Return the first line for safely inserting code above Node.
+   --  This includes comment boxes if any are found.
+
+   function Line_Below (Node : Ada_Node'Class) return Line_Number
+   is (Line_Number'Succ (Expand_End_SLOC (Node).Line))
+   with Pre => not Node.Is_Null;
+   --  Return line below node, including docstrings in node range
 
    function Get_Contextual_Insertion_Point
      (Subp : Subp_Decl) return Source_Location

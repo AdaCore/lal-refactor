@@ -13,14 +13,25 @@
 --    Procedure body generation from concrete declaration
 --    Package   body generation from concrete or generic declaration
 
+with Ada.Containers;
+with Ada.Containers.Ordered_Sets;
+
 with VSS.Strings;        use VSS.Strings;
 with VSS.String_Vectors; use VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
 package LAL_Refactor.Stub_Utils is
-   package Declaration_Vectors is new
-     Ada.Containers.Indefinite_Vectors (Natural, Subp_Decl);
-   subtype Decl_Vector is Declaration_Vectors.Vector;
+   function Subp_LT (L, R : Subp_Decl) return Boolean;
+   function Subp_EQ (L, R : Subp_Decl) return Boolean;
+
+   package Subp_Sets is new Ada.Containers.Ordered_Sets
+      (Element_Type => Subp_Decl,
+      "<"          => Subp_LT,
+      "="          => Subp_EQ);
+   subtype Subp_Set is Subp_Sets.Set;
+
+   function To_Subp_Set (New_Item : Subp_Decl) return Subp_Set
+   renames Subp_Sets.To_Set;
 
    subtype VSS_Vector is Virtual_String_Vector;
 
@@ -90,7 +101,7 @@ package LAL_Refactor.Stub_Utils is
    --  """
 
    function Create_Code_Generator
-     (Spec : Base_Package_Decl; Subprograms : Decl_Vector)
+     (Spec : Base_Package_Decl; Subprograms : Subp_Set)
       return Pkg_Code_Generator
    with Pre => not Spec.Is_Null and not Subprograms.Is_Empty;
    --  Extract information from LAL node to create package body generator
@@ -112,6 +123,15 @@ private
       return Unbounded_String
    is ((Offset + Nesting * Indentation) * " ");
    --  Return leading indentation whitespace string
+
+   --  Subp_Set comparison functions --
+
+   function Subp_LT (L, R : Subp_Decl) return Boolean
+   is (L.Sloc_Range < R.Sloc_Range);
+   --  All grouped subprograms will be declared in same file
+   --  so SLOC range will suffice for uniqueness
+   function Subp_EQ (L, R : Subp_Decl) return Boolean
+   is (not (L.Sloc_Range < R.Sloc_Range or R.Sloc_Range < L.Sloc_Range));
 
    --  VSS string conversion helpers --
 
@@ -141,7 +161,7 @@ private
    end record;
 
    type Pkg_Code_Generator is new Code_Generator with record
-      Subprograms : Decl_Vector;
+      Subprograms : Subp_Set;
       --  Declared subprograms to generate in body
    end record;
 

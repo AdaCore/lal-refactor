@@ -1,0 +1,5 @@
+title: Generate new package body file from specification.
+
+description: generate_package tool test - test generation of new package body
+
+driver: shell_script

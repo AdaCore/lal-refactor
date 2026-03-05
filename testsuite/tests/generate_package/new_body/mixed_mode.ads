@@ -1,4 +1,4 @@
-package Priv_Impl is
+package Mixed_Mode is
    type WordCountT is private;
 
    function Run_Word_Count (S : String) return WordCountT;
@@ -14,4 +14,9 @@ private
    is (W.Lines);
 
    procedure Debug (W : WordCountT);
-end Priv_Impl;
+end Mixed_Mode;
+--  This package specification tests the Generate Package tool
+--  Specifically:
+--    handling of public and private subprograms
+--    ignoring non-subprogram declarations
+--    ignoring privately implemented subprograms
