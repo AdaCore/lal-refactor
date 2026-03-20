@@ -1,106 +1,22 @@
-# Renaming node qux.ads:3:13: 
-References:
-Unit:qux.adb
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 14
-End_Line: 4
-End_Column: 21
-Unit:qux.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 20
-Problems:
-Renaming Dummy_A to Dummy_B creates a name collision with <Id "Dummy_B" qux.ads:4:13-4:20>
+FAILED | Safe_Rename (3:13-3:20) : 'Dummy_A' -> 'Dummy_B'
+-- Renaming Dummy_A to Dummy_B creates a name collision with <Id "Dummy_B" qux.ads:4:13-4:20>
 
-# Renaming node qux.ads:3:13: 
-References:
-Unit:qux.adb
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 14
-End_Line: 4
-End_Column: 21
-Unit:qux.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 20
+PASSED | Safe_Rename (3:13-3:20) : 'Dummy_A' -> 'Dummy_C'
+--  1 references in qux.ads
+--  1 references in qux.adb
 
-# Renaming node qux.ads:3:13: 
-References:
-Unit:qux.adb
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 14
-End_Line: 4
-End_Column: 21
-Unit:qux.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 20
+PASSED | Safe_Rename (3:13-3:20) : 'Dummy_A' -> 'Dummy_D'
+--  1 references in qux.ads
+--  1 references in qux.adb
 
-# Renaming node qux.ads:6:13: 
-References:
-Unit:qux.adb
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 14
-End_Line: 7
-End_Column: 21
-Unit:qux.ads
-Line: 6
-Source Location Range:
-Start_Line: 6
-Start_Column: 13
-End_Line: 6
-End_Column: 20
-Problems:
-Renaming Dummy_D to Dummy_E creates a name collision with <Id "Dummy_E" qux.ads:7:13-7:20>
+FAILED | Safe_Rename (6:13-6:20) : 'Dummy_D' -> 'Dummy_E'
+-- Renaming Dummy_D to Dummy_E creates a name collision with <Id "Dummy_E" qux.ads:7:13-7:20>
 
-# Renaming node qux.ads:3:13: 
-References:
-Unit:qux.adb
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 14
-End_Line: 4
-End_Column: 21
-Unit:qux.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 20
+PASSED | Safe_Rename (3:13-3:20) : 'Dummy_A' -> 'Dummy_F'
+--  1 references in qux.ads
+--  1 references in qux.adb
 
-# Renaming node qux.ads:6:13: 
-References:
-Unit:qux.adb
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 14
-End_Line: 7
-End_Column: 21
-Unit:qux.ads
-Line: 6
-Source Location Range:
-Start_Line: 6
-Start_Column: 13
-End_Line: 6
-End_Column: 20
+PASSED | Safe_Rename (6:13-6:20) : 'Dummy_D' -> 'Dummy_F'
+--  1 references in qux.ads
+--  1 references in qux.adb
 

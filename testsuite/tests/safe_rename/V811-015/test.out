@@ -1,30 +1,5 @@
-# Renaming node com_channel.adb:7:16: 
-References:
-Unit:com_channel.adb
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 16
-End_Line: 7
-End_Column: 22
-Unit:neutrino.adb
-Line: 2
-Source Location Range:
-Start_Line: 2
-Start_Column: 23
-End_Line: 2
-End_Column: 29
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 7
-End_Line: 4
-End_Column: 13
-Unit:neutrino.ads
-Line: 2
-Source Location Range:
-Start_Line: 2
-Start_Column: 23
-End_Line: 2
-End_Column: 29
+PASSED | Safe_Rename (7:16-7:22) : 'Result' -> 'Status'
+--  1 references in neutrino.ads
+--  2 references in neutrino.adb
+--  1 references in com_channel.adb
 
