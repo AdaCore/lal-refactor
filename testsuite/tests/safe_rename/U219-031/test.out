@@ -1,198 +1,25 @@
-# Renaming node bar.ads:5:13: 
-References:
-Unit:bar.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 13
-End_Line: 7
-End_Column: 16
-Unit:bar.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 8
-Source Location Range:
-Start_Line: 8
-Start_Column: 13
-End_Line: 8
-End_Column: 16
-Line: 11
-Source Location Range:
-Start_Line: 11
-Start_Column: 13
-End_Line: 11
-End_Column: 16
-Unit:foos.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
+PASSED | Safe_Rename (5:13-5:16) : 'Get' -> 'Qux'
+--  2 references in foos.ads
+--  3 references in bar.ads
+--  3 references in bar.adb
 
-# Renaming node bar.ads:8:13: 
-References:
-Unit:bar.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Unit:bar.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 8
-Source Location Range:
-Start_Line: 8
-Start_Column: 13
-End_Line: 8
-End_Column: 16
-Unit:foos.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
+PASSED | Safe_Rename (8:13-8:16) : 'Get' -> 'Qux'
+--  1 references in foos.ads
+--  2 references in bar.ads
+--  2 references in bar.adb
 
-# Renaming node bar.ads:11:13: 
-References:
-Unit:bar.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 13
-End_Line: 7
-End_Column: 16
-Unit:bar.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 11
-Source Location Range:
-Start_Line: 11
-Start_Column: 13
-End_Line: 11
-End_Column: 16
-Unit:foos.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
+PASSED | Safe_Rename (11:13-11:16) : 'Get' -> 'Qux'
+--  1 references in foos.ads
+--  2 references in bar.ads
+--  2 references in bar.adb
 
-# Renaming node foos.ads:3:13: 
-References:
-Unit:bar.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Unit:bar.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 8
-Source Location Range:
-Start_Line: 8
-Start_Column: 13
-End_Line: 8
-End_Column: 16
-Unit:foos.ads
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
+PASSED | Safe_Rename (3:13-3:16) : 'Get' -> 'Qux'
+--  1 references in foos.ads
+--  2 references in bar.ads
+--  2 references in bar.adb
 
-# Renaming node foos.ads:5:13: 
-References:
-Unit:bar.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 13
-End_Line: 3
-End_Column: 16
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 13
-End_Line: 7
-End_Column: 16
-Unit:bar.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
-Line: 11
-Source Location Range:
-Start_Line: 11
-Start_Column: 13
-End_Line: 11
-End_Column: 16
-Unit:foos.ads
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 13
-End_Line: 5
-End_Column: 16
+PASSED | Safe_Rename (5:13-5:16) : 'Get' -> 'Qux'
+--  1 references in foos.ads
+--  2 references in bar.ads
+--  2 references in bar.adb
 

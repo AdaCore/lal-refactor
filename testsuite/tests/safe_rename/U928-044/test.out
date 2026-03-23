@@ -1,16 +1,3 @@
-# Renaming node foo.adb:4:7: 
-References:
-Unit:foo.adb
-Line: 4
-Source Location Range:
-Start_Line: 4
-Start_Column: 7
-End_Line: 4
-End_Column: 8
-Line: 7
-Source Location Range:
-Start_Line: 7
-Start_Column: 32
-End_Line: 7
-End_Column: 33
+PASSED | Safe_Rename (4:7-4:8) : 'D' -> 'E'
+--  2 references in foo.adb
 

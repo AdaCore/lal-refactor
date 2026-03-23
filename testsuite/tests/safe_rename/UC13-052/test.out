@@ -1,18 +1,3 @@
-# Renaming node main.adb:3:14: 
-References:
-Unit:main.adb
-Line: 3
-Source Location Range:
-Start_Line: 3
-Start_Column: 14
-End_Line: 3
-End_Column: 17
-Line: 5
-Source Location Range:
-Start_Line: 5
-Start_Column: 4
-End_Line: 5
-End_Column: 7
-Problems:
-Renaming Foo to Qux hides <Id "Qux" bar.ada:2:14-2:17>
+FAILED | Safe_Rename (3:14-3:17) : 'Foo' -> 'Qux'
+-- Renaming Foo to Qux hides <Id "Qux" bar.ada:2:14-2:17>
 

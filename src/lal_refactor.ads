@@ -220,7 +220,7 @@ package LAL_Refactor is
    --  Merges two maps
 
    procedure Print (M : Text_Edit_Map);
-   --  Print an Edit_Map in an human readable format to the standart output
+   --  Print an Edit_Map in an human readable format to the standard output
 
    procedure Print (S : File_Creation_Ordered_Set);
    --  Print a File_Creation_Ordered_Set in an human readable format to the
@@ -228,14 +228,14 @@ package LAL_Refactor is
 
    procedure Print (S : File_Deletion_Ordered_Set);
    --  Print a File_Deletion_Ordered_Set in an human readable format to the
-   --  standart output
+   --  standard output
 
    procedure Print (S : File_Rename_Ordered_Set);
    --  Print a File_Rename_Ordered_Set in an human readable format to the
-   --  standart output
+   --  standard output
 
    procedure Print (E : Refactoring_Edits);
-   --  Print a Refactoring_Edits in an human readable format to the standart
+   --  Print a Refactoring_Edits in an human readable format to the standard
    --  output.
 
    type Refactoring_Tool is limited interface;

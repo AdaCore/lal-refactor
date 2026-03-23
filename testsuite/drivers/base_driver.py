@@ -28,15 +28,21 @@ class BaseDriver(DiffTestDriver):
         "change_parameters_default_value",
         "change_parameters_type",
         "extract_subprogram",
+        "extract_variable",
+        "generate_package",
         "generate_subprogram",
+        "inline_variable",
         "introduce_parameter",
+        "laltools",
         "lint",
         "pull_up_declaration",
         "remove_parameter",
         "replace_type",
         "safe_rename",
+        "sort_case",
         "sort_dependencies",
         "suppress_separate",
+        "swap_if_else",
     }
 
     @property
