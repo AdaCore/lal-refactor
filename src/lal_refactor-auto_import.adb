@@ -1048,7 +1048,7 @@ package body LAL_Refactor.Auto_Import is
    begin
       Available_Imports := [];
 
-      if Node.Kind not in Ada_Identifier_Range then
+      if Node.Is_Null or else Node.Kind not in Ada_Identifier_Range then
          return False;
       end if;
 
