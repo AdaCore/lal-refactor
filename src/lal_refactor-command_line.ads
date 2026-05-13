@@ -1,5 +1,5 @@
 --
---  Copyright (C) 2022-2023, AdaCore
+--  Copyright (C) 2022-2026, AdaCore
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
@@ -17,12 +17,6 @@ package LAL_Refactor.Command_Line is
 
    Parser : Argument_Parser :=
      Create_Argument_Parser (Help => "Refactor tools");
-
-   package Help is new Parse_Flag
-     (Parser   => Parser,
-      Short    => "-h",
-      Long     => "--help",
-      Help     => "Help");
 
    package Tool is new Parse_Positional_Arg
      (Parser   => Parser,
