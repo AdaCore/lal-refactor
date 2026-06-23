@@ -5,7 +5,7 @@
 --
 
 with "../../../gnat/lal_refactor_common.gpr";
-with "lal_refactor.gpr";
+with "../../../gnat/lal_refactor.gpr";
 
 project LAL_Refactor_Test_Drivers is
 
