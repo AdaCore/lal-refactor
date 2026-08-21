@@ -291,14 +291,14 @@ private
          Canonical_Definition : Defining_Name;
          New_Name             : New_Name_Type;
          Units                : Analysis_Unit_Array (1 .. Units_Length);
-         References           : Base_Id_Vectors.Vector;
+         References           : Name_Vectors.Vector;
       end record;
 
    procedure Initialize
      (Self                 : out AST_Analyser;
       Canonical_Definition : Defining_Name;
       New_Name             : Unbounded_Text_Type;
-      References           : Base_Id_Vectors.Vector;
+      References           : Name_Vectors.Vector;
       Units                : Analysis_Unit_Array)
      with Pre => not Ada.Strings.Wide_Wide_Unbounded."="
                        (New_Name,
@@ -451,7 +451,7 @@ private
    type Subtype_Indication_Collision_Finder is new Specific_Problem_Finder with
       record
          Canonical_Definition : Defining_Name;
-         References           : Base_Id_Vectors.Vector;
+         References           : Name_Vectors.Vector;
          New_Name             : New_Name_Type;
       end record;
 
@@ -466,7 +466,7 @@ private
    type Name_Hidden_Finder is new Specific_Problem_Finder with
       record
          Canonical_Definition : Defining_Name;
-         References           : Base_Id_Vectors.Vector;
+         References           : Name_Vectors.Vector;
          New_Name             : New_Name_Type;
       end record;
 
@@ -489,7 +489,7 @@ private
 
    procedure Add_References_To_Edits
      (Self       : Safe_Renamer;
-      References : Base_Id_Vectors.Vector;
+      References : Name_Vectors.Vector;
       Edits      : in out Refactoring_Edits);
    --  Adds `References` to `Edits`
 
@@ -503,7 +503,7 @@ private
 
    procedure Add_Files_Rename_To_Edits
      (Self       : Safe_Renamer;
-      References : Base_Id_Vectors.Vector;
+      References : Name_Vectors.Vector;
       Edits      : in out Refactoring_Edits)
      with Pre => Self.Is_Top_Level_Decl
                    (Self.Canonical_Definition.P_Basic_Decl);

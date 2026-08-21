@@ -106,7 +106,7 @@ package body LAL_Refactor.Delete_Entity is
                in Ada_Subp_Kind_Function,
       when others => False);
 
-   function To_Selected_Name (Ref : Base_Id'Class) return Name;
+   function To_Selected_Name (Ref : Name'Class) return Name;
    --  Return selected_name for given identifier, like A.B.C for C
 
    function Find_Next_Decl (Id : Name'Class) return Ada_Node is
@@ -221,7 +221,7 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Change_Bin_Op
         (Result : in out Refactoring_Edits;
-         Id     : Base_Id'Class;
+         Id     : Name'Class;
          Ref    : Name);
       --  Replace `To_Be_Deleted .. XXX` or `XXX .. To_Be_Deleted` range by
       --  substituting `To_Be_Deleted` with next/prev enumeration literal.
@@ -235,7 +235,7 @@ package body LAL_Refactor.Delete_Entity is
 
       procedure Change_Bin_Op
         (Result : in out Refactoring_Edits;
-         Id     : Base_Id'Class;
+         Id     : Name'Class;
          Ref    : Name)
       is
          Op   : constant Bin_Op := Ref.Parent.As_Bin_Op;
@@ -472,7 +472,7 @@ package body LAL_Refactor.Delete_Entity is
    begin
       for Item of Refs when Kind (Item) = Precise loop
          declare
-            Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+            Ref : constant Name'Class := Libadalang.Analysis.Ref (Item);
 
             Name : constant Libadalang.Analysis.Name :=
               To_Selected_Name (Ref);
@@ -699,7 +699,8 @@ package body LAL_Refactor.Delete_Entity is
       begin
          for Item of Refs when Kind (Item) = Precise loop
             declare
-               Ref : constant Base_Id'Class := Libadalang.Analysis.Ref (Item);
+               Ref : constant Libadalang.Analysis.Name'Class :=
+                 Libadalang.Analysis.Ref (Item);
 
             begin
                if Contains (Result.Text_Edits, Ref) then
@@ -999,7 +1000,7 @@ package body LAL_Refactor.Delete_Entity is
    -- To_Selected_Name --
    ----------------------
 
-   function To_Selected_Name (Ref : Base_Id'Class) return Name is
+   function To_Selected_Name (Ref : Name'Class) return Name is
       Result : Name := Ref.As_Name;
    begin
       if not Result.Parent.Is_Null

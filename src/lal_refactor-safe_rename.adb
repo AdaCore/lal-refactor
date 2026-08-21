@@ -225,7 +225,7 @@ package body LAL_Refactor.Safe_Rename is
    procedure Initialize_Unit_Slocs_Maps
      (Unit_References      : out Unit_Slocs_Maps.Map;
       Canonical_Definition : Defining_Name;
-      References           : Base_Id_Vectors.Vector);
+      References           : Name_Vectors.Vector);
    --  Unitializes Unit_References with Canonical_Definition own reference
    --  and with all its references given by References.
 
@@ -1745,7 +1745,8 @@ package body LAL_Refactor.Safe_Rename is
       --  Delegates to Check_Subp_Rename_Conflict after doing necessary
       --  convertions between node types.
 
-      function Is_Safe_Reference (Reference : Base_Id'Class) return Boolean
+      function Is_Safe_Reference (Reference : Libadalang.Analysis.Name'Class)
+                                  return Boolean
         with Pre => not Reference.Is_Null;
       --  Checks if renaming this reference is always safe. For instance, the
       --  actual parameter reference in a parameter association is safe to
@@ -1789,7 +1790,8 @@ package body LAL_Refactor.Safe_Rename is
       -- Is_Safe_Reference --
       -----------------------
 
-      function Is_Safe_Reference (Reference : Base_Id'Class) return Boolean is
+      function Is_Safe_Reference (Reference : Libadalang.Analysis.Name'Class)
+                                  return Boolean is
       begin
          --  For now, only one check is done: if Reference is a reference to
          --  an actual parameter in a parameter association. These are always
@@ -2105,7 +2107,7 @@ package body LAL_Refactor.Safe_Rename is
      (Self                 : out AST_Analyser;
       Canonical_Definition : Defining_Name;
       New_Name             : Unbounded_Text_Type;
-      References           : Base_Id_Vectors.Vector;
+      References           : Name_Vectors.Vector;
       Units                : Analysis_Unit_Array) is
    begin
       Self.Canonical_Definition := Canonical_Definition;
@@ -2238,7 +2240,7 @@ package body LAL_Refactor.Safe_Rename is
    procedure Initialize_Unit_Slocs_Maps
      (Unit_References      : out Unit_Slocs_Maps.Map;
       Canonical_Definition : Defining_Name;
-      References           : Base_Id_Vectors.Vector)
+      References           : Name_Vectors.Vector)
    is
       procedure Add_Node (Node : Ada_Node'Class);
       --  Add Node to Unit_References.
@@ -2500,7 +2502,7 @@ package body LAL_Refactor.Safe_Rename is
 
       function Initialize_Algorithm
         (Units      : Analysis_Unit_Array;
-         References : Base_Id_Vectors.Vector)
+         References : Name_Vectors.Vector)
          return Problem_Finder_Algorithm'Class;
       --  Returns an initialized Problem_Finder_Algorithm depending on
       --  Self.Algorithm.
@@ -2511,7 +2513,7 @@ package body LAL_Refactor.Safe_Rename is
 
       function Initialize_Algorithm
         (Units      : Analysis_Unit_Array;
-         References : Base_Id_Vectors.Vector)
+         References : Name_Vectors.Vector)
          return Problem_Finder_Algorithm'Class
       is
          References_Map : Unit_Slocs_Maps.Map;
@@ -2557,7 +2559,7 @@ package body LAL_Refactor.Safe_Rename is
 
       declare
          Units      : constant Analysis_Unit_Array := Analysis_Units.all;
-         References : constant Base_Id_Vectors.Vector :=
+         References : constant Name_Vectors.Vector :=
            Find_All_References_For_Renaming (Self.Canonical_Definition, Units);
          Algorithm  : Problem_Finder_Algorithm'Class :=
            Initialize_Algorithm (Units, References);
@@ -2587,7 +2589,7 @@ package body LAL_Refactor.Safe_Rename is
 
    procedure Add_References_To_Edits
      (Self       : Safe_Renamer;
-      References : Base_Id_Vectors.Vector;
+      References : Name_Vectors.Vector;
       Edits      : in out Refactoring_Edits)
    is
       New_Name : constant Unbounded_String := +(+(+Self.New_Name));
@@ -2644,12 +2646,13 @@ package body LAL_Refactor.Safe_Rename is
 
    procedure Add_Files_Rename_To_Edits
      (Self       : Safe_Renamer;
-      References : Base_Id_Vectors.Vector;
+      References : Name_Vectors.Vector;
       Edits      : in out Refactoring_Edits)
    is
       File_Rename : LAL_Refactor.File_Rename;
 
-      function New_File_Name (Reference : Base_Id) return String;
+      function New_File_Name (Reference : Libadalang.Analysis.Name)
+                              return String;
       --  Computes the new file name based on the old one, on the
       --  `Self.Canonical_Definition` text and on `Self.New_Name`.
       --  Example:
@@ -2662,7 +2665,8 @@ package body LAL_Refactor.Safe_Rename is
       -- New_File_Name --
       -------------------
 
-      function New_File_Name (Reference : Base_Id) return String
+      function New_File_Name (Reference : Libadalang.Analysis.Name)
+                              return String
       is
          Unit_Old_Filename : constant String :=
            Reference.Unit.Get_Filename;

@@ -350,7 +350,7 @@ package body LAL_Refactor.Introduce_Parameter is
       begin
          for Reference of References loop
             declare
-               Reference_Base_Id     : constant Base_Id'Class :=
+               Reference_Base_Id     : constant Name'Class :=
                  Ref (Reference);
                Reference_Definitions : constant Defining_Name_Array :=
                  (if Reference_Base_Id.Parent.Kind in Ada_Dotted_Name then
@@ -428,7 +428,7 @@ package body LAL_Refactor.Introduce_Parameter is
                begin
                   for Reference of References loop
                      declare
-                        Reference_Base_Id     : constant Base_Id'Class :=
+                        Reference_Base_Id     : constant Name'Class :=
                             Ref (Reference);
                         Reference_Definitions : constant Defining_Name_Array :=
                           (if Reference_Base_Id.Parent.Kind in

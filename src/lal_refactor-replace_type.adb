@@ -79,7 +79,7 @@ package body LAL_Refactor.Replace_Type is
         Self.Source_Type.P_Defining_Name.P_Find_All_References (Units)
       loop
          declare
-            Reference_Base_Id             : constant Base_Id'Class :=
+            Reference_Base_Id             : constant Name'Class :=
               Ref (Reference);
             Reference_Base_Id_Parent_Decl : constant Basic_Decl :=
               (declare Parent_Decl : constant Basic_Decl :=

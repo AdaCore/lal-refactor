@@ -1152,7 +1152,7 @@ package body LAL_Refactor.Subprogram_Signature is
       --  specification.
 
       procedure Move_Arguments_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean);
       --  Callback that adds to Edits the necessary edits to 'Call'
@@ -1185,7 +1185,7 @@ package body LAL_Refactor.Subprogram_Signature is
       -----------------------------
 
       procedure Move_Arguments_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean)
       is

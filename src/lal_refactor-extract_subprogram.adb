@@ -25,7 +25,7 @@ package body LAL_Refactor.Extract_Subprogram is
    Tool_Name : constant String := "Extract Subprogram";
 
    function Get_Parameter_Mode_From_Reference
-     (Reference : Base_Id'Class)
+     (Reference : Name'Class)
       return Ada_Mode;
    --  Assuming that Reference will be passed as a subprogram argument,
    --  computes its mode by checking if Reference is being read or written.
@@ -106,7 +106,7 @@ package body LAL_Refactor.Extract_Subprogram is
    ---------------------------------------
 
    function Get_Parameter_Mode_From_Reference
-     (Reference : Base_Id'Class)
+     (Reference : Name'Class)
       return Ada_Mode
    is
       Mode : Ada_Mode := Ada_Mode_Default;

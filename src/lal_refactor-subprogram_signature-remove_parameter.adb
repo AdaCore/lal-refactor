@@ -206,7 +206,7 @@ package body LAL_Refactor.Subprogram_Signature.Remove_Parameter is
       --  those with 'Slocs'.
 
       procedure Calls_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean);
       --  Gets the arguments slocs in 'Call' and merges those with 'Slocs'
@@ -229,7 +229,7 @@ package body LAL_Refactor.Subprogram_Signature.Remove_Parameter is
       --------------------
 
       procedure Calls_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean)
       is
@@ -374,7 +374,7 @@ package body LAL_Refactor.Subprogram_Signature.Remove_Parameter is
       Parameters       : constant Params := Get_Subp_Params (Subp);
 
       procedure Calls_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean);
       --  Callback to remove the actual parameters of a subprogram call.
@@ -391,7 +391,7 @@ package body LAL_Refactor.Subprogram_Signature.Remove_Parameter is
       --------------------
 
       procedure Calls_Callback
-        (Call_Identifier : Base_Id'Class;
+        (Call_Identifier : Name'Class;
          Kind            : Ref_Result_Kind;
          Cancel          : in out Boolean)
       is
