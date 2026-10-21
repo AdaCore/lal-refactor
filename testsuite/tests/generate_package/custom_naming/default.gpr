@@ -1,0 +1,8 @@
+project Default is
+   for Source_Dirs use (".");
+
+   package Naming is
+      for Spec_Suffix ("Ada") use ".bloop";
+      for Body_Suffix ("Ada") use ".kvert";
+   end Naming;
+end Default;

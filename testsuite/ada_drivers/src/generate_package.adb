@@ -22,17 +22,20 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO;           use Ada.Text_IO;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with Ada.Text_IO;                   use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse;
+with GPR2;
+with GPR2.Project.Attribute;
+with GPR2.Project.Attribute_Index;
 
 with Langkit_Support.Text;
-with Langkit_Support.Slocs;       use Langkit_Support.Slocs;
-with Libadalang.Analysis;         use Libadalang.Analysis;
-with Libadalang.Common;           use Libadalang.Common;
-with Libadalang.Helpers;          use Libadalang.Helpers;
-with Libadalang.Project_Provider; use Libadalang.Project_Provider;
+with Langkit_Support.Slocs;         use Langkit_Support.Slocs;
+with Libadalang.Analysis;           use Libadalang.Analysis;
+with Libadalang.Common;             use Libadalang.Common;
+with Libadalang.Helpers;            use Libadalang.Helpers;
+with Libadalang.Project_Provider;   use Libadalang.Project_Provider;
 
 with LAL_Refactor;                  use LAL_Refactor;
 with LAL_Refactor.Generate_Package; use LAL_Refactor.Generate_Package;
@@ -108,56 +111,81 @@ procedure Generate_Package is
      (Context : App_Context; Jobs : App_Job_Context_Array)
    is
 
-      Spec_Path : constant String := To_String (Args.Spec.Get);
-      Files     : constant Filename_Vectors.Vector :=
-        Source_Files (Context.Provider.Project);
-
-      Main_Unit       : Analysis_Unit;
-      Number_Of_Units : constant Positive := Natural (Files.Length);
-      Units_Index     : Positive := 1;
-      Units           : Analysis_Unit_Array (1 .. Number_Of_Units);
       Test_SLOC       : constant Source_Location :=
         (Line   => Line_Number (Args.Start_Line.Get),
          Column => Column_Number (Args.Start_Column.Get));
+      Spec_Path       : constant String := To_String (Args.Spec.Get);
+      Files           : constant Filename_Vectors.Vector :=
+        Source_Files (Context.Provider.Project);
+      Number_Of_Units : constant Positive := Natural (Files.Length);
+
+      Units_Index : Positive := 1;
+      Units       : Analysis_Unit_Array (1 .. Number_Of_Units);
+      Main_Unit   : Analysis_Unit;
 
       function Analysis_Units return Analysis_Unit_Array
       is (Units);
       --  Provide context to Refactor
 
-      function Refactoring_Available_Here
+      function Attribute_Callback
+        (Attribute : GPR2.Q_Attribute_Id; Default : String := "")
+         return String;
+      --  Lookup configured project attributes
+
+      function Can_Refactor
         (Unit  : Analysis_Unit;
          SLOC  : Source_Location;
          Edits : in out Refactoring_Edits) return Boolean;
+      --  If Generate_Package refactoring is available at SLOC,
+      --  write to Edits and return success
 
-      --  Take a source location, check whether refactoring is offered here
-      --  and write any resulting edit
+      procedure Print_Results (Edits : Refactoring_Edits);
+      --  Helper to print edits and error messages
 
       procedure Test_Single_Sloc
         (Unit : Analysis_Unit; Test_SLOC : Source_Location);
       --  Driver for normal mode of testing
 
-      procedure Test_Entire_Line
-        (Unit : Analysis_Unit; Line : Line_Number);
+      procedure Test_Entire_Line (Unit : Analysis_Unit; Line : Line_Number);
       --  Test Generate Package available for entire line
 
-      --------------------------------
-      -- Refactoring_Available_Here --
-      --------------------------------
+      ------------------------
+      -- Attribute_Callback --
+      ------------------------
 
-      function Refactoring_Available_Here
+      function Attribute_Callback
+        (Attribute : GPR2.Q_Attribute_Id; Default : String := "") return String
+      is
+         Idx  : constant String := "Ada";
+         Attr : constant GPR2.Project.Attribute.Object :=
+           Context.Provider.Project.Root_Project.Attribute
+             (Name  => Attribute,
+              Index =>
+                GPR2.Project.Attribute_Index.Create (GPR2.Value_Type (Idx)));
+      begin
+         return (if Attr.Is_Defined then Attr.Value.Text else Default);
+      end Attribute_Callback;
+
+      ------------------
+      -- Can_Refactor --
+      ------------------
+
+      function Can_Refactor
         (Unit  : Analysis_Unit;
          SLOC  : Source_Location;
          Edits : in out Refactoring_Edits) return Boolean
       is
          Spec        : Base_Package_Decl := No_Base_Package_Decl;
          Start_Token : constant Token_Reference := Unit.Lookup_Token (SLOC);
-         --  Start_Token.Line
          Node        : constant Ada_Node :=
            Lookup (Unit, Start_Token, Forward);
+         Attr_Cbk    : constant Attribute_Provider :=
+           Attribute_Callback'Unrestricted_Access;
       begin
          if Is_Generate_Package_Available (Node, Spec) then
             Edits :=
-              Create_Package_Generator (Spec).Refactor (Analysis_Units'Access);
+              Create_Package_Generator (Spec, Attr_Cbk).Refactor
+                (Analysis_Units'Access);
             return True;
          else
             return False;
@@ -166,10 +194,11 @@ procedure Generate_Package is
          when E : others =>
             Put_Line (Ada.Exceptions.Exception_Message (E));
             return False;
-      end Refactoring_Available_Here;
+      end Can_Refactor;
 
-      procedure Print_Results (Edits : Refactoring_Edits);
-      --  Helper to print edits and error messages
+      -------------------
+      -- Print_Results --
+      -------------------
 
       procedure Print_Results (Edits : Refactoring_Edits) is
       begin
@@ -192,7 +221,7 @@ procedure Generate_Package is
       is
          Edits : Refactoring_Edits := No_Refactoring_Edits;
       begin
-         if Refactoring_Available_Here (Unit, Test_SLOC, Edits) then
+         if Can_Refactor (Unit, Test_SLOC, Edits) then
             Print_Results (Edits);
          else
             Put_Line
@@ -208,12 +237,13 @@ procedure Generate_Package is
       -- Test_Entire_Line --
       -------------------------
 
-      procedure Test_Entire_Line (Unit : Analysis_Unit; Line : Line_Number)
-      is
+      procedure Test_Entire_Line (Unit : Analysis_Unit; Line : Line_Number) is
          --  Check refactoring result for given source location
          Edits, Exp_Edits : Refactoring_Edits := No_Refactoring_Edits;
          Line_Text        : constant String :=
            Langkit_Support.Text.To_UTF8 (Unit.Get_Line (Positive (Line)));
+         End_SLOC         : constant Source_Location :=
+           (Line, Column_Number (Line_Text'Last));
          Test_SLOC        : Source_Location :=
            (Line, Column_Number (Line_Text'First));
          Available        : Boolean;
@@ -221,13 +251,15 @@ procedure Generate_Package is
          if Line_Text'Length < 1 then
             return;
          end if;
-         Available := Refactoring_Available_Here (Unit, Test_SLOC, Edits);
+
+         Available := Can_Refactor (Unit, Test_SLOC, Edits);
          Exp_Edits := Edits;
-         while Test_SLOC.Column < Column_Number (Line_Text'Last)
-         loop
-            Available := Refactoring_Available_Here (Unit, Test_SLOC, Edits);
-            Test_SLOC.Column := Test_SLOC.Column + Column_Number (1);
-            exit when not Available or Exp_Edits /= Edits;
+         --  Expect to produce the same edit across the entire line
+
+         while Test_SLOC < End_SLOC loop
+            Available := Can_Refactor (Unit, Test_SLOC, Edits);
+            Test_SLOC.Column := Column_Number'Succ (Test_SLOC.Column);
+            exit when not Available or else Exp_Edits /= Edits;
          end loop;
          if Test_SLOC.Column /= Column_Number (Line_Text'Last) then
             Put_Line ("Refactoring unavailable at " & Image (Test_SLOC));

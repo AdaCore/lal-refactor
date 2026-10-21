@@ -25,6 +25,9 @@ with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Text_IO;                      use Ada.Text_IO;
 
 with GNATCOLL.Opt_Parse;
+with GPR2;
+with GPR2.Project.Attribute;
+with GPR2.Project.Attribute_Index;
 
 with Langkit_Support;
 with Langkit_Support.Text;             use Langkit_Support.Text;
@@ -120,6 +123,11 @@ procedure Generate_Subprogram is
       is (Units);
       --  Provide context to Refactor
 
+      function Attribute_Callback
+        (Attribute : GPR2.Q_Attribute_Id; Default : String := "")
+         return String;
+      --  Lookup configured project attributes
+
       function Get_Subp_Name (Subp : Subp_Decl) return String
       is (To_UTF8 (Subp.P_Defining_Name.Text));
       --  Name string for debugging
@@ -129,6 +137,23 @@ procedure Generate_Subprogram is
 
       procedure Test_Sloc (Unit : Analysis_Unit; Sloc : Source_Location);
       --  Test refactoring only for one location
+
+      ------------------------
+      -- Attribute_Callback --
+      ------------------------
+
+      function Attribute_Callback
+        (Attribute : GPR2.Q_Attribute_Id; Default : String := "") return String
+      is
+         Idx  : constant String := "Ada";
+         Attr : constant GPR2.Project.Attribute.Object :=
+           Context.Provider.Project.Root_Project.Attribute
+             (Name  => Attribute,
+              Index =>
+                GPR2.Project.Attribute_Index.Create (GPR2.Value_Type (Idx)));
+      begin
+         return (if Attr.Is_Defined then Attr.Value.Text else Default);
+      end Attribute_Callback;
 
       ---------------
       -- Test_Line --
@@ -148,8 +173,9 @@ procedure Generate_Subprogram is
          Base_Edits :=
            (if Is_Generate_Subprogram_Available (Unit, Line_Start, Subp)
             then
-              Create_Subprogram_Generator (Subp).Refactor
-                (Analysis_Units'Access)
+              Create_Subprogram_Generator
+                (Subp, Attribute_Callback'Unrestricted_Access)
+                .Refactor (Analysis_Units'Access)
             else No_Refactoring_Edits);
          --  If no refactoring available, check this is true across entire line
          --  If refactoring successful, check the result is the same
@@ -158,8 +184,9 @@ procedure Generate_Subprogram is
            and then Is_Generate_Subprogram_Available (Unit, Point, Subp)
          loop
             Edits :=
-              Create_Subprogram_Generator (Subp).Refactor
-                (Analysis_Units'Access);
+              Create_Subprogram_Generator
+                (Subp, Attribute_Callback'Unrestricted_Access)
+                .Refactor (Analysis_Units'Access);
             exit when Base_Edits /= Edits;
             C := C + 1;
             Point.Column := Column_Number (C);
@@ -195,8 +222,9 @@ procedure Generate_Subprogram is
       begin
          if Is_Generate_Subprogram_Available (Unit, Sloc, Subp) then
             Edits :=
-              Create_Subprogram_Generator (Subp).Refactor
-                (Analysis_Units'Access);
+              Create_Subprogram_Generator
+                (Subp, Attribute_Callback'Unrestricted_Access)
+                .Refactor (Analysis_Units'Access);
             New_Line;
             Put_Line
               ("Generate Subprogram refactoring for subprogram "
