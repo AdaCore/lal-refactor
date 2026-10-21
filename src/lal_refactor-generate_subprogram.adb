@@ -7,10 +7,9 @@
 with VSS.Strings;        use VSS.Strings;
 with VSS.Strings.Conversions;
 
-with LAL_Refactor.Utils;
-with LAL_Refactor.Tools; use LAL_Refactor.Tools;
 with LAL_Refactor.Stub_Utils;
-with LAL_Refactor.Generate_Package;
+with LAL_Refactor.Tools; use LAL_Refactor.Tools;
+with LAL_Refactor.Utils;
 
 package body LAL_Refactor.Generate_Subprogram is
    Tool_Name : constant String := "Generate Subprogram";
@@ -108,7 +107,8 @@ package body LAL_Refactor.Generate_Subprogram is
    ---------------------------------
 
    function Create_Subprogram_Generator
-     (Node : Ada_Node'Class) return Subprogram_Generator
+     (Node : Ada_Node'Class; Attribute_Callback : Attribute_Provider := null)
+      return Subprogram_Generator
    is
       Subprogram   : constant Subp_Decl := Get_Subp_Decl (Node);
       Package_Spec : constant Base_Package_Decl :=
@@ -121,7 +121,16 @@ package body LAL_Refactor.Generate_Subprogram is
             then New_Pkg_Body
             else Add_To_Pkg_Body));
    begin
-      return (Target_Subp => Subprogram, Action => Insert_Mode);
+      return
+        (case Insert_Mode is
+           when Local           => (Local, Subprogram),
+           when Add_To_Pkg_Body => (Add_To_Pkg_Body, Subprogram),
+           when New_Pkg_Body    =>
+             (Action      => New_Pkg_Body,
+              Target_Subp => Subprogram,
+              Body_Path   =>
+                Generate_Package.Create_Body_Path
+                  (Package_Spec, Attribute_Callback)));
    end Create_Subprogram_Generator;
 
    --------------
@@ -134,51 +143,43 @@ package body LAL_Refactor.Generate_Subprogram is
       Analysis_Units : access function return Analysis_Unit_Array)
       return Refactoring_Edits
    is
-      use LAL_Refactor.Stub_Utils;
-
-      function Generate (Subprogram : Subp_Decl) return Unbounded_String
-      is (Create_Code_Generator (Subprogram).Generate_Body)
-      with Post => Generate'Result not in Null_Unbounded_String;
-      --  Generate subprogram body text
-
-      Edits     : Refactoring_Edits;
-      Dest_File : constant String :=
+      Spec  : constant Base_Package_Decl :=
         (if Self.Action in Local
-         then Self.Target_Subp.Unit.Get_Filename
-         else
-           LAL_Refactor.Generate_Package.Get_Body_Path
-             (Get_Parent_Package_Spec (Self.Target_Subp)));
+         then No_Base_Package_Decl
+         else Get_Parent_Package_Spec (Self.Target_Subp));
+      Edits : Refactoring_Edits;
+
+      use LAL_Refactor.Stub_Utils;
    begin
       case Self.Action is
          when New_Pkg_Body            =>
             declare
-               File_Path              : constant Unbounded_String :=
-                 To_Unbounded_String (Dest_File);
-               Spec                   : constant Base_Package_Decl :=
-                 Get_Parent_Package_Spec (Self.Target_Subp);
-               Set                    : constant Subp_Set :=
+               Set            : constant Subp_Set :=
                  To_Subp_Set (Self.Target_Subp);
-               Generated_Package_Text : constant Unbounded_String :=
+               Generated_Body : constant Unbounded_String :=
                  Create_Code_Generator (Spec => Spec, Subprograms => Set)
                    .Generate_Body;
             begin
-               Edits.File_Creations.Insert
-                 ((File_Path, Generated_Package_Text));
+               Edits.File_Creations.Insert ((Self.Body_Path, Generated_Body));
             end;
 
          when Local | Add_To_Pkg_Body =>
             declare
-               Generated_Stub  : constant Unbounded_String :=
-                 Generate (Self.Target_Subp);
+               Generated_Body  : constant Unbounded_String :=
+                 Create_Code_Generator (Self.Target_Subp).Generate_Body;
                Insert_Point    : constant Source_Location :=
                  LAL_Refactor.Utils.Get_Contextual_Insertion_Point
                    (Self.Target_Subp);
                Insert_Location : constant Source_Location_Range :=
                  Make_Range (Insert_Point, Insert_Point);
                Stub_Edit       : constant Text_Edit :=
-                 (Location => Insert_Location, Text => Generated_Stub);
+                 (Location => Insert_Location, Text => Generated_Body);
+               Body_Path       : constant String :=
+                 (if Self.Action in Local
+                  then Self.Target_Subp.Unit.Get_Filename
+                  else Spec.P_Body_Part.Unit.Get_Filename);
             begin
-               Safe_Insert (Edits.Text_Edits, Dest_File, Stub_Edit);
+               Safe_Insert (Edits.Text_Edits, Body_Path, Stub_Edit);
             end;
       end case;
       return Edits;

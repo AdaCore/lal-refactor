@@ -1,0 +1,5 @@
+title: Generate Package (custom naming)
+
+description: generate_package - test custom body suffix honoured
+
+driver: shell_script

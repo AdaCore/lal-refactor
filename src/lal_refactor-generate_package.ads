@@ -6,19 +6,19 @@
 
 with Ada.Containers.Ordered_Maps;
 
-with VSS;
-with VSS.Strings;
-
 private with Langkit_Support.Text;
 
 with Libadalang.Common; use Libadalang.Common;
 
 with LAL_Refactor.Stub_Utils;
 
+with GPR2;
+
 package LAL_Refactor.Generate_Package is
    subtype Subp_Set is LAL_Refactor.Stub_Utils.Subp_Set;
 
-   package Subp_Decl_Maps is new Ada.Containers.Ordered_Maps
+   package Subp_Decl_Maps is new
+     Ada.Containers.Ordered_Maps
        (Key_Type     => Source_Location_Range,
         Element_Type => Subp_Set,
         "<"          => Langkit_Support.Slocs."<",
@@ -29,6 +29,10 @@ package LAL_Refactor.Generate_Package is
    --  If Node belongs to enclosing package declaration lines
    --  e.g. "package Spec is... " or "end Spec;"
    --  then return the package declaration node, else No_Base_Package_Decl
+
+   function Package_Body_Exists (For_Spec : Base_Package_Decl) return Boolean
+   is (not For_Spec.P_Body_Part.Is_Null);
+   --  Check package body exists in project
 
    function Can_Generate (Spec : Base_Package_Decl) return Boolean;
    --  Once found, check package spec is a viable candidate
@@ -41,13 +45,19 @@ package LAL_Refactor.Generate_Package is
    --  or no and the package includes subprogram declarations,
    --  Return true and write to Spec
 
-   function Get_Body_Path (From_Spec : Base_Package_Decl) return String;
-   --  Return path to existing body
-   --  or create path for package body in same directory
+   type Attribute_Provider is
+     access function
+       (Attribute : GPR2.Q_Attribute_Id; Default : String := "") return String;
+   --  Optionally check project naming conventions before creating a new file
 
-   function Package_Body_Exists (For_Spec : Base_Package_Decl) return Boolean
-   is (not For_Spec.P_Body_Part.Is_Null);
-   --  Check package body exists in project
+   function Create_Body_Path
+     (Spec               : Base_Package_Decl;
+      Attribute_Callback : Attribute_Provider := null) return Unbounded_String
+   with Pre => Spec.P_Body_Part.Is_Null;
+   --  Build file path for new package body for Spec.
+   --  This file will be created in the same directory,
+   --  and its path will be the same as Spec
+   --  with the appropriate file extension.
 
    type Package_Mode is (Create_New, Update_Existing);
 
@@ -55,7 +65,8 @@ package LAL_Refactor.Generate_Package is
      new Refactoring_Tool with private;
 
    function Create_Package_Generator
-     (Spec : Base_Package_Decl) return Package_Generator
+     (Spec               : Base_Package_Decl;
+      Attribute_Callback : Attribute_Provider := null) return Package_Generator
    with Pre => Can_Generate (Spec);
    --  Parse package spec and build generator object
 
@@ -72,22 +83,14 @@ package LAL_Refactor.Generate_Package is
    --
    --  Generate Package Body:
    --    This action creates a new package body file.
-   --    Currently, the subprogram stub order in this
-   --    simply follows that of the package specification.
+   --    The subprogram stubs are inserted in the same order
+   --    they are declared in the package specification.
    --
    --  Update Package Body:
    --    This action inserts new subprogram body stubs
    --    into an existing package body file,
-   --    which means some care must be taken with ordering.
-   --
-   --  Simple approach: insert stubs at the end of the package body.
-   --  This means only one refactoring edit will be produced,
-   --  containing generated text of all the stubs into one string.
-   --
-   --  More complicated: insert stubs in the same order as they
-   --  are declared in the package specification.
-   --  This would split one edit into multiple depending on
-   --  where they are declared in the specification.
+   --    The subprogram stubs are inserted near the existing
+   --    bodies of subprograms declared above or below.
 
    -------------------------------
    --  LSP diagnostic reporting --
@@ -111,16 +114,17 @@ package LAL_Refactor.Generate_Package is
      (Msg, File : String; SLOC : Source_Location_Range)
       return Generate_Package_Problem;
 private
-   --  type Package_Mode is (Create_New, Update_Existing);
 
    type Package_Generator (Action : Package_Mode) is new Refactoring_Tool
    with record
-      Spec      : Base_Package_Decl;
-      Body_Path : Unbounded_String;
+      Spec : Base_Package_Decl;
       case Action is
          when Create_New =>
+            Body_Path       : Unbounded_String;
+            --  Path for newly created package body file
             All_Subprograms : Subp_Set;
             --  One ordered list of subprogram declarations
+
          when Update_Existing =>
             New_Subprograms : Subp_Map;
             --  Map of subprogram declarations split around
@@ -130,9 +134,9 @@ private
    end record;
 
    type Generate_Package_Problem is new Refactoring_Diagnostic with record
-      Info     : VSS.Strings.Virtual_String;
+      Info     : Unbounded_String;
+      Filename : Unbounded_String;
       Location : Source_Location_Range;
-      Filename : VSS.Strings.Virtual_String;
    end record;
 
    function Is_Unimplemented_Subprogram (D : Ada_Node'Class) return Boolean

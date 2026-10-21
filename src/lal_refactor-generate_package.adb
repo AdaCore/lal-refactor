@@ -6,14 +6,15 @@
 --
 
 --  This package contains refactoring tools to generate or update
---  a GNAT-compliant package body file from a package declaration
+--  a corresponding package body file for a package declaration
 
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
+
+with GPR2.Project.Registry.Attribute;
+
 with LAL_Refactor.Utils;
 with Langkit_Support.Slocs;
-with VSS.Strings.Conversions;
-
 with Langkit_Support.Text; use Langkit_Support.Text;
 
 package body LAL_Refactor.Generate_Package is
@@ -58,47 +59,53 @@ package body LAL_Refactor.Generate_Package is
          return False;
    end Is_Generate_Package_Available;
 
-   -------------------
-   -- Get_Body_Path --
-   -------------------
+   ----------------------
+   -- Create_Body_Path --
+   ----------------------
 
-   function Get_Body_Path (From_Spec : Base_Package_Decl) return String is
+   function Create_Body_Path
+     (Spec               : Base_Package_Decl;
+      Attribute_Callback : Attribute_Provider := null) return Unbounded_String
+   is
+      Attr renames GPR2.Project.Registry.Attribute.Naming.Body_Suffix;
+
+      Default_Suffix : constant String := ".adb";
+      Suffix         : constant String :=
+        (if Attribute_Callback = null
+         then Default_Suffix
+         else Attribute_Callback.all (Attr, Default_Suffix));
+      --  If Attribute_Callback is provided for a project,
+      --  check whether that project configures a
+      --  custom body suffix and use that
+
+      Name : constant String := Spec.Unit.Get_Filename;
+      Sep  : constant Character := '.';
+      --  If package spec path contains Sep,
+      --  then new package body path will match this
+      --  with only the file extension changed.
+      --  Otherwise, append Suffix to the end of the path.
+      Idx  : constant Natural :=
+        Ada.Strings.Fixed.Index
+          (Source => Name,
+           From   => Name'Last,
+           Going  => Ada.Strings.Backward,
+           Test   => Ada.Strings.Inside,
+           Set    => Ada.Strings.Maps.To_Set (Sep));
    begin
-      if Package_Body_Exists (From_Spec) then
-         return From_Spec.P_Body_Part.Unit.Get_Filename;
-      else
-         --  Create a new file in the same directory
-         --  No guarantee that filenaming conventions follow GNAT,
-         --  but Generate Package will use a GNAT-compliant naming scheme
-         --  and create a body file with an ".adb" suffix,
-         --  even if the spec does not use ".ads"
-
-         declare
-            S   : constant String := From_Spec.Unit.Get_Filename;
-            Sfx : constant String := ".adb";
-            Idx : constant Natural :=
-              Ada.Strings.Fixed.Index
-                (Source => S,
-                 Set    => Ada.Strings.Maps.To_Set ("."),
-                 From   => S'Last,
-                 Test   => Ada.Strings.Inside,
-                 Going  => Ada.Strings.Backward);
-         begin
-            if Idx = 0 then
-               return S & Sfx;
-            else
-               return S (S'First .. Idx - 1) & Sfx;
-            end if;
-         end;
-      end if;
-   end Get_Body_Path;
+      return
+        To_Unbounded_String
+          (if Idx = 0
+           then Name & Suffix
+           else Name (Name'First .. Idx - 1) & Suffix);
+   end Create_Body_Path;
 
    ------------------------------
    -- Create_Package_Generator --
    ------------------------------
 
    function Create_Package_Generator
-     (Spec : Base_Package_Decl) return Package_Generator
+     (Spec               : Base_Package_Decl;
+      Attribute_Callback : Attribute_Provider := null) return Package_Generator
    is
       Public_Decls  : constant Ada_Node_Array :=
         (if Spec.F_Public_Part.Is_Null
@@ -131,20 +138,19 @@ package body LAL_Refactor.Generate_Package is
       --  add N to Set when Match (N); stop if Til (N) or the array ends.
       --  Return final iteration index. Set may be empty.
 
-      function Build_Subp_Set (From_Decls : Ada_Node_Array) return Subp_Set
+      function Build_Subp_Set (Decls : Ada_Node_Array) return Subp_Set
       with Post => not Build_Subp_Set'Result.Is_Empty;
       --  Build list of all subprograms to generate in new package body.
       --  Used by Generate Package action,
       --  and by Update Package in the edge case that
       --  package body object exists without any child declarations
 
-      function Build_Singleton_Map
-        (From_Decls : Ada_Node_Array) return Subp_Map;
+      function Build_Singleton_Map (Decls : Ada_Node_Array) return Subp_Map;
       --  Edge case : insertion into an empty package body
       --  Produces a map with one subprogram block
       --  to be inserted above the package F_End_Name node
 
-      function Build_Subp_Map (From_Decls : Ada_Node_Array) return Subp_Map
+      function Build_Subp_Map (Decls : Ada_Node_Array) return Subp_Map
       with
         Pre  => Package_Body_Exists (Spec) and not Has_Empty_Body (Spec),
         Post => not Build_Subp_Map'Result.Is_Empty;
@@ -183,17 +189,17 @@ package body LAL_Refactor.Generate_Package is
       -- Build_Subp_Set --
       --------------------
 
-      function Build_Subp_Set (From_Decls : Ada_Node_Array) return Subp_Set is
+      function Build_Subp_Set (Decls : Ada_Node_Array) return Subp_Set is
          Set     : Subp_Set;
          End_Idx : Positive;
       begin
          End_Idx :=
            Filter_Subp_Set
-             (Nodes => From_Decls,
+             (Nodes => Decls,
               Match => Is_Unimplemented_Subprogram'Access,
               Til   => Libadalang.Analysis.Is_Null'Access,
               Set   => Set);
-         if End_Idx < From_Decls'Last then
+         if End_Idx < Decls'Last then
             raise Constraint_Error with End_Idx'Img;
          end if;
          return Set;
@@ -203,14 +209,12 @@ package body LAL_Refactor.Generate_Package is
       -- Build_Singleton_Map --
       -------------------------
 
-      function Build_Singleton_Map
-        (From_Decls : Ada_Node_Array) return Subp_Map
-      is
+      function Build_Singleton_Map (Decls : Ada_Node_Array) return Subp_Map is
          Insert_Point : constant Source_Location_Range :=
            To_Range (Spec.P_Body_Part.F_Decls.Sloc_Range.End_Sloc);
       begin
          return Singleton_Map : Subp_Map do
-            Singleton_Map.Insert (Insert_Point, Build_Subp_Set (From_Decls));
+            Singleton_Map.Insert (Insert_Point, Build_Subp_Set (Decls));
          end return;
       end Build_Singleton_Map;
 
@@ -218,7 +222,7 @@ package body LAL_Refactor.Generate_Package is
       -- Build_Subp_Map --
       --------------------
 
-      function Build_Subp_Map (From_Decls : Ada_Node_Array) return Subp_Map is
+      function Build_Subp_Map (Decls : Ada_Node_Array) return Subp_Map is
 
          --  Insertion point helpers
          function Insert_Below
@@ -240,34 +244,36 @@ package body LAL_Refactor.Generate_Package is
          --  These are context nodes, and will be used
          --  to calculate insertion point
 
-         Map                    : Subp_Map;
-         Subp_Batch             : Subp_Set;
-         Insert_Point           : Source_Location_Range;
-         Context_Idx            : Natural := 0;
+         Map          : Subp_Map;
+         Subp_Batch   : Subp_Set;
+         Insert_Point : Source_Location_Range;
+         Context_Idx  : Natural := 0;
          --  Store idx of last context node
-         Subp_Above, Subp_Below : Subp_Decl := No_Subp_Decl;
+         Idx          : Positive := Decls'First;
+         --  Iterator
+         Subp_Above   : Subp_Decl := No_Subp_Decl;
+         Subp_Below   : Subp_Decl := No_Subp_Decl;
          --  Track context nodes (implemented subprograms) declared
          --  before or after unimplemented subp decls
-         Idx                    : Positive := From_Decls'First;
 
       begin
-         while Idx <= From_Decls'Last loop
+         while Idx <= Decls'Last loop
             --  To insert subprogram body stubs in the order of declaration,
             --  note the nearest implemented subprogram in the spec
             --  and insert above or below.
-            if Context_Idx in From_Decls'Range then
-               Subp_Above := From_Decls (Context_Idx).As_Subp_Decl;
+            if Context_Idx in Decls'Range then
+               Subp_Above := Decls (Context_Idx).As_Subp_Decl;
             end if;
             --  Only need Subp_Above for first subp batch
             Context_Idx :=
               Filter_Subp_Set
                 (From  => Idx,
-                 Nodes => From_Decls,
+                 Nodes => Decls,
                  Match => Is_Unimplemented_Subprogram'Access,
                  Til   => Is_Context_Node'Access,
                  Set   => Subp_Batch);
-            if Context_Idx in From_Decls'Range then
-               Subp_Below := From_Decls (Context_Idx).As_Subp_Decl;
+            if Context_Idx in Decls'Range then
+               Subp_Below := Decls (Context_Idx).As_Subp_Decl;
             end if;
 
             if not Subp_Batch.Is_Empty then
@@ -289,7 +295,6 @@ package body LAL_Refactor.Generate_Package is
          then
            (Action          => Update_Existing,
             Spec            => Spec,
-            Body_Path       => To_Unbounded_String (Get_Body_Path (Spec)),
             New_Subprograms =>
               (if Has_Empty_Body (Spec)
                then Build_Singleton_Map (Pkg_Decls)
@@ -297,7 +302,7 @@ package body LAL_Refactor.Generate_Package is
          else
            (Action          => Create_New,
             Spec            => Spec,
-            Body_Path       => To_Unbounded_String (Get_Body_Path (Spec)),
+            Body_Path       => Create_Body_Path (Spec, Attribute_Callback),
             All_Subprograms => Build_Subp_Set (Pkg_Decls)));
    end Create_Package_Generator;
 
@@ -312,15 +317,13 @@ package body LAL_Refactor.Generate_Package is
       return Refactoring_Edits
    is
       procedure Add_New_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Spec  : Base_Package_Decl;
-         With_Decls : Subp_Set)
-      with Pre => not (From_Spec.Is_Null or With_Decls.Is_Empty);
+        (Edits : out Refactoring_Edits; Decls : Subp_Set)
+      with Pre => not (Self.Spec.Is_Null or Decls.Is_Empty);
       --  Create edits to go into one new file
 
       procedure Update_Package_Edits
         (Edits : out Refactoring_Edits; New_Decls : Subp_Map)
-      with Pre => not New_Decls.Is_Empty;
+      with Pre => not (Self.Spec.Is_Null or New_Decls.Is_Empty);
       --  Text edits to modify an existing package body
 
       ---------------------------
@@ -328,13 +331,10 @@ package body LAL_Refactor.Generate_Package is
       ---------------------------
 
       procedure Add_New_Package_Edits
-        (Edits      : out Refactoring_Edits;
-         From_Spec  : Base_Package_Decl;
-         With_Decls : Subp_Set)
+        (Edits : out Refactoring_Edits; Decls : Subp_Set)
       is
          Package_Body_Text : constant Unbounded_String :=
-           LAL_Refactor.Stub_Utils.Create_Code_Generator
-             (From_Spec, With_Decls)
+           LAL_Refactor.Stub_Utils.Create_Code_Generator (Self.Spec, Decls)
              .Generate_Body;
       begin
          Edits.File_Creations.Insert ((Self.Body_Path, Package_Body_Text));
@@ -347,6 +347,9 @@ package body LAL_Refactor.Generate_Package is
       procedure Update_Package_Edits
         (Edits : out Refactoring_Edits; New_Decls : Subp_Map)
       is
+         Body_Path : constant String :=
+           Self.Spec.P_Body_Part.Unit.Get_Filename;
+
          --  Iterate over subprogram blocks and convert to edit
          procedure Insert_Edit (Position : Subp_Decl_Maps.Cursor)
          with Pre => Position.Has_Element;
@@ -383,7 +386,7 @@ package body LAL_Refactor.Generate_Package is
                Subp_Batch.Iterate (Generate_Subp_Stub'Access);
                Safe_Insert
                  (Edits     => Edits.Text_Edits,
-                  File_Name => Self.Body_Path.To_String,
+                  File_Name => Body_Path,
                   Edit      => (Insert_Loc, Package_Stub));
             end if;
          end Insert_Edit;
@@ -399,14 +402,11 @@ package body LAL_Refactor.Generate_Package is
       case Self.Action is
          when Update_Existing =>
             Update_Package_Edits
-              (Edits     => Package_Edits,
-               New_Decls => Self.New_Subprograms);
+              (Edits => Package_Edits, New_Decls => Self.New_Subprograms);
 
          when Create_New      =>
             Add_New_Package_Edits
-              (Edits      => Package_Edits,
-               From_Spec  => Self.Spec,
-               With_Decls => Self.All_Subprograms);
+              (Edits => Package_Edits, Decls => Self.All_Subprograms);
       end case;
       return Package_Edits;
    exception
@@ -424,7 +424,7 @@ package body LAL_Refactor.Generate_Package is
 
    overriding
    function Filename (Self : Generate_Package_Problem) return String
-   is (VSS.Strings.Conversions.To_UTF_8_String (Self.Filename));
+   is (To_String (Self.Filename));
 
    --------------
    -- Location --
@@ -441,7 +441,7 @@ package body LAL_Refactor.Generate_Package is
 
    overriding
    function Info (Self : Generate_Package_Problem) return String
-   is (VSS.Strings.Conversions.To_UTF_8_String (Self.Info));
+   is (To_String (Self.Info));
 
    -------------
    -- Problem --
@@ -450,7 +450,7 @@ package body LAL_Refactor.Generate_Package is
    function Problem
      (Msg, File : String; SLOC : Source_Location_Range)
       return Generate_Package_Problem
-   is (Info     => VSS.Strings.Conversions.To_Virtual_String (Msg),
-       Location => SLOC,
-       Filename => VSS.Strings.Conversions.To_Virtual_String (File));
+   is (Info     => To_Unbounded_String (Msg),
+       Filename => To_Unbounded_String (File),
+       Location => SLOC);
 end LAL_Refactor.Generate_Package;
