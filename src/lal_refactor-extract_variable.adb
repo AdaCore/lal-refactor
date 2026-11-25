@@ -145,9 +145,9 @@ package body LAL_Refactor.Extract_Variable is
                   if Priority < Tmp then
                      return False;
                   end if;
-               end if;
 
-               Priority   := Tmp;
+                  Priority := Tmp;
+               end if;
             end if;
 
             Subtree := Parent;

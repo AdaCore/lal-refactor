@@ -820,14 +820,18 @@ package body LAL_Refactor.Auto_Import is
       ------------------------------
 
       procedure Process_Compilation_Unit
-        (Comp_Unit : Compilation_Unit)
-      is
-         Unit_Name : constant Langkit_Support.Text.Unbounded_Text_Type :=
-           (if Original_Qualifier = "" or else Comp_Unit.Is_Null
-            then Null_Unbounded_Wide_Wide_String
-            else Get_Fully_Qualified_Name (Comp_Unit));
+        (Comp_Unit : Compilation_Unit) is
       begin
          if Comp_Unit.Is_Null then
+            return;
+         end if;
+
+         --  Only process the current subunit, since other subunits cannot
+         --  provide imports and may have no stub in their parent body.
+
+         if Comp_Unit.F_Body.Kind in Ada_Subunit_Range
+           and then Comp_Unit /= Name.P_Enclosing_Compilation_Unit
+         then
             return;
          end if;
 
@@ -838,11 +842,19 @@ package body LAL_Refactor.Auto_Import is
                Reachable_Definitions  => Reachable_Declarations,
                Reachable_Renames      => Reachable_Renames);
 
-         elsif Lowered_Full_Name = Unit_Name then
-            Found_Unit_Name := True;
+         else
+            declare
+               Unit_Name : constant
+                 Langkit_Support.Text.Unbounded_Text_Type :=
+                   Get_Fully_Qualified_Name (Comp_Unit);
+            begin
+               if Lowered_Full_Name = Unit_Name then
+                  Found_Unit_Name := True;
 
-         elsif Lowered_Original_Qualifier = Unit_Name then
-            Found_Qualifier := True;
+               elsif Lowered_Original_Qualifier = Unit_Name then
+                  Found_Qualifier := True;
+               end if;
+            end;
          end if;
       end Process_Compilation_Unit;
 
