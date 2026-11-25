@@ -1,16 +1,18 @@
-usage: lalrefactor.exe [--help|-h] [--help|-h] tool [--verbose|-v] [--pipe|-p] 
-                      [--project|-P PROJECT] [--sources|-S SOURCES [SOURCES...]]
-                       [-X nm=val [nm=val...]] [--from-gnat-warnings|-fgw 
-                      <file_with_gnat_warnings>] [--remove-indices|-ri] 
+usage: lalrefactor.exe [--help|-h] [--json-help] tool [--verbose|-v] [--pipe|-p]
+                       [--project|-P PROJECT] [--sources|-S SOURCES
+                      [SOURCES...]] [-X nm=val [nm=val...]]
+                      [--from-gnat-warnings|-fgw <file_with_gnat_warnings>]
+                      [--remove-indices|-ri]
 
 Refactor tools
 
 positional arguments:
    tool  array_aggregates
-   
+
 optional arguments:
    --help, -h                  Show this help message
-   --help, -h                  Help
+   --json-help                 Output the help for this command as JSON, and
+                               exit
    --verbose, -v               Print traces
    --pipe, -p                  Print the result to stdout instead of editing the
                                 files on disk
@@ -18,7 +20,7 @@ optional arguments:
    --sources, -S               Source files to refactor
    -X                          Specify an external reference for Project Files
    --from-gnat-warnings, -fgw  File with all obsolescent syntax GNAT warnings
-   --remove-indices, -ri       Removes the indices in empty and one element 
+   --remove-indices, -ri       Removes the indices in empty and one element
                                arrays
-   
+
 
